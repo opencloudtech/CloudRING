@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -149,7 +149,7 @@ jobs:
               end;
             def reviewed_use:
               type == "string" and
-              (. == "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" or
+              (. == "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" or
                . == "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e" or
                . == "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" or
                . == "actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6" or
@@ -481,7 +481,7 @@ jobs:
             'permissions: {contents: read}' \
             'jobs:' \
             '  reused:' \
-            '    uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0' \
+            '    uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' \
             "    ${restricted_context}: inherit")"
           expect_rejected restricted-key "${restricted_key_fixture}"
 
