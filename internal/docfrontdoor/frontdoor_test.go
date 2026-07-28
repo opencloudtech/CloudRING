@@ -1,6 +1,8 @@
 package docfrontdoor
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"io/fs"
 	"os"
 	"path"
@@ -117,12 +119,30 @@ func TestFrontDoorRelativeLinksResolve(t *testing.T) {
 
 func TestPublicDocumentsDoNotNamePrivateConsumers(t *testing.T) {
 	repository := openRepository(t)
-	forbidden := []string{
-		"cloudring-enterprise",
-		"cloudring_enterprise",
-		"cloudlinux",
-		"cloudring_provider",
-		"gitlab.corp",
+	// Store only one-way fingerprints so the public guard does not disclose the
+	// private identifiers that it rejects.
+	forbidden := []struct {
+		length int
+		sha256 string
+	}{
+		{length: 20, sha256: "ba415b48d22794dc48d4450683c6bba7ceb89ec35ceb7c3a028abaa128444e7c"},
+		{length: 20, sha256: "4e538bf0dc25d9d384f9a0f2cc9cf913679483e1d500fd7347919de9cef8adfa"},
+		{length: 10, sha256: "298343ca6d4934f16f32cba169902d02d6f2da35568b113a984c7841cb7ada54"},
+		{length: 18, sha256: "99f78b6204094534ebc5e299796ac979e4f77b67f9a6c86991710e5909eae2fe"},
+		{length: 11, sha256: "09780addc0aca989e9cc50096a35c7d2519b557fe51b389e15639213fe20f86a"},
+	}
+	digestsByLength := make(map[int]map[[sha256.Size]byte]struct{})
+	for _, identifier := range forbidden {
+		raw, err := hex.DecodeString(identifier.sha256)
+		if err != nil || len(raw) != sha256.Size {
+			t.Fatalf("decode private-identifier fingerprint: %v", err)
+		}
+		var digest [sha256.Size]byte
+		copy(digest[:], raw)
+		if digestsByLength[identifier.length] == nil {
+			digestsByLength[identifier.length] = make(map[[sha256.Size]byte]struct{})
+		}
+		digestsByLength[identifier.length][digest] = struct{}{}
 	}
 	err := fs.WalkDir(repository.FS(), ".", func(name string, entry fs.DirEntry, err error) error {
 		if err != nil {
@@ -143,10 +163,14 @@ func TestPublicDocumentsDoNotNamePrivateConsumers(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		lower := strings.ToLower(string(data))
-		for _, identifier := range forbidden {
-			if strings.Contains(lower, identifier) {
-				t.Errorf("%s contains non-public consumer identifier %q", name, identifier)
+		lower := []byte(strings.ToLower(string(data)))
+		for length, digests := range digestsByLength {
+			for offset := 0; offset+length <= len(lower); offset++ {
+				digest := sha256.Sum256(lower[offset : offset+length])
+				if _, forbidden := digests[digest]; forbidden {
+					t.Errorf("%s contains a non-public consumer identifier", name)
+					return nil
+				}
 			}
 		}
 		return nil
