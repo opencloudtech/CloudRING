@@ -59,6 +59,82 @@ func TestS3FetchStreamsExactVersionedObjectWithoutLeakingInputs(t *testing.T) {
 	}
 }
 
+func TestResolveS3ObjectVersionUsesExactHashAndSizeBinding(t *testing.T) {
+	version := "version-private-value"
+	objectKey := "backups/private/snapshot.db"
+	body := `<ListVersionsResult><IsTruncated>false</IsTruncated>` +
+		`<Version><Key>` + objectKey + `</Key><VersionId>older-version</VersionId><Size>32</Size></Version>` +
+		`<Version><Key>` + objectKey + `</Key><VersionId>` + version + `</VersionId><Size>32</Size></Version>` +
+		`</ListVersionsResult>`
+	var requests atomic.Int32
+	server := httptest.NewTLSServer(http.HandlerFunc(func(writer http.ResponseWriter, incoming *http.Request) {
+		requests.Add(1)
+		if incoming.Method != http.MethodGet || incoming.URL.EscapedPath() != "/bucket-a" ||
+			incoming.URL.Query().Get("prefix") != objectKey ||
+			incoming.URL.Query().Get("versions") != "" ||
+			incoming.URL.Query().Get("max-keys") != "1000" ||
+			incoming.Header.Get("Authorization") == "" {
+			http.Error(writer, "invalid", http.StatusBadRequest)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/xml")
+		writer.Header().Set("Content-Length", strconv.Itoa(len(body)))
+		_, _ = writer.Write([]byte(body))
+	}))
+	defer server.Close()
+	lookup := S3ObjectVersionLookup{
+		Endpoint: server.URL, Region: "region-1", Bucket: "bucket-a",
+		ObjectKey: objectKey, ObjectVersionSHA256: sha256Hex([]byte(version)), ExpectedBytes: 32,
+	}
+	resolved, err := resolveS3ObjectVersionWithClient(
+		context.Background(), lookup, []byte(validProjectedS3AuthFile()), time.Now().UTC(), server.Client(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolved != version || requests.Load() != 1 {
+		t.Fatalf("resolved=%q requests=%d", resolved, requests.Load())
+	}
+}
+
+func TestResolveS3ObjectVersionRejectsIncompleteAmbiguousAndLeakyInputs(t *testing.T) {
+	version := "version-private-value"
+	objectKey := "backups/private/snapshot.db"
+	versionXML := `<Version><Key>` + objectKey + `</Key><VersionId>` + version + `</VersionId><Size>32</Size></Version>`
+	for _, test := range []struct {
+		name string
+		body string
+	}{
+		{"truncated", `<ListVersionsResult><IsTruncated>true</IsTruncated>` + versionXML + `</ListVersionsResult>`},
+		{"ambiguous", `<ListVersionsResult><IsTruncated>false</IsTruncated>` + versionXML + versionXML + `</ListVersionsResult>`},
+		{"wrong size", `<ListVersionsResult><IsTruncated>false</IsTruncated><Version><Key>` + objectKey + `</Key><VersionId>` + version + `</VersionId><Size>31</Size></Version></ListVersionsResult>`},
+		{"wrong version", `<ListVersionsResult><IsTruncated>false</IsTruncated><Version><Key>` + objectKey + `</Key><VersionId>other-private-version</VersionId><Size>32</Size></Version></ListVersionsResult>`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			server := httptest.NewTLSServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+				writer.Header().Set("Content-Length", strconv.Itoa(len(test.body)))
+				_, _ = writer.Write([]byte(test.body))
+			}))
+			defer server.Close()
+			lookup := S3ObjectVersionLookup{
+				Endpoint: server.URL, Region: "region-1", Bucket: "bucket-a",
+				ObjectKey: objectKey, ObjectVersionSHA256: sha256Hex([]byte(version)), ExpectedBytes: 32,
+			}
+			_, err := resolveS3ObjectVersionWithClient(
+				context.Background(), lookup, []byte(validProjectedS3AuthFile()), time.Now().UTC(), server.Client(),
+			)
+			if err == nil {
+				t.Fatal("unsafe S3 object version listing was accepted")
+			}
+			for _, canary := range []string{server.URL, objectKey, version, "access-key-canary", "secret-key-canary-value"} {
+				if strings.Contains(err.Error(), canary) {
+					t.Fatalf("error leaked protected input %q: %v", canary, err)
+				}
+			}
+		})
+	}
+}
+
 func TestS3FetchRejectsRedirectTLSVersionTruncationOversizeAndCancellation(t *testing.T) {
 	archive := []byte("synthetic-versioned-etcd-snapshot")
 	base := validS3Request(archive)
