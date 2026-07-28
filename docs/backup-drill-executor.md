@@ -10,12 +10,19 @@ journaling, recovery, cleanup, and proof invariants independently.
 
 The versioned plan binds the operation, proof, and installation IDs; accepted
 public and downstream Git SHAs; cluster identity digest; exact
-BackupStorageLocation UID, generation, and config digest; object-store prefix,
+BackupStorageLocation UID, observed generation, and effective config digest; object-store prefix,
 minimum retention of at least 30 days, and governance/compliance object-lock
 mode; five source baselines; tool and adapter executable digests; one Backup,
 four Restore identities/scopes, and five explicit source-to-isolated namespace
 mappings; etcd sandbox; cleanup targets with identity preconditions; issuance, expiry, nonce,
 and downstream aggregate-proof path token.
+
+The storage-location generation is audit context from plan issuance. It is not
+a universal desired-state fence: provider CRDs without a status subresource can
+legitimately advance generation during status validation while leaving the
+effective configuration unchanged. Adapters therefore prove live continuity
+with the exact UID plus canonical effective-configuration digest; a changed UID
+or configuration fails closed.
 
 All external JSON is size-bounded and rejects malformed input, duplicate keys,
 unknown fields, trailing documents, and unsafe depth. The schemas are in

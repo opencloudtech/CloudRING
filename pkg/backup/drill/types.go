@@ -42,8 +42,12 @@ type IsolatedNamespace struct {
 }
 
 type StorageLocation struct {
-	Name         string `json:"name"`
-	UIDSHA256    string `json:"uidSha256"`
+	Name      string `json:"name"`
+	UIDSHA256 string `json:"uidSha256"`
+	// Generation is the value observed when the plan is issued. It is audit
+	// context, not a universal desired-state fence: some provider CRDs update
+	// status through the main resource and legitimately advance generation.
+	// Adapters must bind live continuity with UIDSHA256 plus ConfigSHA256.
 	Generation   int64  `json:"generation"`
 	ConfigSHA256 string `json:"configSha256"`
 }
