@@ -154,7 +154,7 @@ jobs:
                . == "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" or
                . == "actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6" or
                . == "docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f" or
-               test("^github/codeql-action/(init|autobuild|analyze)@7188fc363630916deb702c7fdcf4e481b751f97a$") or
+               test("^github/codeql-action/(init|autobuild|analyze)@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81$") or
                test("^docker://[^@[:space:]]+@sha256:[0-9a-f]{64}$"));
             def safe_image:
               type == "string" and

@@ -6,7 +6,7 @@
     ".github/workflows/cla-dco.yml": "6a931f46518dd3d7a149ca963a2aa5124ca184a746b191889f1d28c4cf4555f7",
     ".github/workflows/license.yml": "d8032e889057a6e760c080e6adb10942ed59b8abd45f92951b956a95b79733df",
     ".github/workflows/release-provenance.yml": "a6e44d232964d23f32777da25f5255b20d0db1fbcb3cc18418f0c11b3042d11e",
-    ".github/workflows/security.yml": "8e2210f0caa813ef886ba353d8d3c395f0033e047eb9299d314b27de99bfb4a7",
-    ".github/workflows/supply-chain.yml": "3c8a128ed0f1e8c04e4e5d2ffc2b589927c7b701717299fe660057175b6831b4"
+    ".github/workflows/security.yml": "4701a3710d9ac91e26a07440f8f26f912e3d91499e9d1e6bf4be6fed7fe18142",
+    ".github/workflows/supply-chain.yml": "4f482ac2e07e5ef43f446b07cf5e254ab28efc646aa1d934a0c807686bd02d48"
   }
 }
