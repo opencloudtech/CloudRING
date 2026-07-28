@@ -61,7 +61,7 @@ func (runner *fakeAdapterRunner) RunWithEnvironment(_ context.Context, arguments
 		return []byte(`{"` + forbiddenCredentialField() + `":"synthetic-reference"}`), nil, nil
 	}
 	status := "completed"
-	mutated := request.Mode == "apply" && slicesContains([]string{"etcd-offcell-complete", "velero-backup-complete", "restore-watch-create-observe-complete", "etcd-sandbox-restored", "isolated-targets-deleted"}, request.Step)
+	mutated := request.Mode == "apply" && slicesContains([]string{"etcd-offcell-complete", "velero-backup-complete", "restore-watch-create-observe-complete", "etcd-sandbox-restored", "restore-validation-complete", "isolated-targets-deleted"}, request.Step)
 	if request.Mode == "preflight" {
 		status = "ready"
 		mutated = runner.preflightMutation
