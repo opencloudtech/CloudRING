@@ -93,8 +93,8 @@ The standard supplies generated clients and a Go SDK first, server stubs, test
 doubles, a local product harness, conformance helpers and package tooling. Its
 wire contracts are language-neutral; additional SDKs are generated from the same
 schemas after the Go reference is stable. The SDK must not require importing
-platform internals or access to an Enterprise repository. A clean-room product
-team must be able to implement, test, package and publish independently.
+platform internals or access to non-public source. A clean-room product team must
+be able to implement, test, package and publish independently.
 
 ## APIs and operations
 

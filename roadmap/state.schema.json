@@ -43,10 +43,10 @@
     "repositories": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["public", "enterprise", "provider"],
+      "required": ["public", "reference", "provider"],
       "properties": {
         "public": {"$ref": "#/$defs/repositoryProof"},
-        "enterprise": {"$ref": "#/$defs/repositoryProof"},
+        "reference": {"$ref": "#/$defs/repositoryProof"},
         "provider": {"$ref": "#/$defs/repositoryProof"}
       }
     },
@@ -101,7 +101,7 @@
                   "pin": {"type": "null"}
                 }
               },
-              "enterprise": {
+              "reference": {
                 "type": "object",
                 "properties": {
                   "main": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
@@ -243,7 +243,7 @@
           "enum": [
             "public_clean_room",
             "hub",
-            "cloudlinux",
+            "independent_provider",
             "region_primary",
             "region_secondary",
             "federation_provider_a",

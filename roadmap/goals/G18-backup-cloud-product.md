@@ -37,9 +37,10 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 
 ## Hub and downstream delivery
 
-Install the signed OSS product at the reference site with Enterprise-only target
-bindings. The target must be failure-independent from protected data. CloudLinux
-uses its own target binding and the same lifecycle/conformance.
+Install the signed OSS product at the reference site with site-only target
+bindings. The target must be failure-independent from protected data. An
+independent downstream uses its own target binding and the same lifecycle and
+conformance.
 
 ## Acceptance
 

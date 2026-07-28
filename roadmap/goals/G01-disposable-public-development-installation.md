@@ -34,8 +34,8 @@ change must be deployed and live-verified in an isolated scope beside
 4. Execute positive and negative API/CLI smoke tests with the bounded development
    operator identity.
 5. Destroy, verify zero owned residue, then recreate from the same inputs.
-6. Follow the public tutorial from a CloudLinux-controlled clean-room CI job using
-   no Enterprise checkout or unpublished local module.
+6. Follow the public tutorial from an independently controlled clean-room CI job
+   using no non-public checkout or unpublished local module.
 
 ## Hub and downstream delivery
 

@@ -49,9 +49,9 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 ## Hub and downstream delivery
 
 Deploy the signed OSS image/artifact product at the reference installation, bind
-only its storage locations in Enterprise and complete both live lifecycles with
-test content. CloudLinux runs format, distribution, prerequisite and clean-room
-conformance without Enterprise assets.
+only its site storage locations downstream and complete both live lifecycles with
+test content. An independent downstream runs format, distribution, prerequisite
+and clean-room conformance without non-public reference assets.
 
 ## Acceptance
 

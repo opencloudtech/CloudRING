@@ -51,9 +51,9 @@ that reconciliation cannot adopt/delete current resources. Switch traffic only
 after full acceptance; keep the previous revision/data as tested rollback.
 Current-alpha migration/removal is a separate approved post-cutover transaction.
 
-Enterprise supplies OVH inventory and bindings only. Provider runs clean-room
-validation and planning with protected/synthetic independent-site inputs; no Enterprise
-path is read.
+The maintained reference deployment supplies its site inventory and bindings
+only. An independent downstream runs clean-room validation and planning with
+protected or synthetic site inputs and reads no non-public reference path.
 
 ## Acceptance
 

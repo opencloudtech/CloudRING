@@ -47,10 +47,12 @@ be deployed and live-verified at `https://hub.cloudring.org`.
   zero-downtime signed N-1-to-N upgrade;
 - continuous platform API, portal, ID, IAM, usage ingest, rating, ledger and
   invoice-read correctness through replica loss and the signed upgrade;
-- Enterprise reproducibly serves the hub from exact final pin;
-- CloudLinux clean-room site installs, operates, backs up/restores, upgrades/
-  rolls back and removes the provider plane and one CloudLinux-owned OCS product
-  using only released OSS, Provider, SafePush and CloudLinux infrastructure;
+- the maintained reference deployment reproducibly serves its public endpoint
+  from the exact final pin;
+- an independently controlled clean-room site installs, operates, backs up and
+  restores, upgrades, rolls back and removes the provider plane and one
+  independently owned OCS product using only released public artifacts and its
+  own infrastructure;
 - all exact CI/protection/SafePush checks green; no required open issue,
   unclassified WIP, duplicate, placeholder, private dependency or hidden step.
 
@@ -63,8 +65,9 @@ be deployed and live-verified at `https://hub.cloudring.org`.
   observability, HA, backup, upgrade, test, docs and live cell.
 - Measurement objectives pass with immutable candidate artifacts.
 - A real signed tag, SBOM and provenance verify from a fresh environment.
-- Final public/Enterprise/Provider SHAs, pins, GitOps revisions, artifacts,
-  cleanup and support handoff are recorded without secrets.
+- Final public, maintained-reference and independent-downstream revisions, pins,
+  GitOps revisions, artifacts, cleanup and support handoff are recorded without
+  secrets.
 
 ## Completion statement
 

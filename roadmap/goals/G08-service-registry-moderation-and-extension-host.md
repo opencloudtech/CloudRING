@@ -61,10 +61,11 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 ## Hub and downstream delivery
 
 Deploy the registry, moderation console, gateway and extension host to the hub.
-Use the G07 tutorial and independently built CloudLinux package in isolated
+Use the G07 tutorial and independently built clean-room package in isolated
 audiences. Install, activate, upgrade, fail/roll back and remove both; the public
 catalog remains honest until G12 delivers the first sellable product. The
-CloudLinux path uses only released public SDK/packages and its own clean-room CI.
+The independent path uses only released public SDK/packages and its own
+clean-room CI.
 
 ## Acceptance
 
@@ -74,5 +75,5 @@ CloudLinux path uses only released public SDK/packages and its own clean-room CI
 - Documentation lets an external provider define its own moderation policy.
 - Every paid or public activation receipt binds the immutable package revision
   to the exact approved publisher commercial-eligibility revision.
-- The touched Enterprise OCS registry/extension implementations are removed after
-  the public replacement lands; only site bindings remain.
+- Touched downstream OCS registry/extension duplicates are removed after the
+  public replacement lands; only site bindings remain.

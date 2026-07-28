@@ -41,10 +41,11 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 
 ## Hub and downstream delivery
 
-Publish and install the signed reference network product from OSS. Enterprise
-supplies only OVH address/vRack/BGP or L2 bindings. Prove direct IPv4 and IPv6
-hub/API paths, origin TLS and a bounded network failover on the reference site.
-CloudLinux runs the same product conformance against synthetic site bindings.
+Publish and install the signed reference network product from OSS. The maintained
+reference deployment supplies only site address, routing and L2 bindings. Prove
+direct IPv4 and IPv6 API paths, origin TLS and a bounded network failover on the
+reference site. An independent downstream runs the same product conformance
+against synthetic site bindings.
 
 ## Acceptance
 

@@ -48,8 +48,9 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 
 Deploy cell-aware management to the hub, add at least a second isolated cell and
 connect a real second region after explicit cost approval. Missing approved
-capacity blocks G25; synthetic topology cannot complete it. CloudLinux repeats
-cell conformance on its certified provider; no shared Enterprise state is used.
+capacity blocks G25; synthetic topology cannot complete it. The independent
+downstream repeats cell conformance on its certified deployment; no shared
+reference-deployment state is used.
 
 ## Acceptance
 

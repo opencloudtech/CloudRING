@@ -39,9 +39,9 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 ## Hub and downstream delivery
 
 Replace synthetic/offline identity readiness at the hub. Run sanitized browser
-and API journeys with protected test accounts and cleanup. Enterprise supplies
-only mail/external-IdP/secret bindings; CloudLinux runs identical clean-room
-identity conformance.
+and API journeys with protected test accounts and cleanup. Downstream operators
+supply only mail, external-IdP, and secret bindings; an independent clean-room
+consumer runs identical identity conformance.
 
 ## Acceptance
 

@@ -17,17 +17,15 @@
 SDKs, API conventions, identity and IAM, billing semantics, installers,
 controllers, reference products, operations, conformance, security and docs.
 
-`opencloudtech/cloudring-enterprise` owns only OpenCloudTech proprietary logic,
-OVH/site/jurisdiction bindings, private configuration references, protected live
-receipts and the `cloudring_core` gitlink.
-
-`infra/cloudring_provider` owns only CloudLinux/TuxCare bindings, inventory
-adapters, site profiles, migration logic, protected inputs and the same public
-`cloudring_core` gitlink.
+Downstream operators own their concrete provider, site, and jurisdiction
+bindings, private configuration references, protected inventory, and live
+evidence. A downstream may pin this public source, but CloudRING must remain
+buildable, testable, understandable, and usable without access to that
+downstream.
 
 When a downstream environment exposes a generic defect, fix it in OSS first,
-merge it, update both consumer pins, remove any temporary workaround and rerun
-the affected live journey.
+merge it, update the affected consumer pin, remove any temporary workaround and
+rerun the affected acceptance journey.
 
 ## Agent team
 
@@ -36,8 +34,8 @@ integration, credentials, live mutations, reviews, merges and release verdict.
 Use at most four concurrent implementation lanes:
 
 - OSS implementation;
-- Enterprise/OVH propagation and live preparation;
-- CloudLinux/provider propagation;
+- reference-deployment propagation and live preparation;
+- independent downstream clean-room verification;
 - read-only verification and red-team review.
 
 Write-heavy lanes use separate persistent worktrees and non-overlapping path
@@ -68,12 +66,12 @@ For each goal:
 6. Merge through protected OSS `main`.
 7. Produce an immutable signed prerelease artifact for the goal with SBOM,
    provenance, compatibility record and exact source SHA.
-8. Prove the public clean-room journey without either private repository.
-9. Update Enterprise and CloudLinux gitlinks to the exact accepted OSS SHA and
-   merge consumer-specific changes through their protected mains. Every Provider
-   pin must pass the isolated SafePush Stage 9 signed receipt.
-10. Reconcile the exact Enterprise main to `https://hub.cloudring.org` using
-    GitOps.
+8. Prove the public clean-room journey without any non-public source.
+9. Verify at least one independently controlled downstream pin to the exact
+   accepted OSS SHA when the goal requires portability. Consumer-specific
+   changes stay in that downstream and pass its protected delivery policy.
+10. Reconcile the exact accepted public release to the maintained public
+    reference installation when the goal requires live deployment.
 11. Run the goal's live human/API/CLI/agent journeys, every previously delivered
    regression journey, rollback/failure checks, drift checks and current SLOs.
 12. Comment on and close only issues whose complete acceptance criteria are now
@@ -114,7 +112,7 @@ A goal is complete only when all applicable cells are green:
 - no reachable production placeholder, mock, fixture, hardcoded success or
   `not implemented` behavior;
 - green required CI and supply-chain checks on the exact accepted commit;
-- exact downstream pins in both consumer mains unless formally not applicable;
+- exact downstream pins for every applicable clean-room consumer;
 - successful rollout and acceptance at `hub.cloudring.org`;
 - no unclassified WIP or unresolved issue that contradicts the goal claim;
 - generic downstream duplication for every surface touched by the goal has been

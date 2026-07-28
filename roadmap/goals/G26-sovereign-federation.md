@@ -58,15 +58,14 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 
 ## Hub and downstream delivery
 
-Use the G24-certified hub and independent CloudLinux provider only after both run
-the exact G27 release tuple; G24 is provider provenance, not the post-1.0
-execution base. Neither provider is embedded in the other's repository or
-administration. Any public directory is optional/cacheable and never the
-authorization root.
+Use two G24-certified independent providers only after both run the exact G27
+release tuple; G24 is provider provenance, not the post-1.0 execution base.
+Neither provider is embedded in the other's repository or administration. Any
+public directory is optional/cacheable and never the authorization root.
 
 ## Acceptance
 
-- No shared database, root identity, mandatory coordinator or hidden Enterprise
+- No shared database, root identity, mandatory coordinator or hidden non-public
   dependency exists.
 - Partition/reconnect and negative security conformance pass with real operations.
 - Provider policy and legal control remain local and auditable.

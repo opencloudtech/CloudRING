@@ -37,8 +37,9 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
   init|dev|validate|test|package`.
 - Provide an ephemeral conformance runner and tutorial connector in test/sandbox
   only. Persistent registry/activation belongs to G08.
-- Require a service built in an empty CloudLinux-controlled repository/CI using
-  only released public artifacts, with no Enterprise checkout or author cache.
+- Require a service built in an empty independently controlled repository/CI
+  using only released public artifacts, with no non-public checkout or author
+  cache.
 
 ## Required journeys
 
@@ -50,7 +51,7 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
   module, and a local product without a portal module;
 - upgrade across a declared compatible candidate and reject incompatibility;
 - generate clients/docs reproducibly from source schemas;
-- run tutorial and independent CloudLinux package through the ephemeral runner,
+- run the tutorial and an independently built package through the ephemeral runner,
   then remove all test state.
 
 ## Hub and downstream delivery
@@ -63,7 +64,7 @@ types/validators for the touched surface and use the public candidate unchanged.
 
 - Issues #87, #88 and #95 close with strict runtime-consumer regression suites.
 - Every schema has a validator and consumer or is removed.
-- The independent CloudLinux package proves no private or unpublished dependency.
+- The independently built package proves no private or unpublished dependency.
 - No “OCS 1.0” or accredited-standard claim is made before G27.
 - `validate` and `conformance` use one canonical public validator and return the
   same schema verdict for every positive and negative fixture.

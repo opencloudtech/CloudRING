@@ -12,7 +12,7 @@ Ownership is carried without weakening through
 canonical owner and the stable `CR-GNN-*` requirement against which it is now
 accepted. The legacy identifier remains a compatibility alias, not a second
 status or completion authority. Every row stays `unverified` until that
-canonical goal publishes an exact OSS/Enterprise/Provider/hub tuple and fresh
+canonical goal publishes an exact public/reference/downstream release tuple and fresh
 evidence. Historical local or live observations are recovery inputs, not
 readiness claims.
 

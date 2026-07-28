@@ -44,7 +44,7 @@
           "enum": [
             "public_clean_room",
             "hub",
-            "cloudlinux",
+            "independent_provider",
             "region",
             "federation_provider",
             "local_test",

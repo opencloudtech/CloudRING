@@ -76,7 +76,7 @@ goals so that a stale snapshot cannot become a release claim.
 | G21 | [External integration product](goals/G21-external-integration-product.md) | One real remote system proves replaceable OCS integration; other profiles remain templates. |
 | G22 | [One-engineer operations and autonomous recovery](goals/G22-one-engineer-operations-and-autonomous-recovery.md) | Cross-product operations meet a measured one-engineer toil budget. |
 | G23 | [Zero-downtime upgrades and failure resilience](goals/G23-zero-downtime-upgrades-and-failure-resilience.md) | The integrated platform survives supported failures and released upgrades. |
-| G24 | [Portable provider certification](goals/G24-portable-provider-certification.md) | OpenCloudTech and CloudLinux independently deploy the same OSS release. |
+| G24 | [Portable provider certification](goals/G24-portable-provider-certification.md) | Two independently controlled environments deploy the same public release without non-public platform dependencies. |
 | G27 | [Final security, compliance and 1.0 release](goals/G27-final-security-compliance-and-1-0-release.md) | The fully audited platform and OCS 1.0 are released for independent providers. |
 | G25 | [Regional cells, multi-region and measured scale](goals/G25-regional-cells-multi-region-and-scale.md) | Post-1.0: providers add bounded scale/failure units without enlarging one control plane forever. |
 | G26 | [Sovereign federation](goals/G26-sovereign-federation.md) | Post-1.0: independent providers exchange approved products without shared root, database or coordinator. |
