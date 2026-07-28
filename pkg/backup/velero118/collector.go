@@ -312,6 +312,11 @@ func CollectCSIDataMoverVolumeLineage(
 	if err != nil || !sameDataUpload(liveUpload, retainedUpload) {
 		return restoreproof.VolumeReceipt{}, errors.New("retained DataUpload changed after restore cleanup")
 	}
+	if observer, ok := cleanupBarrier.(PostCleanupObserver); ok {
+		if err := observer.ObservePostCleanup(ctx); err != nil {
+			return restoreproof.VolumeReceipt{}, errors.New("observe post-cleanup source continuity")
+		}
+	}
 
 	verifiedAt := maxCanonicalTimestamp(clock.Now(), backend.SourcePresenceObservation.ObservedAt)
 	backend.EvidenceSHA256 = restoreproof.BackendEvidenceSHA256(&backend)

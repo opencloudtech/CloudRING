@@ -70,13 +70,13 @@ func TestCollectCSIDataMoverVolumeLineageEndToEnd(t *testing.T) {
 	}}
 	provider := &fakeBackendObserver{clock: clock}
 	readsAtBarrier := 0
-	barrier := &fakeCleanupBarrier{onReady: func(notice CleanupReady) error {
+	barrier := &fakePostCleanupBarrier{fakeCleanupBarrier: fakeCleanupBarrier{onReady: func(notice CleanupReady) error {
 		if provider.calls != 1 || notice.SchemaVersion != CleanupReadySchemaVersion || notice.Status != CleanupReadyStatus {
 			return errors.New("cleanup barrier was published out of order")
 		}
 		readsAtBarrier = reader.getCalls
 		return nil
-	}}
+	}}}
 	receipt, err := CollectCSIDataMoverVolumeLineage(t.Context(), reader, probe, provider, barrier, request, baseline, archive, clock)
 	if err != nil {
 		t.Fatalf("CollectCSIDataMoverVolumeLineage() error = %v", err)
@@ -88,8 +88,8 @@ func TestCollectCSIDataMoverVolumeLineageEndToEnd(t *testing.T) {
 	if provider.calls != 4 {
 		t.Fatalf("provider calls = %d, want 4", provider.calls)
 	}
-	if barrier.calls != 1 || readsAtBarrier == 0 || reader.getCalls <= readsAtBarrier {
-		t.Fatalf("cleanup barrier ordering: calls=%d readsAtBarrier=%d finalReads=%d", barrier.calls, readsAtBarrier, reader.getCalls)
+	if barrier.calls != 1 || barrier.postCleanupCalls != 1 || readsAtBarrier == 0 || reader.getCalls <= readsAtBarrier {
+		t.Fatalf("cleanup barrier ordering: calls=%d postCleanupCalls=%d readsAtBarrier=%d finalReads=%d", barrier.calls, barrier.postCleanupCalls, readsAtBarrier, reader.getCalls)
 	}
 	if len(receipt.Lineage.BackendArtifacts) != 1 || len(receipt.Lineage.BackendArtifacts[0].AbsenceObservations) != 2 {
 		t.Fatalf("provider absence proof = %#v", receipt.Lineage.BackendArtifacts)
@@ -973,6 +973,17 @@ type fakeCleanupBarrier struct {
 	calls   int
 	notice  CleanupReady
 	onReady func(CleanupReady) error
+}
+
+type fakePostCleanupBarrier struct {
+	fakeCleanupBarrier
+	postCleanupCalls int
+	postCleanupError error
+}
+
+func (barrier *fakePostCleanupBarrier) ObservePostCleanup(context.Context) error {
+	barrier.postCleanupCalls++
+	return barrier.postCleanupError
 }
 
 func (barrier *fakeCleanupBarrier) ReadyForCleanup(_ context.Context, notice CleanupReady) error {
