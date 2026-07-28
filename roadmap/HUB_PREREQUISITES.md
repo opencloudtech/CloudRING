@@ -17,9 +17,9 @@ before purchase.
 | G15-G16 | KubeVirt/Cluster API capacity and dedicated test VM/tenant cluster | Partly installed, not release-proved | Reserve compute and verify versions/prerequisites. |
 | G19-G21 | Access broker, support retention, real external reference API | Unknown | Select safe test systems and protected credentials. |
 | G22-G23 | Maintenance windows, node-loss authority, recovery console and on-call owner | Partial historical proof | Create exact mutation/abort/rollback envelopes. |
-| G24 | Real CloudLinux-controlled disposable independent bare-metal installation | Not available as current evidence | Secure owner, inventory, credentials, capacity and approval; absence blocks G24. |
+| G24 | Real independently controlled disposable bare-metal installation | Not available as current evidence | Secure owner, inventory, credentials, capacity and approval; absence blocks G24. |
 | G25 | Exact G27 release tuple, second cell and, for multi-region proof, independent regional capacity | Not allocated | Produce cost/capacity proposal, obtain approval and expand only from the accepted standalone 1.0 base. |
-| G26 | Two G24-certified sovereign providers upgraded to the exact G27 release tuple, with separate trust, admins and databases | Not yet present | Preserve G24 provenance, use G27 as the execution base and introduce no shared Enterprise-only component. |
+| G26 | Two G24-certified sovereign providers upgraded to the exact G27 release tuple, with separate trust, admins and databases | Not yet present | Preserve G24 provenance, use G27 as the execution base and introduce no shared non-public platform component. |
 | G27 | Frozen release environment, clean-room reviewers/operators and evidence retention | Not yet prepared | Assign people/environments before candidate freeze. |
 
 ## Side-by-side hub rule

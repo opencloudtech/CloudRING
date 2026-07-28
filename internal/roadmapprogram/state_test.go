@@ -499,7 +499,7 @@ func TestValidateRejectsDeliveredStateWithoutExactDownstreamPin(t *testing.T) {
 		`"pin": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"`, 1)
 	writeFile(t, repository, "state/G00.json", state)
 	err := ValidateDir(root)
-	if err == nil || !strings.Contains(err.Error(), "enterprise pin must equal the exact accepted public SHA") {
+	if err == nil || !strings.Contains(err.Error(), "reference pin must equal the exact accepted public SHA") {
 		t.Fatalf("ValidateDir() error = %v, want exact downstream pin blocker", err)
 	}
 }
@@ -581,8 +581,8 @@ func TestValidateRejectsUnknownAndEmptyDeploymentTargets(t *testing.T) {
 		},
 		{
 			name:       "empty goal target",
-			oldTargets: "deploymentTargets: [public_clean_room, hub, cloudlinux] # G24",
-			newTargets: "deploymentTargets: [public_clean_room, hub, cloudlinux, \"\"] # G24",
+			oldTargets: "deploymentTargets: [public_clean_room, hub, independent_provider] # G24",
+			newTargets: "deploymentTargets: [public_clean_room, hub, independent_provider, \"\"] # G24",
 			want:       "G24: deployment targets must not contain empty values",
 		},
 	}

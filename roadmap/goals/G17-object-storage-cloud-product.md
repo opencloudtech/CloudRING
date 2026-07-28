@@ -39,10 +39,10 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 
 ## Hub and downstream delivery
 
-Install the signed OSS product at the reference site with Enterprise-only storage
-and DNS bindings. The off-cell backup target must remain failure-independent from
-the data under test. CloudLinux runs both local-reference and remote-adapter
-conformance with synthetic credentials.
+Install the signed OSS product at the reference site with site-only storage and
+DNS bindings. The off-cell backup target must remain failure-independent from the
+data under test. An independent downstream runs both local-reference and remote-
+adapter conformance with synthetic credentials.
 
 ## Acceptance
 

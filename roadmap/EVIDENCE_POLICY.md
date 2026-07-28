@@ -19,8 +19,8 @@ The semantic validator enforces rules JSON Schema cannot express:
 
 - requirement IDs and deployment targets exactly match `roadmap.yaml` and the
   goal contract;
-- Enterprise and Provider pins equal the accepted public SHA and all check
-  receipts belong to those exact mains;
+- every maintained reference or downstream consumer pin equals the accepted
+  public SHA and all check receipts belong to those exact revisions;
 - only `delivered` satisfies `dependsOn`; a goal cannot be skipped or superseded
   through a state value;
 - every required target uses the same release-manifest tuple, while region and

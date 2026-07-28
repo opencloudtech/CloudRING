@@ -38,7 +38,7 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 ## Hub and downstream delivery
 
 Install the OSS product at the hub with an isolated support route and test tenant.
-Enterprise and CloudLinux supply routing/ownership and jurisdictional retention
+Each downstream supplies routing, ownership and jurisdictional retention
 configuration only. Complete cleanup preserves only policy-required audit.
 
 ## Acceptance

@@ -35,14 +35,16 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
   side effect occurred;
 - revoke/rotate provider credentials and prove no secret persists in receipt;
 - restart executor and adapter during work without duplicate asset or operation;
-- run the same conformance against public reference and CloudLinux/OVH adapters.
+- run the same conformance against public reference and independently maintained
+  downstream adapters.
 
 ## Hub and downstream delivery
 
-Deploy the public executor at the hub with an OVH adapter containing only private
-bindings. CloudLinux supplies its own read-only independent-site adapter and protected
-inventory capture; synthetic capture is acceptable for CI but not G24
-certification. Remove all competing generic Enterprise inventory/executor code.
+Deploy the public executor at the reference installation with a site adapter
+containing only protected bindings. An independent downstream supplies its own
+read-only site adapter and protected inventory capture; synthetic capture is
+acceptable for CI but not G24
+certification. Remove all competing generic downstream inventory/executor code.
 
 ## Acceptance
 

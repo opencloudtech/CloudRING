@@ -89,9 +89,9 @@ type stateRecord struct {
 	Requirements       []string            `json:"requirements"`
 	RequirementResults []requirementResult `json:"requirementResults"`
 	Repositories       struct {
-		Public     repositoryProof `json:"public"`
-		Enterprise repositoryProof `json:"enterprise"`
-		Provider   repositoryProof `json:"provider"`
+		Public    repositoryProof `json:"public"`
+		Reference repositoryProof `json:"reference"`
+		Provider  repositoryProof `json:"provider"`
 	} `json:"repositories"`
 	Artifacts             []evidenceReference `json:"artifacts"`
 	Deployments           []deploymentProof   `json:"deployments"`
@@ -424,8 +424,8 @@ func validateStateRecord(
 		blockers = append(blockers, goal.ID+": delivered state requires an exact accepted public SHA")
 	} else {
 		for label, downstream := range map[string]repositoryProof{
-			"enterprise": record.Repositories.Enterprise,
-			"provider":   record.Repositories.Provider,
+			"reference": record.Repositories.Reference,
+			"provider":  record.Repositories.Provider,
 		} {
 			if downstream.Main == nil {
 				blockers = append(blockers, fmt.Sprintf("%s: delivered state requires an exact accepted %s SHA", goal.ID, label))
@@ -482,17 +482,17 @@ func validateStateRecord(
 	if !slices.Equal(actualTargets, expectedTargets) {
 		blockers = append(blockers, fmt.Sprintf("%s: delivered deployments must exactly match %v", goal.ID, expectedTargets))
 	}
-	if record.Repositories.Enterprise.Main != nil {
+	if record.Repositories.Reference.Main != nil {
 		for _, deployment := range record.Deployments {
-			if deployment.Target == "hub" && (deployment.GitOpsRevision == nil || *deployment.GitOpsRevision != *record.Repositories.Enterprise.Main) {
-				blockers = append(blockers, goal.ID+": hub GitOps revision must equal the exact accepted enterprise SHA")
+			if deployment.Target == "hub" && (deployment.GitOpsRevision == nil || *deployment.GitOpsRevision != *record.Repositories.Reference.Main) {
+				blockers = append(blockers, goal.ID+": hub GitOps revision must equal the exact accepted reference SHA")
 			}
 		}
 	}
 	if record.Repositories.Provider.Main != nil {
 		for _, deployment := range record.Deployments {
-			if deployment.Target == "cloudlinux" && (deployment.GitOpsRevision == nil || *deployment.GitOpsRevision != *record.Repositories.Provider.Main) {
-				blockers = append(blockers, goal.ID+": cloudlinux GitOps revision must equal the exact accepted provider SHA")
+			if deployment.Target == "independent_provider" && (deployment.GitOpsRevision == nil || *deployment.GitOpsRevision != *record.Repositories.Provider.Main) {
+				blockers = append(blockers, goal.ID+": independent provider GitOps revision must equal the exact accepted provider SHA")
 			}
 		}
 	}

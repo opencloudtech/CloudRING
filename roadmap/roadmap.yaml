@@ -166,14 +166,14 @@ spec:
       requirementIds: [CR-G24-PORTABILITY]
       status: not_started
       liveDeployment: required
-      deploymentTargets: [public_clean_room, hub, cloudlinux]
+      deploymentTargets: [public_clean_room, hub, independent_provider]
     - id: G27
       file: goals/G27-final-security-compliance-and-1-0-release.md
       dependsOn: [G24]
       requirementIds: [CR-G27-RELEASE]
       status: not_started
       liveDeployment: required
-      deploymentTargets: [public_clean_room, hub, cloudlinux]
+      deploymentTargets: [public_clean_room, hub, independent_provider]
     - id: G25
       file: goals/G25-regional-cells-multi-region-and-scale.md
       dependsOn: [G27]
@@ -181,7 +181,7 @@ spec:
       status: not_started
       releaseTrack: post_1_0
       liveDeployment: required
-      deploymentTargets: [public_clean_room, hub, cloudlinux, region_primary, region_secondary]
+      deploymentTargets: [public_clean_room, hub, independent_provider, region_primary, region_secondary]
     - id: G26
       file: goals/G26-sovereign-federation.md
       dependsOn: [G27]
@@ -189,7 +189,7 @@ spec:
       status: not_started
       releaseTrack: post_1_0
       liveDeployment: required
-      deploymentTargets: [public_clean_room, hub, cloudlinux, federation_provider_a, federation_provider_b]
+      deploymentTargets: [public_clean_room, hub, independent_provider, federation_provider_a, federation_provider_b]
   invariant:
     - complete_in_dependency_order
     - reusable_implementation_is_oss

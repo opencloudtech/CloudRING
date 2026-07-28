@@ -33,7 +33,7 @@ var (
 	knownDeploymentTargets = []string{
 		"public_clean_room",
 		"hub",
-		"cloudlinux",
+		"independent_provider",
 		"region_primary",
 		"region_secondary",
 		"federation_provider_a",
@@ -599,10 +599,10 @@ func validateReleaseBoundary(goals map[string]*Goal) []string {
 	}
 
 	requiredTargets := map[string][]string{
-		"G24": {"cloudlinux"},
-		"G27": {"cloudlinux"},
-		"G25": {"cloudlinux", "region_primary", "region_secondary"},
-		"G26": {"cloudlinux", "federation_provider_a", "federation_provider_b"},
+		"G24": {"independent_provider"},
+		"G27": {"independent_provider"},
+		"G25": {"independent_provider", "region_primary", "region_secondary"},
+		"G26": {"independent_provider", "federation_provider_a", "federation_provider_b"},
 	}
 	for id, expected := range requiredTargets {
 		goal, exists := goals[id]

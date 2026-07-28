@@ -41,10 +41,10 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 
 ## Hub and downstream delivery
 
-Install the OSS VM product at the reference site with Enterprise-only host and
-capacity bindings. Run the full journey and one bounded server-loss drill on a
-dedicated test VM. CloudLinux validates KubeVirt/hardware prerequisites and a
-deterministic plan using synthetic inventory.
+Install the OSS VM product at the reference site with site-only host and capacity
+bindings. Run the full journey and one bounded server-loss drill on a dedicated
+test VM. An independent downstream validates KubeVirt/hardware prerequisites and
+a deterministic plan using synthetic inventory.
 
 ## Acceptance
 
@@ -54,4 +54,4 @@ deterministic plan using synthetic inventory.
 - Live-migration claims meet KubeVirt/storage/network prerequisites and are
   proved; unsupported cases state and prove cold-recovery behavior.
 - Resource, usage, invoice and audit chains are complete and consistent.
-- No VM path bypasses OCS or directly embeds OVH/CloudLinux logic in core.
+- No VM path bypasses OCS or directly embeds site/provider logic in core.

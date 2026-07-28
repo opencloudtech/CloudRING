@@ -25,7 +25,7 @@
       "checks": "green",
       "pin": null
     },
-    "enterprise": {
+    "reference": {
       "main": "cccccccccccccccccccccccccccccccccccccccc",
       "checks": "green",
       "pin": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
@@ -68,14 +68,14 @@
       "environmentFingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
       "profile": {
         "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-        "locator": "protected://enterprise/profiles/hub-example",
+        "locator": "protected://reference/profiles/hub-example",
         "retentionUntil": "2035-01-01T00:00:00Z"
       },
       "gitOpsRevision": "cccccccccccccccccccccccccccccccccccccccc",
       "evidence": [
         {
           "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-          "locator": "protected://enterprise/evidence/hub-example",
+          "locator": "protected://reference/evidence/hub-example",
           "retentionUntil": "2035-01-01T00:00:00Z"
         }
       ],

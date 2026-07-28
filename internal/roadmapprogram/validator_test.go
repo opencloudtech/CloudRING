@@ -97,9 +97,9 @@ func TestValidateRejectsInvalidGraphAndContracts(t *testing.T) {
 		{
 			name: "missing release target",
 			mutate: func(document string) string {
-				return strings.Replace(document, "deploymentTargets: [public_clean_room, hub, cloudlinux] # G27", "deploymentTargets: [public_clean_room, hub] # G27", 1)
+				return strings.Replace(document, "deploymentTargets: [public_clean_room, hub, independent_provider] # G27", "deploymentTargets: [public_clean_room, hub] # G27", 1)
 			},
-			want: "G27: deployment targets must include cloudlinux",
+			want: "G27: deployment targets must include independent_provider",
 		},
 		{
 			name: "missing invariant",
@@ -300,11 +300,11 @@ func writeFixture(t *testing.T) (string, *os.Root, string) {
 		targets := ""
 		switch id {
 		case "G24", "G27":
-			targets = "      deploymentTargets: [public_clean_room, hub, cloudlinux] # " + id + "\n"
+			targets = "      deploymentTargets: [public_clean_room, hub, independent_provider] # " + id + "\n"
 		case "G25":
-			targets = "      deploymentTargets: [public_clean_room, hub, cloudlinux, region_primary, region_secondary] # G25\n"
+			targets = "      deploymentTargets: [public_clean_room, hub, independent_provider, region_primary, region_secondary] # G25\n"
 		case "G26":
-			targets = "      deploymentTargets: [public_clean_room, hub, cloudlinux, federation_provider_a, federation_provider_b] # G26\n"
+			targets = "      deploymentTargets: [public_clean_room, hub, independent_provider, federation_provider_a, federation_provider_b] # G26\n"
 		}
 		fmt.Fprintf(&goals, "    - id: %s\n      file: goals/%s.md\n      dependsOn: %s # %s\n      requirementIds: [CR-%s-DELIVERY]\n      status: not_started # %s\n%s      liveDeployment: required\n%s", id, id, dependency, id, id, id, releaseTrack, targets)
 	}

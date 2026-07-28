@@ -46,8 +46,9 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 ## Hub and downstream delivery
 
 Deploy complete enforcement to the hub and run the full Task 24 denial matrix
-with protected test identities. Enterprise contains deployment bindings only;
-CloudLinux consumes the same policy/evaluator/audit implementation.
+with protected test identities. Downstream repositories contain deployment
+bindings only; an independent clean-room consumer uses the same policy,
+evaluator, and audit implementation.
 
 ## Acceptance
 

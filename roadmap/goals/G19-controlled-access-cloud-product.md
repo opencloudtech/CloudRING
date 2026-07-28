@@ -37,8 +37,8 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 ## Hub and downstream delivery
 
 Install the OSS product at the hub and run sessions only against dedicated test
-resources. Enterprise/CloudLinux supply bastion/console bindings and retention
-policy only; access semantics and credential safety remain public.
+resources. Each downstream supplies bastion/console bindings and retention policy
+only; access semantics and credential safety remain public.
 
 ## Acceptance
 

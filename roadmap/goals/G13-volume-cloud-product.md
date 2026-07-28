@@ -39,10 +39,10 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 
 ## Hub and downstream delivery
 
-Install the OSS volume product on the reference site using Enterprise-only device
-and topology bindings. Run destructive drills only on dedicated test resources.
-CloudLinux validates prerequisites and plan against synthetic independent-site
-storage inventory; it must not depend on OVH code.
+Install the OSS volume product on the reference site using site-only device and
+topology bindings. Run destructive drills only on dedicated test resources. An
+independent downstream validates prerequisites and plan against synthetic storage
+inventory; it must not depend on the reference site's provider code.
 
 ## Acceptance
 

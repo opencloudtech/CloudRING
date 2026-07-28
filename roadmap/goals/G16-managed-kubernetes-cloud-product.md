@@ -45,8 +45,8 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 
 Install the OSS product on the reference platform and create a dedicated tenant
 cluster using reference products only. Clean it up after the complete lifecycle.
-CloudLinux validates the same product against its provider adapter without any
-Enterprise files.
+An independent downstream validates the same product against its provider adapter
+without any non-public reference files.
 
 ## Acceptance
 

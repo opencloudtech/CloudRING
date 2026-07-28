@@ -18,6 +18,27 @@ implementation, or one technology stack.
 > the required installation, security, durability, upgrade, failure, and user
 > journey evidence exists.
 
+## Repository authority
+
+This repository is the complete public source boundary for CloudRING. A reader
+does not need access to any non-public repository to build, test, understand, or
+contribute to the code and contracts kept here.
+
+Use these entry points:
+
+| Question | Authoritative entry point |
+| --- | --- |
+| What is this repository and where does code live? | [Repository map](REPOSITORY_MAP.md) |
+| What architecture is intended and what is only a proposal? | [Architecture index](ARCHITECTURE.md) |
+| What exists today and what remains blocked or planned? | [Public current state](roadmap/CURRENT_STATE.md) |
+| What is the delivery order and status? | [`roadmap/roadmap.yaml`](roadmap/roadmap.yaml), the single canonical roadmap/status index |
+| How are experiments, evidence, generated files, and historical documents handled? | [Repository lifecycle](docs/repository-lifecycle.md) |
+| How are changes governed and owned? | [Contributing](CONTRIBUTING.md), [governance](GOVERNANCE.md), and [CODEOWNERS](.github/CODEOWNERS) |
+
+Narrative roadmap documents explain the machine-readable index; they do not
+create a second status authority. Historical and compatibility files retain
+traceability only and cannot mark a roadmap goal delivered.
+
 ## Why CloudRING exists
 
 Cloud computing should not require users to accept permanent dependence on one
@@ -165,6 +186,12 @@ It does **not** yet provide a complete installation, serving identity platform,
 durable provider control plane, executable product registry, production portal,
 billing runtime, end-to-end reference cloud product, proven provider pilot, or
 working multi-provider federation. Examples and test fixtures are synthetic.
+
+Current three-node and one-server-loss material is a **reference topology** for
+testing a single-failure envelope. It is not a universal HA promise or a
+requirement that every future installation contain exactly three servers. A
+topology-neutral failure-domain, quorum, replication, and SLO contract is planned
+and is not implemented by this documentation.
 
 The project reports readiness fail-closed: missing or stale live evidence means
 `blocked` or `unverified`, not `ready`.

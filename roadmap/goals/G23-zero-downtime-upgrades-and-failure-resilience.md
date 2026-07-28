@@ -43,10 +43,10 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 
 ## Hub and downstream delivery
 
-Run the complete campaign on the exact Enterprise main at the hub with approved
-mutation tuples and dedicated data. Generic defects return to OSS. Provider runs
-the full non-destructive campaign and prepares site mutation inputs; its real
-failure campaign completes in G24.
+Run the complete campaign on the exact maintained-reference revision with approved
+mutation tuples and dedicated data. Generic defects return to OSS. An independent
+downstream runs the full non-destructive campaign and prepares site mutation
+inputs; its real failure campaign completes in G24.
 
 ## Acceptance
 

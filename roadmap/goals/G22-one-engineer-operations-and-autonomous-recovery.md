@@ -42,8 +42,8 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 ## Hub and downstream delivery
 
 Deploy the integrated operator experience to the hub and exercise bounded test
-failures. CloudLinux uses the same diagnostics/automation and supplies only
-alert routing, ownership and site bindings.
+failures. An independent downstream uses the same diagnostics and automation and
+supplies only alert routing, ownership and site bindings.
 
 ## Acceptance
 

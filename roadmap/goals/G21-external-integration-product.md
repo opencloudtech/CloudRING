@@ -43,8 +43,9 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 ## Hub and downstream delivery
 
 Run the real integration in an isolated hub tenant, then clean it. Implement a
-second adapter in a CloudLinux-controlled repository and pass replaceability
-conformance without Enterprise access; it may target the same open test system.
+second adapter in an independently controlled repository and pass replaceability
+conformance without non-public reference access; it may target the same open test
+system.
 
 ## Acceptance
 
