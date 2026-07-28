@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/hex"
+	"encoding/xml"
 	"errors"
 	"io"
 	"net"
@@ -24,6 +25,8 @@ import (
 
 const emptyPayloadHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
+const maximumVersionListingBytes = 1 << 20
+
 type s3Credentials struct {
 	accessKey    []byte
 	secretKey    []byte
@@ -37,6 +40,116 @@ func (credentials *s3Credentials) clear() {
 	clear(credentials.accessKey)
 	clear(credentials.secretKey)
 	clear(credentials.sessionToken)
+}
+
+type s3VersionListing struct {
+	XMLName     xml.Name `xml:"ListVersionsResult"`
+	IsTruncated bool     `xml:"IsTruncated"`
+	Versions    []struct {
+		Key       string `xml:"Key"`
+		VersionID string `xml:"VersionId"`
+		Size      int64  `xml:"Size"`
+	} `xml:"Version"`
+}
+
+// ResolveS3ObjectVersion resolves one exact immutable S3-compatible object
+// version by its source-safe SHA-256 binding. Credentials and the raw version
+// remain caller-owned protected data and are never included in returned
+// errors. A truncated or ambiguous listing fails closed.
+func ResolveS3ObjectVersion(
+	ctx context.Context,
+	lookup S3ObjectVersionLookup,
+	sharedCredentials []byte,
+	now time.Time,
+) (string, error) {
+	return resolveS3ObjectVersionWithClient(ctx, lookup, sharedCredentials, now, newS3Client())
+}
+
+func resolveS3ObjectVersionWithClient(
+	ctx context.Context,
+	lookup S3ObjectVersionLookup,
+	sharedCredentials []byte,
+	now time.Time,
+	client *http.Client,
+) (string, error) {
+	if ctx == nil || client == nil || !validS3VersionLookup(lookup) || now.IsZero() {
+		return "", errors.New("S3 object version lookup is invalid")
+	}
+	credentials, err := parseSharedS3Credentials(sharedCredentials)
+	if err != nil {
+		return "", errors.New("S3 object version credentials are unavailable")
+	}
+	defer credentials.clear()
+	endpoint, err := parseS3Endpoint(lookup.Endpoint)
+	if err != nil {
+		return "", errors.New("S3 object version endpoint is invalid")
+	}
+	canonicalURI := "/" + awsEscape(lookup.Bucket)
+	canonicalQuery := "max-keys=1000&prefix=" + awsEscape(lookup.ObjectKey) + "&versions="
+	endpoint.Path = "/" + lookup.Bucket
+	endpoint.RawPath = canonicalURI
+	endpoint.RawQuery = canonicalQuery
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return "", errors.New("create S3 object version lookup")
+	}
+	request.Header.Set("Accept", "application/xml")
+	request.Header.Set("X-Amz-Content-Sha256", emptyPayloadHash)
+	if err := signS3Request(request, lookup.Region, canonicalURI, canonicalQuery, now.UTC(), credentials); err != nil {
+		return "", errors.New("sign S3 object version lookup")
+	}
+	safeClient := *client
+	safeClient.CheckRedirect = func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }
+	response, err := safeClient.Do(request)
+	request.Header.Del("Authorization")
+	request.Header.Del("X-Amz-Security-Token")
+	if err != nil {
+		return "", errors.New("query S3 object versions")
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK ||
+		response.ContentLength > maximumVersionListingBytes {
+		return "", errors.New("S3 object version response is invalid")
+	}
+	payload, err := io.ReadAll(io.LimitReader(response.Body, maximumVersionListingBytes+1))
+	if err != nil || len(payload) == 0 || len(payload) > maximumVersionListingBytes {
+		clear(payload)
+		return "", errors.New("read bounded S3 object version response")
+	}
+	defer clear(payload)
+	var listing s3VersionListing
+	if xml.Unmarshal(payload, &listing) != nil || listing.XMLName.Local != "ListVersionsResult" ||
+		listing.IsTruncated || len(listing.Versions) == 0 || len(listing.Versions) > 1000 {
+		return "", errors.New("S3 object version listing is invalid or incomplete")
+	}
+	resolved := ""
+	for _, version := range listing.Versions {
+		if version.Key != lookup.ObjectKey || version.Size != lookup.ExpectedBytes ||
+			!safeOpaque(version.VersionID, 512) ||
+			sha256Hex([]byte(version.VersionID)) != lookup.ObjectVersionSHA256 {
+			continue
+		}
+		if resolved != "" {
+			return "", errors.New("S3 object version binding is ambiguous")
+		}
+		resolved = version.VersionID
+	}
+	if resolved == "" {
+		return "", errors.New("S3 object version binding was not found")
+	}
+	return resolved, nil
+}
+
+func validS3VersionLookup(lookup S3ObjectVersionLookup) bool {
+	_, err := parseS3Endpoint(lookup.Endpoint)
+	return err == nil && safeS3Region(lookup.Region) && safeS3Bucket(lookup.Bucket) &&
+		validObjectKey(lookup.ObjectKey) && validSHA256(lookup.ObjectVersionSHA256) &&
+		lookup.ExpectedBytes > 0 && lookup.ExpectedBytes <= MaxArchiveBytes
+}
+
+func sha256Hex(value []byte) string {
+	digest := sha256.Sum256(value)
+	return hex.EncodeToString(digest[:])
 }
 
 func validSource(request Request) bool {

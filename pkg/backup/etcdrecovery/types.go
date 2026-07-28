@@ -69,6 +69,19 @@ type Request struct {
 	TimeoutSeconds         int    `json:"timeoutSeconds"`
 }
 
+// S3ObjectVersionLookup is the minimum protected input needed to resolve the
+// exact immutable version of an already uploaded recovery object. Callers keep
+// the returned raw version in a protected runtime boundary and publish only its
+// SHA-256 binding.
+type S3ObjectVersionLookup struct {
+	Endpoint            string `json:"endpoint"`
+	Region              string `json:"region"`
+	Bucket              string `json:"bucket"`
+	ObjectKey           string `json:"objectKey"`
+	ObjectVersionSHA256 string `json:"objectVersionSha256"`
+	ExpectedBytes       int64  `json:"expectedBytes"`
+}
+
 type ToolIdentity struct {
 	Name             string `json:"name"`
 	Version          string `json:"version"`
