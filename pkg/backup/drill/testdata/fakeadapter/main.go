@@ -51,7 +51,7 @@ func main() {
 		return
 	}
 	status := "completed"
-	mutated := slices.Contains([]string{"etcd-offcell-complete", "velero-backup-complete", "restore-watch-create-observe-complete", "etcd-sandbox-restored", "isolated-targets-deleted"}, request.Step)
+	mutated := slices.Contains([]string{"etcd-offcell-complete", "velero-backup-complete", "restore-watch-create-observe-complete", "etcd-sandbox-restored", "restore-validation-complete", "isolated-targets-deleted"}, request.Step)
 	if request.Mode == "preflight" {
 		status = "ready"
 	}

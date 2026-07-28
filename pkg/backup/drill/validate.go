@@ -153,7 +153,7 @@ func ValidateAdapterResponse(request AdapterRequest, response AdapterResponse) e
 			return errors.New("backup drill preflight attempted or reported mutation")
 		}
 	case "apply":
-		mutationStep := slices.Contains([]string{"etcd-offcell-complete", "velero-backup-complete", "restore-watch-create-observe-complete", "etcd-sandbox-restored", "isolated-targets-deleted"}, request.Step)
+		mutationStep := slices.Contains([]string{"etcd-offcell-complete", "velero-backup-complete", "restore-watch-create-observe-complete", "etcd-sandbox-restored", "restore-validation-complete", "isolated-targets-deleted"}, request.Step)
 		if response.Status != "completed" || response.Mutated != mutationStep {
 			return errors.New("backup drill apply step is not complete")
 		}
