@@ -1,1 +1,21 @@
 * @trukhinyuri
+
+# Repository front door and governance.
+/README.md @trukhinyuri
+/ARCHITECTURE.md @trukhinyuri
+/REPOSITORY_MAP.md @trukhinyuri
+/CONTRIBUTING.md @trukhinyuri
+/GOVERNANCE.md @trukhinyuri
+/SECURITY.md @trukhinyuri
+/docs/repository-lifecycle.md @trukhinyuri
+
+# Canonical delivery program and public contracts.
+/roadmap/ @trukhinyuri
+/specifications/ @trukhinyuri
+/contracts/ @trukhinyuri
+/pkg/ocs/ @trukhinyuri
+/sdk/ocsv3/ @trukhinyuri
+
+# Deployment and repository policy.
+/deploy/ @trukhinyuri
+/.github/ @trukhinyuri
