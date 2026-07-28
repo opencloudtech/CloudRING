@@ -329,6 +329,17 @@ type CleanupBarrier interface {
 	ReadyForCleanup(context.Context, CleanupReady) error
 }
 
+// PostCleanupObserver is an optional cleanup-barrier capability invoked only
+// after the collector has proven all cleanup targets absent and source
+// continuity, but before it seals the receipt verification timestamp.
+//
+// Implementations can use this narrow window to capture exact source-list and
+// namespace-absence observations that must be ordered after cleanup and before
+// final receipt verification. Returning an error fails the entire collection.
+type PostCleanupObserver interface {
+	ObservePostCleanup(context.Context) error
+}
+
 type Clock interface {
 	Now() time.Time
 	Wait(context.Context, time.Duration) error
