@@ -120,7 +120,8 @@ func ObserveDataUploadResult(
 			restoreObject, decodeErr := DecodeRestore(restorePayload)
 			configMap, configMapErr := DecodeConfigMap(captured)
 			if decodeErr != nil || configMapErr != nil || restoreObject.Identity.Metadata.Name != request.RestoreName || restoreObject.Identity.Metadata.Namespace != request.VeleroNamespace ||
-				restoreObject.Identity.Metadata.DeletionTimestamp != nil || configMap.Identity.Metadata.Labels["velero.io/restore-uid"] != veleroValidLabelName(restoreObject.Identity.Metadata.UID) || len(configMap.Data) != 1 {
+				restoreObject.Identity.Metadata.DeletionTimestamp != nil || restoreUID != "" && restoreUID != restoreObject.Identity.Metadata.UID ||
+				configMap.Identity.Metadata.Labels["velero.io/restore-uid"] != veleroValidLabelName(restoreObject.Identity.Metadata.UID) || len(configMap.Data) != 1 {
 				return DataUploadResultObservation{}, errors.New("DataUploadResult event is not bound to the exact Restore")
 			}
 			restoreUID = restoreObject.Identity.Metadata.UID
@@ -129,15 +130,14 @@ func ObserveDataUploadResult(
 			if !exists || resultErr != nil || result.SourceNamespace != request.SourceNamespace || !canonicalTime(configMap.Identity.Metadata.CreationTimestamp) {
 				return DataUploadResultObservation{}, errors.New("DataUploadResult event payload or creation time is invalid")
 			}
-			if !canonicalTime(restoreObject.Status.StartTimestamp) {
-				return DataUploadResultObservation{}, errors.New("Restore start time is unavailable for DataUploadResult watch binding")
+			if !canonicalTime(restoreObject.Identity.Metadata.CreationTimestamp) || !canonicalTime(restoreObject.Status.StartTimestamp) {
+				return DataUploadResultObservation{}, errors.New("Restore creation or start time is unavailable for DataUploadResult watch binding")
 			}
-			watchStarted, _ := time.Parse(time.RFC3339Nano, watchStartedAt)
-			restoreStarted, _ := time.Parse(time.RFC3339Nano, restoreObject.Status.StartTimestamp)
-			createdAt, _ := time.Parse(time.RFC3339Nano, configMap.Identity.Metadata.CreationTimestamp)
-			if watchStarted.After(restoreStarted) || createdAt.Before(restoreStarted) {
-				return DataUploadResultObservation{}, errors.New("DataUploadResult watch did not precede the Restore")
-			}
+			// API-server and Velero-controller timestamps come from clocks that
+			// need not agree with this observer. The exact empty LIST fence,
+			// readiness barrier, gap-free watch, and Restore UID binding are the
+			// causal proof that this object belongs to the subsequently created
+			// Restore; the remote timestamps remain canonical identity evidence.
 			observation := DataUploadResultObservation{
 				SchemaVersion:  DataUploadResultObservationSchemaVersion,
 				WatchStartedAt: watchStartedAt,
@@ -150,6 +150,9 @@ func ObserveDataUploadResult(
 				EvidenceRef:    request.EvidencePrefix + "/velero-data-upload-result-observation",
 			}
 			observation.EvidenceSHA256 = dataUploadResultObservationEvidenceSHA256(observation)
+			if err := validateDataUploadResultObservation(observation); err != nil {
+				return DataUploadResultObservation{}, err
+			}
 			return observation, nil
 		}
 
@@ -198,10 +201,11 @@ func validateDataUploadResultObservation(observation DataUploadResultObservation
 		observation.EvidenceSHA256 != dataUploadResultObservationEvidenceSHA256(observation) {
 		return errors.New("DataUploadResult observation is invalid")
 	}
+	// These are the only two timestamps emitted by this observer's clock.
+	// Do not order either one against API-server creationTimestamp values.
 	watchStartedAt, _ := time.Parse(time.RFC3339Nano, observation.WatchStartedAt)
-	observedAt, _ := time.Parse(time.RFC3339Nano, observation.ObservedAt)
 	capturedAt, _ := time.Parse(time.RFC3339Nano, observation.CapturedAt)
-	if watchStartedAt.After(observedAt) || capturedAt.Before(observedAt) || capturedAt.Sub(observedAt) > 30*time.Second {
+	if capturedAt.Before(watchStartedAt) {
 		return errors.New("DataUploadResult observation timeline is invalid")
 	}
 	return nil

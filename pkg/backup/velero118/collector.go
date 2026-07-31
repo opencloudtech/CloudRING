@@ -155,7 +155,7 @@ func CollectCSIDataMoverVolumeLineage(
 	if err := crossValidateDataPath(request, restoreObject, backupObject, sourcePVC, sourcePV, targetPVC, targetPV, liveUpload, archivedUpload, resultConfigMap, result, dataDownload); err != nil {
 		return restoreproof.VolumeReceipt{}, err
 	}
-	resultAutoDeletedAt, err := confirmVeleroAutoDeletedDataUploadResult(ctx, reader, request, resultConfigMap, restoreObject, resultObservedAt, clock)
+	resultAutoDeletedAt, err := confirmVeleroAutoDeletedDataUploadResult(ctx, reader, request, resultConfigMap, restoreObject, clock)
 	if err != nil {
 		return restoreproof.VolumeReceipt{}, err
 	}
@@ -551,27 +551,32 @@ func readObservedDataUploadResult(request CollectionRequest, restoreObject Resto
 	if err != nil || sourceProof.Namespace != result.SourceNamespace {
 		return ConfigMap{}, "", DataUploadResult{}, "", errors.New("decode observed Velero DataUploadResult payload")
 	}
-	watchStartedAt, watchStartedErr := time.Parse(time.RFC3339Nano, observation.WatchStartedAt)
-	observedAt, observedErr := time.Parse(time.RFC3339Nano, observation.ObservedAt)
+	// Keep clock domains separate: observation.ObservedAt is the API-server
+	// creationTimestamp, while Restore status timestamps are written by the
+	// Velero controller. UID/request/object bindings establish causality; only
+	// the controller timestamps are ordered against each other here.
 	restoreStarted, startedErr := time.Parse(time.RFC3339Nano, restoreObject.Status.StartTimestamp)
 	restoreCompleted, completedErr := time.Parse(time.RFC3339Nano, restoreObject.Status.CompletionTimestamp)
-	if watchStartedErr != nil || observedErr != nil || startedErr != nil || completedErr != nil || watchStartedAt.After(restoreStarted) ||
-		observedAt.Before(restoreStarted) || observedAt.After(restoreCompleted) || configMap.Identity.Metadata.CreationTimestamp != observation.ObservedAt {
+	if startedErr != nil || completedErr != nil || !canonicalTime(restoreObject.Identity.Metadata.CreationTimestamp) ||
+		!restoreStarted.Before(restoreCompleted) || configMap.Identity.Metadata.CreationTimestamp != observation.ObservedAt {
 		return ConfigMap{}, "", DataUploadResult{}, "", errors.New("Velero DataUploadResult observation is outside the Restore timeline")
 	}
 	return configMap, payload, result, observation.ObservedAt, nil
 }
 
-func confirmVeleroAutoDeletedDataUploadResult(ctx context.Context, reader KubernetesReader, request CollectionRequest, configMap ConfigMap, restoreObject Restore, observedAt string, clock Clock) (string, error) {
+func confirmVeleroAutoDeletedDataUploadResult(ctx context.Context, reader KubernetesReader, request CollectionRequest, configMap ConfigMap, restoreObject Restore, clock Clock) (string, error) {
 	target := observedTarget{GVR: restoreproof.CoreV1CMGVR, Namespace: request.VeleroNamespace, Name: configMap.Identity.Metadata.Name, Proof: configMap.Identity.Target("configmaps")}
 	if err := requireExactAbsentObservedTarget(ctx, reader, target); err != nil {
 		return "", errors.New("Velero DataUploadResult auto-deletion was not confirmed")
 	}
+	// The terminal Restore was read before this exact absence check, which is
+	// the causal proof. The watcher and collector can be separate processes, so
+	// their local timestamps must not be ordered against each other.
 	confirmedAt := canonicalTimestamp(clock.Now())
-	observed, observedErr := time.Parse(time.RFC3339Nano, observedAt)
+	started, startedErr := time.Parse(time.RFC3339Nano, restoreObject.Status.StartTimestamp)
 	completed, completedErr := time.Parse(time.RFC3339Nano, restoreObject.Status.CompletionTimestamp)
-	confirmed, confirmedErr := time.Parse(time.RFC3339Nano, confirmedAt)
-	if observedErr != nil || completedErr != nil || confirmedErr != nil || observed.After(completed) || confirmed.Before(completed) {
+	_, confirmedErr := time.Parse(time.RFC3339Nano, confirmedAt)
+	if startedErr != nil || completedErr != nil || confirmedErr != nil || restoreObject.Status.Phase != "Completed" || !started.Before(completed) {
 		return "", errors.New("Velero DataUploadResult auto-deletion timeline is invalid")
 	}
 	return confirmedAt, nil

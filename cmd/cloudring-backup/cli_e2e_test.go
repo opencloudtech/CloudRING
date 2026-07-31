@@ -193,7 +193,9 @@ func cliCollectionFixture(t *testing.T, baselineAt time.Time, sourcePVC []byte) 
 	backup := cliKubeObject("velero.io/v1", "Backup", cliMetadata("backup-direct", "velero", backupUID, "2", nil, nil), map[string]any{
 		"storageLocation": "offcell", "snapshotMoveData": true, "datamover": "", "csiSnapshotTimeout": "10m",
 	}, map[string]any{"phase": "Completed", "completionTimestamp": timestamp(-time.Minute), "errors": 0, "warnings": 0}, nil)
-	restore := cliKubeObject("velero.io/v1", "Restore", cliMetadata("restore-copy", "velero", restoreUID, "3", nil, nil), map[string]any{
+	restoreMetadata := cliMetadata("restore-copy", "velero", restoreUID, "3", nil, nil)
+	restoreMetadata["creationTimestamp"] = timestamp(500 * time.Microsecond)
+	restore := cliKubeObject("velero.io/v1", "Restore", restoreMetadata, map[string]any{
 		"backupName": "backup-direct", "scheduleName": "", "namespaceMapping": map[string]string{"source": "target"},
 	}, map[string]any{"phase": "Completed", "startTimestamp": timestamp(time.Millisecond), "completionTimestamp": timestamp(4 * time.Millisecond), "errors": 0, "warnings": 0}, nil)
 	serverStatus := cliKubeObject("velero.io/v1", "ServerStatusRequest", cliMetadata("cloudring-status", "velero", "server-status-uid", "4", nil, nil), map[string]any{}, map[string]any{
