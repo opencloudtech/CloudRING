@@ -85,6 +85,29 @@ func TestCollectCSIDataMoverVolumeLineageEndToEnd(t *testing.T) {
 		t.Fatalf("ValidateCSIDataMoverVolumeReceipt() error = %v", err)
 	}
 	assertReceiptMatchesSchema(t, receipt)
+	crossClockReceipt := cloneReceipt(t, receipt)
+	crossClockReceipt.DataUploadResult.ObservedAt = "2026-07-14T05:00:00Z"
+	crossClockReceipt.DataUploadResult.VeleroAutoDeletedAt = "2026-07-14T07:00:00Z"
+	crossClockReceipt.DataUploadResult.EvidenceSHA256 = restoreproof.DataUploadResultEvidenceSHA256(&crossClockReceipt.DataUploadResult)
+	crossClockReceipt.ReceiptSHA256 = restoreproof.ReceiptSHA256(crossClockReceipt)
+	if err := restoreproof.ValidateCSIDataMoverVolumeReceipt(&crossClockReceipt); err != nil {
+		t.Fatalf("independent API/local/controller clocks rejected by receipt validator: %v", err)
+	}
+	lateAutoDeletion := cloneReceipt(t, receipt)
+	validationCompletedAt := mustTime(t, lateAutoDeletion.Context.Cleanup.ValidationCompletedAt)
+	lateAutoDeletion.DataUploadResult.VeleroAutoDeletedAt = validationCompletedAt.Add(time.Nanosecond).Format(time.RFC3339Nano)
+	lateAutoDeletion.DataUploadResult.EvidenceSHA256 = restoreproof.DataUploadResultEvidenceSHA256(&lateAutoDeletion.DataUploadResult)
+	lateAutoDeletion.ReceiptSHA256 = restoreproof.ReceiptSHA256(lateAutoDeletion)
+	if err := restoreproof.ValidateCSIDataMoverVolumeReceipt(&lateAutoDeletion); err == nil {
+		t.Fatal("auto-deletion after the local validation boundary unexpectedly passed")
+	}
+	nonCanonicalObservation := cloneReceipt(t, receipt)
+	nonCanonicalObservation.DataUploadResult.ObservedAt = "2026-07-14T12:01:30+00:00"
+	nonCanonicalObservation.DataUploadResult.EvidenceSHA256 = restoreproof.DataUploadResultEvidenceSHA256(&nonCanonicalObservation.DataUploadResult)
+	nonCanonicalObservation.ReceiptSHA256 = restoreproof.ReceiptSHA256(nonCanonicalObservation)
+	if err := restoreproof.ValidateCSIDataMoverVolumeReceipt(&nonCanonicalObservation); err == nil {
+		t.Fatal("non-canonical API-server observation timestamp unexpectedly passed")
+	}
 	if provider.calls != 4 {
 		t.Fatalf("provider calls = %d, want 4", provider.calls)
 	}
@@ -313,6 +336,123 @@ func TestCollectorRejectsInvalidVeleroRuntimeAndBaselineTimeline(t *testing.T) {
 			test.mutate(t, reader, &request, &baseline)
 			if _, err := CollectCSIDataMoverVolumeLineage(t.Context(), reader, fakeProbeObserver{observation: validProbeObservationFixture()}, &fakeBackendObserver{clock: clock}, &fakeCleanupBarrier{}, request, baseline, archive, clock); err == nil {
 				t.Fatal("invalid runtime or baseline unexpectedly produced a receipt")
+			}
+		})
+	}
+}
+
+func TestReadObservedDataUploadResultAcceptsIndependentClockSkew(t *testing.T) {
+	cases := []struct {
+		name             string
+		restoreCreatedAt string
+		resultCreatedAt  string
+		watchStartedAt   string
+		capturedAt       string
+	}{
+		{
+			name:             "API clock behind controller and observer ahead",
+			restoreCreatedAt: "2026-07-14T05:00:00Z",
+			resultCreatedAt:  "2026-07-14T05:00:01Z",
+			watchStartedAt:   "2026-07-14T18:00:00Z",
+			capturedAt:       "2026-07-14T18:00:01Z",
+		},
+		{
+			name:             "API clock ahead of controller and observer behind",
+			restoreCreatedAt: "2026-07-14T20:00:00Z",
+			resultCreatedAt:  "2026-07-14T20:00:01Z",
+			watchStartedAt:   "2026-07-14T08:00:00Z",
+			capturedAt:       "2026-07-14T08:00:01Z",
+		},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			reader, _, request, baseline, _ := preparedCollectionFixture(t)
+			restorePayload := mutateObject(t, reader, restoreproof.VeleroV1RestoreGVR, "velero", "restore-copy", func(object map[string]any) {
+				object["metadata"].(map[string]any)["creationTimestamp"] = test.restoreCreatedAt
+			})
+			restoreObject, err := DecodeRestore(restorePayload)
+			if err != nil {
+				t.Fatal(err)
+			}
+			request.DataUploadResultObservation.WatchStartedAt = test.watchStartedAt
+			request.DataUploadResultObservation.CapturedAt = test.capturedAt
+			mutateObservedDataUploadResult(t, reader, func(object map[string]any) {
+				object["metadata"].(map[string]any)["creationTimestamp"] = test.resultCreatedAt
+			})
+			request.DataUploadResultObservation.ObservedAt = test.resultCreatedAt
+			request.DataUploadResultObservation.EvidenceSHA256 = dataUploadResultObservationEvidenceSHA256(*request.DataUploadResultObservation)
+
+			_, _, _, observedAt, err := readObservedDataUploadResult(request, restoreObject, baseline.Source)
+			if err != nil {
+				t.Fatalf("cross-clock observation rejected: %v", err)
+			}
+			if observedAt != test.resultCreatedAt || request.DataUploadResultObservation.CapturedAt != test.capturedAt {
+				t.Fatalf("clock domains were not preserved: observed=%s captured=%s", observedAt, request.DataUploadResultObservation.CapturedAt)
+			}
+		})
+	}
+}
+
+func TestConfirmVeleroAutoDeletedDataUploadResultUsesLocalCausalClock(t *testing.T) {
+	cases := []struct {
+		name        string
+		confirmedAt string
+	}{
+		{name: "local clock behind Velero controller", confirmedAt: "2026-07-14T07:00:01Z"},
+		{name: "local clock ahead of Velero controller", confirmedAt: "2026-07-14T18:00:01Z"},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			reader, _, request, _, _ := preparedCollectionFixture(t)
+			restoreObject, err := DecodeRestore(reader.objects[readerKey(restoreproof.VeleroV1RestoreGVR, "velero", "restore-copy")])
+			if err != nil {
+				t.Fatal(err)
+			}
+			configMap, err := DecodeConfigMap(request.DataUploadResultObservation.Object)
+			if err != nil {
+				t.Fatal(err)
+			}
+			clock := &fakeClock{now: mustTime(t, test.confirmedAt)}
+			got, err := confirmVeleroAutoDeletedDataUploadResult(t.Context(), reader, request, configMap, restoreObject, clock)
+			if err != nil {
+				t.Fatalf("cross-clock auto-deletion rejected: %v", err)
+			}
+			if got != test.confirmedAt {
+				t.Fatalf("confirmation timestamp = %s, want %s", got, test.confirmedAt)
+			}
+		})
+	}
+}
+
+func TestConfirmVeleroAutoDeletedDataUploadResultRejectsInvalidCausalState(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(*fakeReader, *Restore)
+	}{
+		{name: "exact absence not proven", mutate: func(reader *fakeReader, _ *Restore) { reader.autoDeletedResult = false }},
+		{name: "field-selected absence unconfirmed", mutate: func(reader *fakeReader, _ *Restore) { reader.unconfirmedAutoDeletedResult = true }},
+		{name: "Restore is not terminal", mutate: func(_ *fakeReader, restoreObject *Restore) { restoreObject.Status.Phase = "InProgress" }},
+		{name: "Restore controller timeline is reversed", mutate: func(_ *fakeReader, restoreObject *Restore) {
+			restoreObject.Status.StartTimestamp = restoreObject.Status.CompletionTimestamp
+		}},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			reader, _, request, _, _ := preparedCollectionFixture(t)
+			restoreObject, err := DecodeRestore(reader.objects[readerKey(restoreproof.VeleroV1RestoreGVR, "velero", "restore-copy")])
+			if err != nil {
+				t.Fatal(err)
+			}
+			configMap, err := DecodeConfigMap(request.DataUploadResultObservation.Object)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if test.mutate != nil {
+				test.mutate(reader, &restoreObject)
+			}
+			clock := &fakeClock{now: mustTime(t, "2026-07-14T12:02:03Z")}
+			if _, err := confirmVeleroAutoDeletedDataUploadResult(t.Context(), reader, request, configMap, restoreObject, clock); err == nil {
+				t.Fatal("invalid auto-deletion causal state unexpectedly passed")
 			}
 		})
 	}
@@ -874,16 +1014,17 @@ func TestCollectorAcceptsSubMillisecondNanosecondProbe(t *testing.T) {
 }
 
 type fakeReader struct {
-	objects                map[string][]byte
-	lists                  map[string][]byte
-	deleted                bool
-	mutateSourceOnCleanup  bool
-	replaceTargetOnCleanup bool
-	terminatingTargetOnce  bool
-	terminatingReturned    bool
-	getCalls               int
-	autoDeletedResult      bool
-	observation            *DataUploadResultObservation
+	objects                      map[string][]byte
+	lists                        map[string][]byte
+	deleted                      bool
+	mutateSourceOnCleanup        bool
+	replaceTargetOnCleanup       bool
+	terminatingTargetOnce        bool
+	terminatingReturned          bool
+	getCalls                     int
+	autoDeletedResult            bool
+	unconfirmedAutoDeletedResult bool
+	observation                  *DataUploadResultObservation
 }
 
 func (reader *fakeReader) Get(_ context.Context, gvr restoreproof.GVR, namespace, name string) ([]byte, error) {
@@ -927,7 +1068,7 @@ func (reader *fakeReader) ListPage(_ context.Context, gvr restoreproof.GVR, name
 
 func (reader *fakeReader) ConfirmAbsent(_ context.Context, gvr restoreproof.GVR, namespace, name string) (bool, error) {
 	if reader.autoDeletedResult && gvr == restoreproof.CoreV1CMGVR && namespace == "velero" && name == "backup-volume-1-result" {
-		return true, nil
+		return !reader.unconfirmedAutoDeletedResult, nil
 	}
 	return reader.deleted && isCleanupKey(gvr, namespace, name), nil
 }
@@ -1074,7 +1215,9 @@ func validRuntimeFixture(t *testing.T) (*fakeReader, []byte) {
 	backup := kubeObject(t, "velero.io/v1", "Backup", metadata("backup-direct", "velero", backupUID, "2", nil, map[string]string{}), map[string]any{
 		"storageLocation": "offcell", "snapshotMoveData": true, "datamover": "", "csiSnapshotTimeout": "10m",
 	}, map[string]any{"phase": "Completed", "completionTimestamp": "2026-07-14T11:59:00Z", "errors": 0, "warnings": 0}, nil)
-	restore := kubeObject(t, "velero.io/v1", "Restore", metadata("restore-copy", "velero", restoreUID, "3", nil, map[string]string{}), map[string]any{
+	restoreMetadata := metadata("restore-copy", "velero", restoreUID, "3", nil, map[string]string{})
+	restoreMetadata["creationTimestamp"] = "2026-07-14T12:00:30Z"
+	restore := kubeObject(t, "velero.io/v1", "Restore", restoreMetadata, map[string]any{
 		"backupName": "backup-direct", "scheduleName": "", "namespaceMapping": map[string]string{"source": "target"},
 	}, map[string]any{"phase": "Completed", "startTimestamp": "2026-07-14T12:01:00Z", "completionTimestamp": "2026-07-14T12:02:00Z", "errors": 0, "warnings": 0}, nil)
 	serverStatus := kubeObject(t, "velero.io/v1", "ServerStatusRequest", metadata("cloudring-status", "velero", "server-status-uid", "4", nil, map[string]string{}), map[string]any{}, map[string]any{

@@ -471,13 +471,14 @@ func validateDataUploadBindings(receipt *VolumeReceipt) error {
 		result.EvidenceSHA256 != DataUploadResultEvidenceSHA256(result) {
 		return errors.New("Velero DataUploadResult proof is invalid")
 	}
-	resultObserved, observedErr := time.Parse(time.RFC3339Nano, result.ObservedAt)
+	// ObservedAt is an API-server creationTimestamp, Restore status is written
+	// by the Velero controller, and VeleroAutoDeletedAt is stamped by the local
+	// collector after exact absence. Their cross-clock order is not evidence;
+	// preserve canonical forms and only keep the local cleanup boundary.
 	resultAutoDeleted, autoDeletedErr := time.Parse(time.RFC3339Nano, result.VeleroAutoDeletedAt)
-	restoreStarted, _ := time.Parse(time.RFC3339Nano, receipt.Context.RestoreStartedAt)
-	restoreCompleted, _ := time.Parse(time.RFC3339Nano, receipt.Context.CompletedAt)
 	validationCompleted, _ := time.Parse(time.RFC3339Nano, receipt.Context.Cleanup.ValidationCompletedAt)
-	if observedErr != nil || autoDeletedErr != nil || resultObserved.Before(restoreStarted) || resultObserved.After(restoreCompleted) ||
-		resultAutoDeleted.Before(restoreCompleted) || resultAutoDeleted.After(validationCompleted) {
+	if autoDeletedErr != nil || !canonicalTime(result.ObservedAt) || !canonicalTime(result.VeleroAutoDeletedAt) ||
+		resultAutoDeleted.After(validationCompleted) {
 		return errors.New("Velero DataUploadResult observation and auto-deletion timeline is invalid")
 	}
 	if len(lineage.Helpers) != 1 || lineage.Helpers[0].DataDownload == nil {
