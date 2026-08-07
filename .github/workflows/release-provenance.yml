@@ -74,11 +74,11 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Attest release bundle provenance
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: dist/cloudring-linux-amd64.tar.gz
       - name: Attest release bundle SBOM
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: dist/cloudring-linux-amd64.tar.gz
           sbom-path: dist/cloudring-sbom.cdx.json
@@ -394,24 +394,24 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Attest recovery worker image provenance
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ steps.image.outputs.name }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
       - name: Attest recovery worker image SBOM
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ steps.image.outputs.name }}
           subject-digest: ${{ steps.push.outputs.digest }}
           sbom-path: dist/etcd-recovery-worker-image.cdx.json
           push-to-registry: true
       - name: Attest recovery worker release-component SBOM
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: dist/etcd-recovery-worker-components.cdx.json
       - name: Attest canonical recovery worker release identity
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: dist/etcd-recovery-worker-identity.json
       - name: Verify authenticated immutable image pull
