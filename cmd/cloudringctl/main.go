@@ -78,7 +78,7 @@ func verify(goalID, statePath string) (map[string]any, error) {
 	if err := roadmapprogram.ValidateDir("roadmap"); err != nil {
 		return nil, err
 	}
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) // #nosec G304 -- path is fail-closed to the repository-local G00 state file above.
 	if err != nil {
 		return nil, err
 	}
