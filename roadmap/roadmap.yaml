@@ -20,7 +20,7 @@ spec:
       file: goals/G00-truthful-baseline-and-protected-delivery.md
       dependsOn: []
       requirementIds: [CR-G00-DELIVERY]
-      status: not_started
+      status: in_progress
       liveDeployment: required
     - id: G01
       file: goals/G01-disposable-public-development-installation.md

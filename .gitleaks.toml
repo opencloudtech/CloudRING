@@ -1,0 +1,41 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "cloudring-config-credential-assignment"
+description = "Credential-shaped configuration assignment"
+regex = '''(?i)["']?[a-z0-9_.-]*(?:password|passwd|secret|token|api[_-]?key|private[_-]?key|credential|secret[_-]?key|secret[_-]?access[_-]?key|signing[_-]?key)[a-z0-9_.-]*["']?[ \t]*[:=][ \t]*(?:"[^"\r\n]{8,}"|'[^'\r\n]{8,}'|[^<\s"',][^\s"',]{7,})'''
+keywords = ["password", "passwd", "secret", "token", "apikey", "api_key", "privatekey", "private_key", "credential"]
+path = '''(?i)(?:^|/)(?:[^/]+[.](?:conf|config|ini|json|properties|toml|xml|ya?ml)|[.]env(?:[.][^/]+)?)$'''
+[[rules.allowlists]]
+description = "Exact braced uppercase environment reference"
+regexTarget = "match"
+regexes = [
+  '''^(?i:["']?[a-z0-9_.-]*(?:password|passwd|secret|token|api[_-]?key|private[_-]?key|credential|secret[_-]?key|secret[_-]?access[_-]?key|signing[_-]?key)[a-z0-9_.-]*["']?)[ \t]*[:=][ \t]*(?:"\$\{[A-Z_][A-Z0-9_]*\}"|'\$\{[A-Z_][A-Z0-9_]*\}'|\$\{[A-Z_][A-Z0-9_]*\})$''',
+  '''^(?i:["']?(?:credential[._-]?class|password[._-]?encryption)["']?)[ \t]*[:=][ \t]*(?:"[a-z0-9_.-]+"|'[a-z0-9_.-]+'|[a-z0-9_.-]+)$''',
+  '''^(?i:["']?[a-z0-9_.-]*secret[._-]?(?:name|namespace)["']?)[ \t]*[:=][ \t]*(?:"[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?"|'[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?'|[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?)$''',
+  '''(?i)secretKey[ 	]*:[ 	]*(?:access-key-id|secret-access-key|ACCESS_KEY_ID|ACCESS_SECRET_KEY|username|password)''',
+  '''(?i)(?:tlsSecret|registrySecret|credentialSecret)[ 	]*:[ 	]*[a-z0-9.-]+''',
+  '''(?i)aggregateProofPathToken[ 	]*:[ 	]*proof/[a-z0-9/_-]+''',
+  '''(?i)["']?aggregateProofPathToken["']?[ 	]*:[ 	]*(?:"proof/[a-z0-9/_-]+"|'proof/[a-z0-9/_-]+'|proof/[a-z0-9/_-]+)''',
+]
+
+[[rules]]
+id = "cloudring-xml-credential"
+description = "Credential-shaped XML element"
+regex = '''(?i)<[ \t]*[a-z0-9_.:-]*(?:password|passwd|secret|token|apikey|api-key|privatekey|private-key|credential)[a-z0-9_.:-]*[ \t]*>[ \t]*[^<\r\n]{4,}?[ \t]*</'''
+keywords = ["password", "passwd", "secret", "token", "apikey", "api-key", "privatekey", "private-key", "credential"]
+path = '''(?i)(?:^|/)[^/]+[.]xml$'''
+[[rules.allowlists]]
+description = "Exact braced uppercase environment reference"
+regexTarget = "match"
+regexes = ['''^(?i:<[ \t]*[a-z0-9_.:-]*(?:password|passwd|secret|token|apikey|api-key|privatekey|private-key|credential)[a-z0-9_.:-]*[ \t]*>)[ \t]*\$\{[A-Z_][A-Z0-9_]*\}[ \t]*</$''']
+
+[[rules]]
+id = "cloudring-url-userinfo-credential"
+description = "URL userinfo contains an embedded password"
+regex = '''(?i)\b[a-z][a-z0-9+.-]{1,31}://[^/\s:@]+:[^<@\s/]+@[^/\s]+'''
+[[rules.allowlists]]
+description = "Exact braced uppercase environment reference"
+regexTarget = "match"
+regexes = ['''^(?i:[a-z][a-z0-9+.-]{1,31}://[^/\s:@]+:)\$\{[A-Z_][A-Z0-9_]*\}@[^/\s]+$''']
