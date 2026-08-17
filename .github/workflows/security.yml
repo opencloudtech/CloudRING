@@ -84,7 +84,56 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          go run github.com/zricethezav/gitleaks/v8@v8.30.1 dir --no-banner --redact=100 --exit-code 1 .
+          go run github.com/zricethezav/gitleaks/v8@v8.30.1 dir --config .gitleaks.toml --no-banner --redact=100 --exit-code 1 .
+
+          probe_root="$(mktemp -d)"
+          trap 'rm -rf "${probe_root}"' EXIT
+          # shellcheck disable=SC2016 # the synthetic value must retain its literal marker
+          printf 'db_%s: "Synthetic$Value#123"\n' 'password' >"${probe_root}/assignment.txt"
+          # shellcheck disable=SC2016 # the synthetic value must retain its literal marker
+          printf 'service_%s_hash: "$Synthetic#Value123456789"\n' 'secret' >"${probe_root}/dollar-prefix.txt"
+          # shellcheck disable=SC2016 # the synthetic value must retain its literal marker
+          printf 'service_%s_hash: "$UPPER_ENV"\n' 'secret' >"${probe_root}/unbraced-env.txt"
+          # shellcheck disable=SC2016 # the synthetic value must retain its literal marker
+          printf 'service_%s_hash: "${lower_env}"\n' 'secret' >"${probe_root}/lowercase-env.txt"
+          # shellcheck disable=SC2016 # the synthetic value must retain its literal marker
+          printf 'service_%s_hash: "${UPPER_ENV}suffix"\n' 'secret' >"${probe_root}/suffixed-env.txt"
+          # shellcheck disable=SC2016 # the synthetic value must retain its literal marker
+          printf 'service_%s_hash: "prefix${UPPER_ENV}"\n' 'secret' >"${probe_root}/prefixed-env.txt"
+          # shellcheck disable=SC2016 # the synthetic value must retain its literal marker
+          printf 'service_%s_hash: "${UPPER_ENV} suffix"\n' 'secret' >"${probe_root}/spaced-suffix-env.txt"
+          # shellcheck disable=SC2016 # the synthetic value must retain its literal marker
+          printf '<%s>Synthetic$Value#123</%s>\n' 'password' 'password' >"${probe_root}/element.xml"
+          # shellcheck disable=SC2016 # the synthetic value must retain its literal marker
+          printf 'postgres%s\n' '://synthetic-user:Synthetic$Value#123@service.example/database' >"${probe_root}/url.txt"
+          # shellcheck disable=SC2016 # the safe value must retain its literal reference
+          printf 'service_%s_hash: "${UPPER_ENV}"\n' 'secret' >"${probe_root}/exact-env.txt"
+          for probe in assignment dollar-prefix unbraced-env lowercase-env suffixed-env prefixed-env spaced-suffix-env element url; do
+            probe_dir="${probe_root}/${probe}"
+            mkdir "${probe_dir}"
+            case "${probe}" in
+              assignment) cp "${probe_root}/assignment.txt" "${probe_dir}/config.yaml" ;;
+              dollar-prefix) cp "${probe_root}/dollar-prefix.txt" "${probe_dir}/config.yaml" ;;
+              unbraced-env) cp "${probe_root}/unbraced-env.txt" "${probe_dir}/config.yaml" ;;
+              lowercase-env) cp "${probe_root}/lowercase-env.txt" "${probe_dir}/config.yaml" ;;
+              suffixed-env) cp "${probe_root}/suffixed-env.txt" "${probe_dir}/config.yaml" ;;
+              prefixed-env) cp "${probe_root}/prefixed-env.txt" "${probe_dir}/config.yaml" ;;
+              spaced-suffix-env) cp "${probe_root}/spaced-suffix-env.txt" "${probe_dir}/config.yaml" ;;
+              element) cp "${probe_root}/element.xml" "${probe_dir}/config.xml" ;;
+              url) cp "${probe_root}/url.txt" "${probe_dir}/config.txt" ;;
+            esac
+            if go run github.com/zricethezav/gitleaks/v8@v8.30.1 dir --config .gitleaks.toml --no-banner --redact=100 --exit-code 1 "${probe_dir}" >/dev/null 2>&1; then
+              echo "gitleaks regression probe was not rejected: ${probe}" >&2
+              exit 1
+            fi
+          done
+          exact_env_dir="${probe_root}/exact-env"
+          mkdir "${exact_env_dir}"
+          cp "${probe_root}/exact-env.txt" "${exact_env_dir}/config.yaml"
+          if ! go run github.com/zricethezav/gitleaks/v8@v8.30.1 dir --config .gitleaks.toml --no-banner --redact=100 --exit-code 1 "${exact_env_dir}" >/dev/null 2>&1; then
+            echo "gitleaks rejected exact braced uppercase environment reference" >&2
+            exit 1
+          fi
 
           case "${GITHUB_EVENT_NAME}" in
             pull_request)
@@ -114,5 +163,5 @@ jobs:
           else
             history_spec="${head_sha}"
           fi
-          go run github.com/zricethezav/gitleaks/v8@v8.30.1 git --no-banner --redact=100 --exit-code 1 --platform github \
+          go run github.com/zricethezav/gitleaks/v8@v8.30.1 git --config .gitleaks.toml --no-banner --redact=100 --exit-code 1 --platform github \
             --log-opts="--full-history --diff-merges=separate ${history_spec}" .
