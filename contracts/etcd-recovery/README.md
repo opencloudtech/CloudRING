@@ -31,9 +31,12 @@ GET with system CA validation, no proxy and no redirect. Raw endpoint, bucket,
 object key/version and credentials never appear in tool arguments, environment,
 stdout, stderr or receipts.
 
-`etcdutl` 3.6.13 is content-pinned to
-`d3b1ab51f3277a60ee37dfd749941e663c14184d5bc0c26d0cf06f5414d18199`
-before execution. Source `hashkv` runs only against a verified disposable
+`etcdutl` 3.6.14 is content-pinned to
+`2b7fea46e31fda1989168fbd8f7ec73f5839155f4b1af7bab274950e337e996d`
+before execution. This executable is rebuilt from the unchanged official source
+with Go 1.26.8 and retained symbols using the [release build procedure](../../docs/releasing.md);
+its source and build identity are retained as `etcdutl-source.json`.
+Source `hashkv` runs only against a verified disposable
 private copy, because upstream `hashkv` can mutate bbolt metadata. The restored
 private database is hashed, reopened, digested and inspected again. Success
 requires exact equality of the semantic KV hash, hash revision, compact
