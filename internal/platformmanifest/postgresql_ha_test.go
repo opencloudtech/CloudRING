@@ -4,6 +4,7 @@
 package platformmanifest
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -125,7 +126,15 @@ func TestPostgreSQLHAProfileRejectsInlineKubernetesSecret(t *testing.T) {
 func TestPostgreSQLHAProfileRejectsWeakenedRecoveryEvidence(t *testing.T) {
 	root := copyPostgreSQLHAProfile(t)
 	data := readPostgreSQLHAFile(t, root, postgresqlHARecoveryEvidencePath)
-	data = replaceOnce(t, data, []byte("\"matched\": {\"const\": true}"), []byte("\"matched\": {\"const\": false}"))
+	var schema map[string]any
+	if json.Unmarshal(data, &schema) != nil {
+		t.Fatal("decode recovery evidence schema")
+	}
+	nested(schema, "properties", "checksum", "properties", "matched").(map[string]any)["const"] = false
+	data, err := json.Marshal(schema)
+	if err != nil {
+		t.Fatal(err)
+	}
 	writePostgreSQLHAFile(t, root, postgresqlHARecoveryEvidencePath, data)
 	if _, err := VerifyPostgreSQLHA(root); err == nil {
 		t.Fatal("mismatched recovery checksum evidence was accepted")

@@ -787,45 +787,6 @@ func exactPostgreSQLRecoveryEgressBinding(policy map[string]any, cidr string, po
 		nestedString(targetPort, "protocol") == "TCP" && nestedNumber(targetPort, "port") == port
 }
 
-func validatePostgreSQLHARecoveryEvidenceSchema(data []byte) error {
-	var schema map[string]any
-	if err := decodeOne(data, &schema); err != nil ||
-		!exactMappingKeys(schema, "$schema", "$id", "title", "type", "additionalProperties", "required", "properties", "$defs") ||
-		nestedString(schema, "$schema") != "https://json-schema.org/draft/2020-12/schema" ||
-		nestedString(schema, "$id") != "https://cloudring.org/schemas/postgresql-cnpg-offcell-recovery-evidence-v1.json" ||
-		nestedString(schema, "type") != "object" || !exactBool(schema, false, "additionalProperties") ||
-		nestedString(schema, "properties", "schemaVersion", "const") != "cloudring.postgresql-cnpg-offcell-recovery-evidence/v1" ||
-		nestedString(schema, "properties", "verdict", "const") != "pass" ||
-		nestedNumber(schema, "properties", "offCell", "properties", "retentionDays", "minimum") != 30 ||
-		nestedNumber(schema, "properties", "offCell", "properties", "objectLockMinimumDays", "minimum") != 30 ||
-		!exactBool(schema, true, "properties", "offCell", "properties", "controlDeleteDenied", "const") ||
-		nestedNumber(schema, "properties", "baseBackup", "properties", "bytes", "minimum") != 1 ||
-		!exactBool(schema, true, "properties", "walArchive", "properties", "continuous", "const") ||
-		nestedNumber(schema, "properties", "recovery", "properties", "productionRouteCount", "const") != 0 ||
-		!exactBool(schema, true, "properties", "recovery", "properties", "writeProbePassed", "const") ||
-		!exactBool(schema, true, "properties", "checksum", "properties", "matched", "const") ||
-		nestedNumber(schema, "properties", "checksum", "properties", "sourceLogicalBytes", "minimum") != 1 ||
-		nestedNumber(schema, "properties", "checksum", "properties", "recoveredLogicalBytes", "minimum") != 1 ||
-		nestedNumber(schema, "properties", "checksum", "properties", "sourceRowCount", "minimum") != 1 ||
-		nestedNumber(schema, "properties", "checksum", "properties", "recoveredRowCount", "minimum") != 1 ||
-		!exactBool(schema, true, "properties", "cleanup", "properties", "complete", "const") ||
-		nestedNumber(schema, "properties", "cleanup", "properties", "twoSweepQuietWindowSeconds", "minimum") != 30 ||
-		nestedNumber(schema, "properties", "cleanup", "properties", "sweeps", "minItems") != 2 ||
-		nestedNumber(schema, "properties", "cleanup", "properties", "sweeps", "maxItems") != 2 ||
-		nestedNumber(schema, "$defs", "cleanupSweep", "properties", "recoveryNamespaceCount", "const") != 0 ||
-		nestedNumber(schema, "$defs", "cleanupSweep", "properties", "clusterCount", "const") != 0 ||
-		nestedNumber(schema, "$defs", "cleanupSweep", "properties", "credentialSecretCount", "const") != 0 ||
-		nestedNumber(schema, "$defs", "cleanupSweep", "properties", "persistentVolumeClaimCount", "const") != 0 ||
-		nestedNumber(schema, "$defs", "cleanupSweep", "properties", "serviceCount", "const") != 0 ||
-		nestedNumber(schema, "$defs", "cleanupSweep", "properties", "routeCount", "const") != 0 ||
-		!exactBool(schema, false, "properties", "redaction", "properties", "containsCredentials", "const") ||
-		!exactBool(schema, false, "properties", "redaction", "properties", "containsEndpoints", "const") ||
-		!exactBool(schema, false, "properties", "redaction", "properties", "containsTenantData", "const") {
-		return errors.New("PostgreSQL recovery evidence schema contract is incomplete")
-	}
-	return nil
-}
-
 func postgresqlCrossNamespaceClientPolicy(policy map[string]any) bool {
 	ingress, _ := nested(policy, "spec", "ingress").([]any)
 	for _, rawRule := range ingress {
