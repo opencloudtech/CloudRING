@@ -1,1 +1,50 @@
-{"goal":"G00","status":"in_progress","requirements":["CR-G00-DELIVERY"],"requirementResults":[{"id":"CR-G00-DELIVERY","applicability":"required","reason":"G00 baseline work started; delivery truth remains blocked by unresolved downstream, SafePush, WIP and hub evidence.","evidence":[],"approvalEvidence":null,"verdict":"blocked"}],"updatedAt":"2026-08-17T08:00:35Z","repositories":{"public":{"main":"e9745706da2364737eee2ffcb5c21ee71983b57e","checks":"green","pin":null},"reference":{"main":"c0d8ef5944b0bc79f6afd88d9f5b0bdbe44c587d","checks":"unverified","pin":"e9745706da2364737eee2ffcb5c21ee71983b57e"},"provider":{"main":"1d3f98a78780b9db17a5390d443d6db70d3a8119","checks":"unverified","pin":"fdc533de33624c74d2f3cbec8d914ce86de7f35b"}},"artifacts":[],"deployments":[],"blockers":["provider pin differs from accepted public SHA","provider SafePush TLS/Stage-9 live receipt is unverified","public branch protection does not require pull-request reviews and does not enforce admins","public clean-room static checks pass but protected evidence locator and attestation are absent","public/Enterprise/Provider worktrees are dirty or divergent","hub baseline reachability TLS anonymous-denial revision and rollback are unverified","protected/OCI evidence locators and signed receipts are absent"],"rollbackBoundary":"No external mutation; local checkpoint only.","predecessorRegression":null,"releaseManifest":null,"verdict":"blocked"}
+{
+  "goal": "G00",
+  "status": "in_progress",
+  "requirements": [
+    "CR-G00-DELIVERY"
+  ],
+  "requirementResults": [
+    {
+      "id": "CR-G00-DELIVERY",
+      "applicability": "required",
+      "reason": "C01 accepted delivery work is recorded separately from full G00 qualification. Public PR 155 is merged and its exact main workflows pass; remaining downstream, signed release and live evidence are not yet qualified.",
+      "evidence": [],
+      "approvalEvidence": null,
+      "verdict": "blocked"
+    }
+  ],
+  "updatedAt": "2026-09-07T07:44:14Z",
+  "repositories": {
+    "public": {
+      "main": "85195ba4822310fbe01a8ee7e5fa889c868d121b",
+      "checks": "green",
+      "pin": null
+    },
+    "reference": {
+      "main": "c0d8ef5944b0bc79f6afd88d9f5b0bdbe44c587d",
+      "checks": "unverified",
+      "pin": "e9745706da2364737eee2ffcb5c21ee71983b57e"
+    },
+    "provider": {
+      "main": "1d3f98a78780b9db17a5390d443d6db70d3a8119",
+      "checks": "unverified",
+      "pin": "fdc533de33624c74d2f3cbec8d914ce86de7f35b"
+    }
+  },
+  "artifacts": [],
+  "deployments": [],
+  "blockers": [
+    "C01 delivery-slice mapping, fixed measurement inputs and immutable prerelease await protected acceptance and clean-room proof",
+    "full G00 downstream exact-pin compatibility and SafePush TLS/Stage-9 signed proof remain unverified; an older pin alone is not a defect",
+    "source-safe WIP disposition covers the recorded current family; recovery or reuse of a preserved diff still requires its own metadata and content review",
+    "public protected-main rules require PR-only delivery and all 18 strict checks; founder self-merge with zero mandatory reviews is permitted, but this state is not a signed ruleset proof",
+    "reference shell reachability, TLS, anonymous denial and GitOps source were observed on 2026-09-07; cumulative user journeys, rollback and exact release-to-runtime propagation remain unverified",
+    "host-mounted portal executable source provenance is unknown; declared manifest hash and GitOps source revision do not prove the executing binary",
+    "resolvable protected/OCI evidence and signed receipts required for full G00 delivery are not yet attached"
+  ],
+  "rollbackBoundary": "No live mutation in C01 source work; prior dirty worktrees preserved. Full G00 rollout requires its own verified rollback boundary.",
+  "predecessorRegression": null,
+  "releaseManifest": null,
+  "verdict": "blocked"
+}

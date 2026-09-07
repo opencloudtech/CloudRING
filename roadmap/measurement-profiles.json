@@ -1,0 +1,348 @@
+{
+  "version": "cloudring-qualification-v1",
+  "status": "acceptance-targets-not-measured",
+  "contract": "MEASUREMENT_CONTRACT.md",
+  "common": {
+    "warmupSeconds": 300,
+    "baselineSeconds": 1800,
+    "qualificationSeconds": 86400,
+    "probeIntervalMilliseconds": 1000,
+    "availabilityMinimumPercent": 99.95,
+    "eligibleRequests": "All scheduled authorized in-quota requests for an advertised supported operation, including every retry, transport timeout, real test request and fixed-rate synthetic request. Correct intended negative denials are measured separately. Latency starts at scheduled dispatch, not worker availability; missed dispatches are failures. A durable acknowledgement requires committed operation identity and replay-safe intent before any success response.",
+    "exclusions": "Only malformed input, expected authentication/authorization/quota negatives and caller cancellation before acceptance, labelled in advance with counts. No release-attributable, provider, timeout, overload, readiness or missing-sample failure is excluded. Separately authorized destructive paths outside the declared continuity envelope are reported as a separate campaign, never deleted from customer SLO history.",
+    "passFormula": "eligible_success / eligible_attempts >= 0.9995; every profile and each non-noisy tenant separately passes all latency, throughput, queue, CPU, memory, recovery and fairness limits; zero lost accepted operations, duplicate logical resources, corrupt data, incorrect charge, imbalance or unauthorized success; all negatives deny; no unresolved release-blocking alert; all abort/rollback/cleanup checks pass. During supported zero-downtime upgrade additionally require zero release-attributable failed eligible requests and zero unavailable readiness samples. Missing evidence fails.",
+    "percentileFormula": "Nearest rank over eligible latencies of the named sample unit: sorted value at ceil(p*N), p=0.50,0.95,0.99; timeouts use elapsed deadline and count as failures. Report counts, error classes and distributions by operation and tenant without averaging percentiles. A percentile SLO claim requires the profile minimum sample count for that named population; smaller lifecycle-trial populations report raw durations and completion bounds, never a qualified p99. Throughput is successful named sample units divided by steady-state wall seconds; unique side effects and retries are separately counted.",
+    "durableAcknowledgementMilliseconds": {
+      "p50": 100,
+      "p95": 500,
+      "p99": 1000
+    },
+    "singleFailureRPOSeconds": 0,
+    "singleFailureRTOSeconds": 300,
+    "offCellRPOSeconds": 900,
+    "offCellRTOSeconds": 3600,
+    "cpuUtilizationMaximumPercent": 70,
+    "memoryUtilizationMaximumPercent": 80,
+    "abortUtilizationPercent": 90,
+    "otherTenantP99RatioMaximum": 1.2,
+    "otherTenantThroughputRatioMinimum": 0.8,
+    "providerLatencySeconds": [
+      1,
+      30,
+      120
+    ],
+    "ambiguousProviderResponsePercent": 10,
+    "reconcileAfterProviderRecoverySeconds": 300
+  },
+  "profiles": [
+    {
+      "id": "management-api",
+      "goal": "G03",
+      "workload": "10 tenants, 100 projects each, 100 resources per project; 60% GET, 20% bounded list or watch establishment, 20% durable mutations. Every list page contains at most 100 resources; 10% mutations replay an existing idempotency key. One additional noisy tenant offers 10 times a normal tenant rate. Read/list latency includes complete response; mutations use durable acknowledgement.",
+      "latencyScope": "durable_ack",
+      "minimumSamples": 180000,
+      "concurrency": 64,
+      "offeredPerSecond": 100,
+      "minimumThroughputPerSecond": 99.95,
+      "saturationSearchCeilingPerSecond": 400,
+      "latencyMilliseconds": {
+        "p50": 100,
+        "p95": 500,
+        "p99": 1000
+      },
+      "queueDepthMaximum": 640,
+      "operationCompletionDeadlineSeconds": 300,
+      "failureWorkload": "Lose an API replica, PostgreSQL leader and one supported server separately; hold an outbox delivery for 120 seconds and restart; prove tenant fairness, audit, no missing or double operations.",
+      "sampleUnit": "Eligible GET, bounded list/watch establishment and durable mutation requests in the stated mix; count every scheduled attempt and report operation-class and tenant counts separately.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "lifecycle",
+      "goal": "G09",
+      "workload": "10 tenants, at most 100 simultaneous logical resources; balanced cycles of 25% provision, 25% resize, 25% suspend/resume, 25% deprovision. Resource-dependent steps wait for actual completion; independent identities preserve the offered rate. Repeat each provider latency and 10% lost-response condition; only supported actions are eligible. Completion deadline includes provider wait; request latency ends at durable acknowledgement.",
+      "latencyScope": "durable_ack",
+      "minimumSamples": 1000,
+      "concurrency": 32,
+      "offeredPerSecond": 0.1,
+      "minimumThroughputPerSecond": 0.09995,
+      "saturationSearchCeilingPerSecond": 0.4,
+      "latencyMilliseconds": {
+        "p50": 100,
+        "p95": 500,
+        "p99": 1000
+      },
+      "queueDepthMaximum": 320,
+      "operationCompletionDeadlineSeconds": 900,
+      "failureWorkload": "Restart after provider side effect but before response; expire credentials, rate-limit provider for 120 seconds and restore it; reconcile identity before retry; reservations balance.",
+      "sampleUnit": "Durable acknowledgements of the stated real provision/resize/suspend-resume/deprovision mix, with 10% idempotent retries recorded separately from unique accepted operations. End-to-end provisioning is bounded by the completion deadline, not an acknowledgement percentile.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "usage-billing",
+      "goal": "G10",
+      "workload": "10 tenants and 1000 resources; at least 1000000 1-KiB events: 80% original, 10% exact duplicate, 5% 24-hour-late original, 5% corrections. Close 100 invoices with 1000 lines each, replay stream and correct closed invoices. All event classes, invoice close and read latencies are reported separately.",
+      "latencyScope": "durable_ack",
+      "minimumSamples": 1000000,
+      "concurrency": 64,
+      "offeredPerSecond": 1000,
+      "minimumThroughputPerSecond": 999.5,
+      "saturationSearchCeilingPerSecond": 4000,
+      "latencyMilliseconds": {
+        "p50": 50,
+        "p95": 250,
+        "p99": 1000
+      },
+      "queueDepthMaximum": 640,
+      "operationCompletionDeadlineSeconds": 300,
+      "failureWorkload": "Stop an ingest/rating replica and fail over PostgreSQL during invoice close; restore and replay stream; exact decimal ledger, invoice identity and zero double charge.",
+      "sampleUnit": "Usage-event durable acknowledgements only, across the fixed original/duplicate/late/correction mix. Invoice closes, reads, credits and restore are separately counted complete lifecycle trials; one million event samples never means one million invoice closes.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "portal-cli-agent",
+      "goal": "G11",
+      "workload": "20 browser, 20 CLI and 20 agent actors across 10 tenants; 40% resource/list, 20% operation timeline, 20% cost view, 20% preview and confirm mutation. Browser latency ends at rendered authoritative state; CLI/agent at complete result or durable operation identity.",
+      "latencyScope": "user_response",
+      "minimumSamples": 36000,
+      "concurrency": 60,
+      "offeredPerSecond": 20,
+      "minimumThroughputPerSecond": 19.990000000000002,
+      "saturationSearchCeilingPerSecond": 80,
+      "latencyMilliseconds": {
+        "p50": 300,
+        "p95": 1000,
+        "p99": 2000
+      },
+      "queueDepthMaximum": 600,
+      "operationCompletionDeadlineSeconds": 300,
+      "failureWorkload": "Refresh/login/session revocation during API replica loss; retry interrupted mutation using same identity; forbidden direct calls remain denied.",
+      "sampleUnit": "Rendered authoritative browser responses or completed CLI/agent responses and durable acknowledgements in the stated interface mix. Long resource provisioning is a separate lifecycle trial.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "network",
+      "goal": "G12",
+      "workload": "10 tenant networks, 20 endpoints; equal fixed-rate 1-KiB IPv4 and IPv6 echo transactions across nodes plus policy-denial traffic. Separately run at least three complete network/subnet/address/policy create-update-delete trials per supported method with common durable acknowledgement limits.",
+      "latencyScope": "data_response",
+      "minimumSamples": 1000,
+      "concurrency": 20,
+      "offeredPerSecond": 100,
+      "minimumThroughputPerSecond": 99.95,
+      "saturationSearchCeilingPerSecond": 400,
+      "latencyMilliseconds": {
+        "p50": 1,
+        "p95": 5,
+        "p99": 10
+      },
+      "queueDepthMaximum": 200,
+      "operationCompletionDeadlineSeconds": 300,
+      "failureWorkload": "Lose one supported node/controller; 10-minute management outage; preserve in-scope flows, isolation, no address leaks or duplicate allocation.",
+      "sampleUnit": "One complete 1-KiB IPv4 or IPv6 echo transaction. Network control lifecycle uses separate real trials and common durable acknowledgement bounds.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "volume",
+      "goal": "G13",
+      "workload": "10 tenants with one 1-GiB volume each; 4-KiB random I/O, 70% read and 30% write, fsync every acknowledged write; fixed content seed 20260907. Separately run attach/resize/snapshot/restore/delete and digest readback with common durable acknowledgement limits.",
+      "latencyScope": "data_response",
+      "minimumSamples": 1000,
+      "concurrency": 32,
+      "offeredPerSecond": 1000,
+      "minimumThroughputPerSecond": 999.5,
+      "saturationSearchCeilingPerSecond": 4000,
+      "latencyMilliseconds": {
+        "p50": 2,
+        "p95": 10,
+        "p99": 20
+      },
+      "queueDepthMaximum": 320,
+      "operationCompletionDeadlineSeconds": 300,
+      "failureWorkload": "Lose a supported storage or attachment node; reject stale/multi-attach; snapshot/restore to another allowed node and compare all committed data.",
+      "sampleUnit": "One completed 4-KiB read or fsynced write. Attach, resize, snapshot and full restore use separate real lifecycle trials.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "image-artifact",
+      "goal": "G14",
+      "workload": "10 tenants, 100 signed 1-MiB OCI blobs and two approved 1-GiB VM images; 70% verified 1-MiB GET, 20% resumable upload chunks, 10% metadata. End-to-end image import and boot use the completion deadline; control mutations use common acknowledgement limits.",
+      "latencyScope": "data_response",
+      "minimumSamples": 1000,
+      "concurrency": 10,
+      "offeredPerSecond": 10,
+      "minimumThroughputPerSecond": 9.995000000000001,
+      "saturationSearchCeilingPerSecond": 40,
+      "latencyMilliseconds": {
+        "p50": 50,
+        "p95": 200,
+        "p99": 500
+      },
+      "queueDepthMaximum": 100,
+      "operationCompletionDeadlineSeconds": 900,
+      "failureWorkload": "Interrupt upload, lose cache/registry replica, revoke sharing and restore metadata/content; digest persists across tag changes and retained references survive GC.",
+      "sampleUnit": "One verified 1-MiB GET/upload chunk or bounded metadata response in the stated mix. Full image imports, registry round trips and VM boots are separate real lifecycle trials.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "compute",
+      "goal": "G15",
+      "workload": "10 Linux VMs across allowed nodes; guest workload writes and fsyncs 1-KiB numbered records and reads their digests at fixed rate. Separately run at least three complete trials per supported create/access/start/stop/resize/snapshot/restore/delete method; control uses common durable acknowledgement limits.",
+      "latencyScope": "data_response",
+      "minimumSamples": 1000,
+      "concurrency": 10,
+      "offeredPerSecond": 100,
+      "minimumThroughputPerSecond": 99.95,
+      "saturationSearchCeilingPerSecond": 400,
+      "latencyMilliseconds": {
+        "p50": 20,
+        "p95": 100,
+        "p99": 250
+      },
+      "queueDepthMaximum": 100,
+      "operationCompletionDeadlineSeconds": 900,
+      "failureWorkload": "Lose VM host and management plane separately; measure declared live or cold recovery within single-failure RTO, preserve committed digest and unique VM/charge identity.",
+      "sampleUnit": "One guest 1-KiB fsynced write/readback response. VM create, access, resize, snapshot, restore and delete use separate real lifecycle trials.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "kubernetes",
+      "goal": "G16",
+      "workload": "Two tenant clusters, three test workload replicas each; equal HTTP GET and durable 1-KiB write/readback requests through tenant service, 10 users. Separately exercise cluster lifecycle, scale and supported adjacent-version upgrade; control uses common acknowledgement limits.",
+      "latencyScope": "data_response",
+      "minimumSamples": 1000,
+      "concurrency": 10,
+      "offeredPerSecond": 100,
+      "minimumThroughputPerSecond": 99.95,
+      "saturationSearchCeilingPerSecond": 400,
+      "latencyMilliseconds": {
+        "p50": 20,
+        "p95": 100,
+        "p99": 250
+      },
+      "queueDepthMaximum": 100,
+      "operationCompletionDeadlineSeconds": 1800,
+      "failureWorkload": "Lose tenant worker/control-plane member and provider management separately; keep declared workload continuity; rotate/revoke credentials and restore isolated workload data.",
+      "sampleUnit": "One tenant-workload HTTP GET or durable 1-KiB write/readback response. Cluster create, scale, upgrade, access rotation, repair and restore use separate real lifecycle trials.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "object",
+      "goal": "G17",
+      "workload": "10 tenant buckets, 1000 versioned 1-MiB objects per bucket; 50% GET, 20% PUT, 20% bounded LIST, 10% DELETE; retention/denial negatives separate. Run same profile against local reference and remote backend; multipart and metadata mutations use common acknowledgement limits.",
+      "latencyScope": "data_response",
+      "minimumSamples": 1000,
+      "concurrency": 20,
+      "offeredPerSecond": 100,
+      "minimumThroughputPerSecond": 99.95,
+      "saturationSearchCeilingPerSecond": 400,
+      "latencyMilliseconds": {
+        "p50": 50,
+        "p95": 200,
+        "p99": 500
+      },
+      "queueDepthMaximum": 200,
+      "operationCompletionDeadlineSeconds": 300,
+      "failureWorkload": "Lose storage/gateway node, interrupt multipart completion and remote response; rotate/revoke credential; restore metadata plus versions with digest and retention checks.",
+      "sampleUnit": "One complete 1-MiB GET/PUT, bounded LIST or DELETE in the stated mix. Full metadata/object restore and credential lifecycle use separate real trials.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "backup",
+      "goal": "G18",
+      "workload": "10 tenants, each with 1-GiB representative volume, VM, Kubernetes or object data; statistical requests are 25% backup-policy create, 25% policy/schedule update, 25% status read, 25% policy delete in balanced reusable cycles. Separately run at least three complete backup, isolated restore and retention-aware copy-delete trials per declared data class, with unique copies and recovered bytes/ownership verification. Record copy/restore bytes per second separately; they are not policy-request throughput.",
+      "latencyScope": "durable_ack",
+      "minimumSamples": 1000,
+      "concurrency": 10,
+      "offeredPerSecond": 1,
+      "minimumThroughputPerSecond": 0.9995,
+      "saturationSearchCeilingPerSecond": 4,
+      "latencyMilliseconds": {
+        "p50": 100,
+        "p95": 500,
+        "p99": 1000
+      },
+      "queueDepthMaximum": 100,
+      "operationCompletionDeadlineSeconds": 3600,
+      "failureWorkload": "Target outage for 120 seconds, partial upload and control restart; verify off-cell RPO/RTO and retention, fail closed on partial copies, cleanup without deleting original data.",
+      "sampleUnit": "Durable backup policy/schedule create, update and delete acknowledgements, plus bounded policy/status reads. Full backup, isolated restore and retained-copy deletion are separate real lifecycle trials; policy throughput never represents copied or recovered data throughput.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "access",
+      "goal": "G19",
+      "workload": "10 tenants and 20 actors; equal SSH, Kubernetes and console methods where claimed; request/approve/use/revoke in fixed cycles, 60-second grants, at least 1000 access-response samples across claimed methods, with at least three complete lifecycle trials per method. Control acceptance uses common acknowledgement limits; first authorized access uses response thresholds.",
+      "latencyScope": "user_response",
+      "minimumSamples": 1000,
+      "concurrency": 20,
+      "offeredPerSecond": 10,
+      "minimumThroughputPerSecond": 9.995000000000001,
+      "saturationSearchCeilingPerSecond": 40,
+      "latencyMilliseconds": {
+        "p50": 100,
+        "p95": 500,
+        "p99": 1000
+      },
+      "queueDepthMaximum": 200,
+      "operationCompletionDeadlineSeconds": 300,
+      "failureWorkload": "Lose issuer/control replica; rotate key, revoke and restore state; grants expire at original deadline, restoration never revives access, wrong-target/cross-tenant denial.",
+      "sampleUnit": "One completed first authorized access or bounded access control response for each claimed SSH, Kubernetes or console method. Full approval, expiry, recovery and key-rotation journeys are separately counted real trials.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "support",
+      "goal": "G20",
+      "workload": "10 tenants, at most 1000 cases; 40% case create/update, 30% consent/status, 20% read/escalate, 10% resolve. Case acknowledgement uses common limits. Separately create at least three independent redacted 10-MiB bundles and complete access, routing failure and restore journeys; each bundle strictly below 300 seconds. Paid test offering uses non-financial data.",
+      "latencyScope": "user_response",
+      "minimumSamples": 1000,
+      "concurrency": 20,
+      "offeredPerSecond": 10,
+      "minimumThroughputPerSecond": 9.995000000000001,
+      "saturationSearchCeilingPerSecond": 40,
+      "latencyMilliseconds": {
+        "p50": 100,
+        "p95": 500,
+        "p99": 1000
+      },
+      "queueDepthMaximum": 200,
+      "operationCompletionDeadlineSeconds": 299,
+      "failureWorkload": "Disconnect external routing for 120 seconds, restart and restore; one durable case, preserved SLA clocks, revoked consent and no restored support grant.",
+      "sampleUnit": "One complete case/consent/read/escalate/resolve control response. Full redacted bundle creation, external routing recovery and restore are separately counted lifecycle trials.",
+      "minimumLifecycleTrialsPerMethod": 3
+    },
+    {
+      "id": "external",
+      "goal": "G21",
+      "workload": "10 tenants, at most 100 simultaneous real authorized external test resources; balanced lifecycle cycles through discover/adopt/provision/use/hold/resize/deprovision using two independent adapters. Every provision is paired with completed deprovision; the rate applies to acknowledgements, with resource-dependent steps waiting for actual completion. Run provider latency/ambiguity mix; preserve resource/operation/usage identity across adapter replacement.",
+      "latencyScope": "durable_ack",
+      "minimumSamples": 1000,
+      "concurrency": 20,
+      "offeredPerSecond": 0.1,
+      "minimumThroughputPerSecond": 0.09995,
+      "saturationSearchCeilingPerSecond": 0.4,
+      "latencyMilliseconds": {
+        "p50": 100,
+        "p95": 500,
+        "p99": 1000
+      },
+      "queueDepthMaximum": 200,
+      "operationCompletionDeadlineSeconds": 900,
+      "failureWorkload": "Rotate credentials, rate-limit and disconnect remote API for 120 seconds; restart after side effect and replace adapter; no duplicate resource, charge or orphan.",
+      "sampleUnit": "Durable acknowledgement of the stated real external lifecycle mix. Unique external effects, retries, provider completion and adapter replacement are counted separately from request throughput.",
+      "minimumLifecycleTrialsPerMethod": 3
+    }
+  ],
+  "human": {
+    "installAttentionMaximumMinutes": 120,
+    "developerMaximumMinutes": 120,
+    "diagnosisStrictlyBelowSeconds": 300,
+    "healthyToilMaximumMinutesPerDay": 30,
+    "representativeDays": 14,
+    "minimumIndependentOperators": 1,
+    "minimumIndependentDevelopers": 1
+  },
+  "scale": {
+    "twoCellCapacityRatioMinimum": 1.7,
+    "recommendedHeadroomMinimumPercent": 30,
+    "saturationStepPercent": 20,
+    "saturationStepSeconds": 300
+  }
+}

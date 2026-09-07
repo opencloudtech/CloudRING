@@ -10,6 +10,8 @@ spec:
   legacyWorkMap: LEGACY_WORK_MAP.md
   hubPrerequisites: HUB_PREREQUISITES.md
   measurementContract: MEASUREMENT_CONTRACT.md
+  measurementProfiles: measurement-profiles.json
+  deliverySlices: DELIVERY_SLICES.md
   evidencePolicy: EVIDENCE_POLICY.md
   verificationMatrix: VERIFICATION_MATRIX.md
   stateSchema: state.schema.json
@@ -24,13 +26,13 @@ spec:
       liveDeployment: required
     - id: G01
       file: goals/G01-disposable-public-development-installation.md
-      dependsOn: [G00]
+      dependsOn: []
       requirementIds: [CR-G01-DEV-INSTALL]
       status: not_started
       liveDeployment: required
     - id: G02
       file: goals/G02-production-ha-empty-provider.md
-      dependsOn: [G01]
+      dependsOn: [G00, G01]
       requirementIds: [CR-G02-HA-INSTALL]
       status: not_started
       liveDeployment: required
@@ -96,7 +98,7 @@ spec:
       liveDeployment: required
     - id: G13
       file: goals/G13-volume-cloud-product.md
-      dependsOn: [G12]
+      dependsOn: [G11]
       requirementIds: [CR-G13-VOLUME]
       status: not_started
       liveDeployment: required
@@ -108,7 +110,7 @@ spec:
       liveDeployment: required
     - id: G15
       file: goals/G15-compute-vm-cloud-product.md
-      dependsOn: [G14]
+      dependsOn: [G12, G14]
       requirementIds: [CR-G15-COMPUTE]
       status: not_started
       liveDeployment: required
@@ -148,21 +150,21 @@ spec:
       requirementIds: [CR-G21-EXTERNAL]
       status: not_started
       liveDeployment: required
-    - id: G22
-      file: goals/G22-one-engineer-operations-and-autonomous-recovery.md
-      dependsOn: [G21]
-      requirementIds: [CR-G22-OPERATIONS]
-      status: not_started
-      liveDeployment: required
     - id: G23
       file: goals/G23-zero-downtime-upgrades-and-failure-resilience.md
-      dependsOn: [G22]
-      requirementIds: [CR-G23-RESILIENCE]
+      dependsOn: [G21]
+      requirementIds: [CR-G23-RESILIENCE, CR-G23-OPERATIONS-ENTRY]
+      status: not_started
+      liveDeployment: required
+    - id: G22
+      file: goals/G22-one-engineer-operations-and-autonomous-recovery.md
+      dependsOn: [G23]
+      requirementIds: [CR-G22-OPERATIONS]
       status: not_started
       liveDeployment: required
     - id: G24
       file: goals/G24-portable-provider-certification.md
-      dependsOn: [G23]
+      dependsOn: [G22, G23]
       requirementIds: [CR-G24-PORTABILITY]
       status: not_started
       liveDeployment: required

@@ -19,7 +19,7 @@ func TestVerifyShippedRoadmap(t *testing.T) {
 	if code != exitSuccess {
 		t.Fatalf("run() code = %d, stderr = %q", code, stderr.String())
 	}
-	if got, want := stdout.String(), "cloudring_roadmap_verified goals=28 requirements=28\n"; got != want {
+	if got, want := stdout.String(), "cloudring_roadmap_verified goals=28 requirements=29\n"; got != want {
 		t.Fatalf("stdout = %q, want %q", got, want)
 	}
 	if stderr.Len() != 0 {

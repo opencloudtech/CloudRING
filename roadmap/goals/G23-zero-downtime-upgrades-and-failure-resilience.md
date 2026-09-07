@@ -30,8 +30,13 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
 
 ## Required journeys
 
-1. Install signed G22 prerelease, create representative resources/usage and
-   upgrade core/products to signed G23 candidate under one-second probes.
+1. Verify CR-G23-OPERATIONS-ENTRY as defined in `../DELIVERY_SLICES.md`: adjacent
+   immutable signed releases N-1/N contain every prior accepted product and the
+   functional G22 diagnose/repair/restore/operations journeys needed by this
+   campaign. Install N-1, create representative resources/usage and upgrade
+   core/products to N under one-second probes. G22 human/toil qualification may
+   follow this campaign on the same candidate; affected checks repeat after any
+   runtime change.
 2. Fail a canary and prove automatic rollback before wider exposure.
 3. Exercise rollback before and restore/recovery after the documented irreversible
    migration boundary.
@@ -39,7 +44,9 @@ change must be deployed and live-verified at `https://hub.cloudring.org`.
    PostgreSQL, VM, product, usage and audit continuity plus cleanup.
 5. Fail secret, database, storage, network and remote connector components in
    separate bounded drills.
-6. Verify cumulative G00-G22 journeys after every recovery.
+6. Verify cumulative G00-G21 and all required functional G22 journeys after
+   every recovery. Full independent G22 human/toil qualification remains required
+   before G24.
 
 ## Hub and downstream delivery
 

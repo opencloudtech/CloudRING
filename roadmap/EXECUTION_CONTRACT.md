@@ -81,12 +81,20 @@ For each goal:
 
 `roadmap.yaml` is the compact status index. From `in_progress` onward, the
 matching `roadmap/state/GNN.json` record is authoritative detail; CI must reject
-an index/state mismatch, an invalid dependency transition or delivered state
+an index/state mismatch, an invalid qualification dependency transition or delivered state
 without immutable proof. The evidence validator additionally enforces
 `expiresAt > observedAt`, goal-specific freshness ceilings, verified
 attestations, resolvability, the exact goal-specific deployment target set, pin
 equality and the protected/public redaction policy defined in
 `EVIDENCE_POLICY.md`; JSON Schema alone cannot express those semantic checks.
+
+The intermediate C01–C28 execution slices in `DELIVERY_SLICES.md` preserve these
+full goal requirements. Starting an independent slice may set its owning goal to
+`in_progress` before qualification dependencies finish, but only with a matching
+state record and explicit remaining blockers. `delivered` always requires the
+complete goal, every qualification dependency and verified evidence. C01 baseline
+acceptance is the entry to C02/G01; it does not falsely complete G00's later
+clean-room/downstream/live chain.
 
 Only one active write PR/MR per repository is allowed. Read-only research and
 verification may proceed in parallel. A compatible batch of already accepted
