@@ -26,7 +26,7 @@ jobs:
       id-token: write
       attestations: write
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -36,32 +36,13 @@ jobs:
           go-version: 1.25.7
           check-latest: false
           cache: true
-      - name: Build release bundle and CycloneDX SBOM
+      - name: Independently reproduce release bundle and CycloneDX SBOM
         shell: bash
         run: |
           set -euo pipefail
-          export GOOS=linux GOARCH=amd64 CGO_ENABLED=0
-          export SOURCE_DATE_EPOCH
-          SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
-          root="dist/cloudring-linux-amd64"
-          mkdir -p "${root}/bin"
-          while IFS= read -r command_dir; do
-            command_name="$(basename "${command_dir}")"
-            go build -mod=readonly -trimpath -buildvcs=true \
-              -ldflags='-s -w -buildid=' \
-              -o "${root}/bin/${command_name}" "./${command_dir}"
-          done < <(find cmd -mindepth 1 -maxdepth 1 -type d -print | sort)
-          cp LICENSE NOTICE "${root}/"
-          go run github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@v1.10.0 \
-            mod -json -test -licenses -output dist/cloudring-sbom.cdx.json .
-          jq -e \
-            '.bomFormat == "CycloneDX" and .specVersion == "1.6" and (.components | length) >= 1' \
-            dist/cloudring-sbom.cdx.json >/dev/null
-          cp dist/cloudring-sbom.cdx.json "${root}/"
-          tar --sort=name --mtime="@${SOURCE_DATE_EPOCH}" --owner=0 --group=0 \
-            --numeric-owner -C dist -czf dist/cloudring-linux-amd64.tar.gz \
-            cloudring-linux-amd64
-          sha256sum dist/cloudring-linux-amd64.tar.gz \
+          bash .github/scripts/build-release-bundle.sh dist
+          # Preserve the existing checksum filename for current consumers.
+          awk '$2 == "cloudring-linux-amd64.tar.gz"' dist/SHA256SUMS \
             > dist/cloudring-linux-amd64.tar.gz.sha256
       - name: Upload release bundle and SBOM
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -71,6 +52,7 @@ jobs:
             dist/cloudring-linux-amd64.tar.gz
             dist/cloudring-linux-amd64.tar.gz.sha256
             dist/cloudring-sbom.cdx.json
+            dist/SHA256SUMS
           if-no-files-found: error
           retention-days: 30
       - name: Attest release bundle provenance
@@ -115,19 +97,25 @@ jobs:
         run: |
           set -euo pipefail
           source_date_epoch="$(git show -s --format=%ct HEAD)"
-          install -d -m 0755 dist/etcd-recovery-worker
+          test -z "$(git status --porcelain)"
+          bash .github/scripts/checkout-release-source.sh \
+            "${GITHUB_SHA}" "${RUNNER_TEMP}/worker-source"
           for attempt in 1 2; do
+            (
+            cd "${RUNNER_TEMP}/worker-source"
             GOCACHE="${RUNNER_TEMP}/go-cache-${attempt}" \
             SOURCE_DATE_EPOCH="${source_date_epoch}" \
             CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
               go build -mod=readonly -trimpath -buildvcs=true \
                 -ldflags='-s -w -buildid=' \
-                -o "${RUNNER_TEMP}/cloudring-etcd-recovery-worker-${attempt}" \
-                ./cmd/cloudring-etcd-recovery-worker
+              -o "${RUNNER_TEMP}/cloudring-etcd-recovery-worker-${attempt}" \
+              ./cmd/cloudring-etcd-recovery-worker
+            )
           done
           cmp \
             "${RUNNER_TEMP}/cloudring-etcd-recovery-worker-1" \
             "${RUNNER_TEMP}/cloudring-etcd-recovery-worker-2"
+          install -d -m 0755 dist/etcd-recovery-worker
           install -m 0555 \
             "${RUNNER_TEMP}/cloudring-etcd-recovery-worker-1" \
             dist/etcd-recovery-worker/cloudring-etcd-recovery-worker
@@ -414,9 +402,11 @@ jobs:
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
           subject-path: dist/etcd-recovery-worker-identity.json
-      - name: Verify authenticated immutable image pull
+      - name: Verify anonymous immutable image pull
         shell: bash
         run: |
           set -euo pipefail
+          anonymous_config="$(mktemp -d)"
+          trap 'rm -rf "${anonymous_config}"' EXIT
           docker image rm "${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }}" 2>/dev/null || true
-          docker pull "${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }}"
+          docker --config "${anonymous_config}" pull "${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }}"

@@ -10,6 +10,14 @@ individual components receive telemetry, backup or repair behavior.
 All reusable implementation must merge into public OSS and the exact accepted
 change must be deployed and live-verified at `https://hub.cloudring.org`.
 
+## Qualification sequence
+
+C25/G23 verifies this goal's functional entry on adjacent signed releases before
+its integrated campaign. C26 completes every original G22 criterion, including
+the independent human walkthrough and 14-day measurement, on the same accepted
+candidate. A runtime change creates a new candidate and repeats affected G23
+checks before G24; neither goal is delivered by the other's partial evidence.
+
 ## Scope
 
 - Unify existing SLOs, dashboards, alerts, dependency health, GitOps drift,

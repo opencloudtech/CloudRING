@@ -5,7 +5,7 @@
     ".github/workflows/ci.yml": "1f2c85ca56d66ec99942a6a8df51a2f324ebd54eeb4728bcffdc5033daa18ea2",
     ".github/workflows/cla-dco.yml": "5c3437cfa6ec997d97a3e9218a87114c1bb14f524e648d0df775f5bc6340430f",
     ".github/workflows/license.yml": "d8032e889057a6e760c080e6adb10942ed59b8abd45f92951b956a95b79733df",
-    ".github/workflows/release-provenance.yml": "a6e44d232964d23f32777da25f5255b20d0db1fbcb3cc18418f0c11b3042d11e",
+    ".github/workflows/release-provenance.yml": "8487fa35aee3241a240cf1ed1bf27f169ec2becb864cc378043fa8f511671a45",
     ".github/workflows/security.yml": "275ad9c29825e88293833bb61af2dd2098d6f8b11447422f70fb4ec22abede51",
     ".github/workflows/supply-chain.yml": "253f133136bee0347c8cae20cadd6646453b4816cd3cfc25cd9ed35aaf93465a"
   }

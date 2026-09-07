@@ -84,6 +84,8 @@ type Spec struct {
 	LegacyWorkMap            string   `yaml:"legacyWorkMap"`
 	HubPrerequisites         string   `yaml:"hubPrerequisites"`
 	MeasurementContract      string   `yaml:"measurementContract"`
+	MeasurementProfiles      string   `yaml:"measurementProfiles"`
+	DeliverySlices           string   `yaml:"deliverySlices"`
 	EvidencePolicy           string   `yaml:"evidencePolicy"`
 	VerificationMatrix       string   `yaml:"verificationMatrix"`
 	StateSchema              string   `yaml:"stateSchema"`
@@ -310,13 +312,16 @@ func (r *Roadmap) validate(repository *os.Root, options ValidationOptions) error
 	}
 
 	if !slices.Equal(order, requiredGoalOrder) {
-		blockers = append(blockers, "deliveryOrder must be exactly G00-G24, G27, G25, G26")
+		blockers = append(blockers, "deliveryOrder must be exactly "+strings.Join(requiredGoalOrder, ", "))
 	}
 	blockers = append(blockers, validateCanonicalDependencies(goals)...)
 	blockers = append(blockers, dependencyCycles(goals)...)
 	blockers = append(blockers, validateStatuses(goals)...)
 	blockers = append(blockers, validateReleaseBoundary(goals)...)
 	blockers = append(blockers, validateInvariants(r.Spec.Invariant)...)
+	if err := validateMeasurementProfiles(repository, r.Spec.MeasurementProfiles); err != nil {
+		blockers = append(blockers, "measurementProfiles: "+err.Error())
+	}
 	if stateSchema != nil && evidenceSchema != nil {
 		blockers = append(blockers, validateStateRecords(repository, r, stateSchema, evidenceSchema, options)...)
 	}
@@ -328,7 +333,9 @@ func (r *Roadmap) validate(repository *os.Root, options ValidationOptions) error
 	return nil
 }
 
-// CanTransition verifies the canonical state machine and dependency barrier.
+// CanTransition verifies the state machine and qualification dependencies.
+// Starting independent work is not acceptance; only delivered requires every
+// prerequisite to be delivered. ValidateWithOptions still requires full proof.
 func (r *Roadmap) CanTransition(goalID string, target Status) error {
 	if r == nil {
 		return errors.New("roadmap is nil")
@@ -346,7 +353,7 @@ func (r *Roadmap) CanTransition(goalID string, target Status) error {
 	if !allowedTransition(goal.Status, target) {
 		return fmt.Errorf("%s cannot transition from %s to %s", goalID, goal.Status, target)
 	}
-	if target != StatusInProgress && target != StatusDelivered {
+	if target != StatusDelivered {
 		return nil
 	}
 
@@ -379,6 +386,8 @@ func (s Spec) contractFiles() []struct {
 		{label: "legacyWorkMap", name: s.LegacyWorkMap},
 		{label: "hubPrerequisites", name: s.HubPrerequisites},
 		{label: "measurementContract", name: s.MeasurementContract},
+		{label: "measurementProfiles", name: s.MeasurementProfiles},
+		{label: "deliverySlices", name: s.DeliverySlices},
 		{label: "evidencePolicy", name: s.EvidencePolicy},
 		{label: "verificationMatrix", name: s.VerificationMatrix},
 		{label: "stateSchema", name: s.StateSchema},
@@ -528,34 +537,41 @@ func validateYAMLTree(node *yaml.Node) error {
 
 func canonicalGoalOrder() []string {
 	goals := make([]string, 0, 28)
-	for number := 0; number <= 24; number++ {
+	for number := 0; number <= 21; number++ {
 		goals = append(goals, fmt.Sprintf("G%02d", number))
 	}
-	return append(goals, "G27", "G25", "G26")
+	return append(goals, "G23", "G22", "G24", "G27", "G25", "G26")
 }
 
-func validateCanonicalDependencies(goals map[string]*Goal) []string {
-	var blockers []string
-	for number := 0; number <= 24; number++ {
+// Qualification order preserves every original goal's complete acceptance.
+// DELIVERY_SLICES.md defines the smaller releases that can precede it.
+func canonicalDependencies() map[string][]string {
+	dependencies := make(map[string][]string, 28)
+	for number := 1; number <= 24; number++ {
 		id := fmt.Sprintf("G%02d", number)
-		goal, exists := goals[id]
-		if !exists {
-			blockers = append(blockers, id+" goal is required")
-			continue
-		}
-		var expected []string
-		if number > 0 {
-			expected = []string{fmt.Sprintf("G%02d", number-1)}
-		}
-		if !slices.Equal(goal.DependsOn, expected) {
-			blockers = append(blockers, fmt.Sprintf("%s: dependsOn must be exactly %v", id, expected))
-		}
+		dependencies[id] = []string{fmt.Sprintf("G%02d", number-1)}
 	}
 	for id, expected := range map[string][]string{
+		"G00": nil,
+		"G01": nil,
+		"G02": {"G00", "G01"},
+		"G13": {"G11"},
+		"G15": {"G12", "G14"},
+		"G23": {"G21"},
+		"G22": {"G23"},
+		"G24": {"G22", "G23"},
 		"G27": {"G24"},
 		"G25": {"G27"},
 		"G26": {"G27"},
 	} {
+		dependencies[id] = expected
+	}
+	return dependencies
+}
+
+func validateCanonicalDependencies(goals map[string]*Goal) []string {
+	var blockers []string
+	for id, expected := range canonicalDependencies() {
 		goal, exists := goals[id]
 		if !exists {
 			blockers = append(blockers, id+" goal is required")
@@ -571,7 +587,7 @@ func validateCanonicalDependencies(goals map[string]*Goal) []string {
 func validateStatuses(goals map[string]*Goal) []string {
 	var blockers []string
 	for _, goal := range goals {
-		if goal.Status != StatusInProgress && goal.Status != StatusDelivered {
+		if goal.Status != StatusDelivered {
 			continue
 		}
 		for _, dependency := range goal.DependsOn {

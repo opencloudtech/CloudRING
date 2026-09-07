@@ -39,7 +39,8 @@ Read, in order:
 7. [ISSUE_MAP.md](ISSUE_MAP.md), [LEGACY_WORK_MAP.md](LEGACY_WORK_MAP.md) and
    [HUB_PREREQUISITES.md](HUB_PREREQUISITES.md) for ownership and live gates.
 8. [REFERENCES.md](REFERENCES.md) for the standards and primary sources used.
-9. The next goal whose dependencies are all complete.
+9. [DELIVERY_SLICES.md](DELIVERY_SLICES.md) for C01–C28 intermediate releases,
+   full-qualification ownership and implementation entry conditions.
 
 `roadmap.yaml` is the machine-readable dependency graph and compact status index.
 Goal files are the normative acceptance contracts. Once a goal starts, its
@@ -83,14 +84,18 @@ goals so that a stale snapshot cannot become a release claim.
 
 ## Sequencing rule
 
-Goals execute in the dependency order encoded in `roadmap.yaml`. The CloudRING
-1.0 path ends at G27 after G24; it does not depend on G25 multi-region or G26
-federation. Those post-1.0 tracks depend on the released standalone provider and
-may proceed independently of each other. Research, design spikes and read-only
-audits for a later goal may run early, but production implementation cannot skip
-its declared dependencies. This prevents parallel scaffolds, duplicate platform
-kernels and an unmaintainable partial system without making future federation a
-release blocker.
+Implementation follows the C01–C28 entry conditions in `DELIVERY_SLICES.md`.
+`roadmap.yaml` encodes **full qualification**, so `in_progress` permits independent
+work but never readiness. `delivered` requires all declared dependencies and the
+complete original goal evidence. C01 accepts the reproducible delivery baseline
+before C02/G01; full G00 downstream/live qualification completes with C08 before
+G02 is delivered. G13 can qualify independently of G12; G15 requires both Network
+and Image/Volume qualification. G23's functional G22 entry is proved before its
+campaign, G22 human qualification follows on that candidate, and G24 needs both.
+
+The CloudRING 1.0 path ends at G27 after G24. G25 multi-region and G26 federation
+remain independent post-1.0 tracks requiring G27. No intermediate developer
+release is CloudRING or OCS 1.0, and no partial slice closes a complete G goal.
 
 Every goal must finish the same delivery chain:
 
