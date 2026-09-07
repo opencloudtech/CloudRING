@@ -82,6 +82,11 @@ func runDrillPreflight(ctx context.Context, arguments []string, stdout io.Writer
 	flags.SetOutput(io.Discard)
 	planPath := flags.String("plan", "", "strict versioned drill plan JSON")
 	adapterPath := flags.String("adapter", "", "absolute reviewed adapter executable")
+	var adapterEnvironmentNames []string
+	flags.Func("adapter-env", "explicit environment variable name to pass to the pinned adapter; repeat for each name", func(name string) error {
+		adapterEnvironmentNames = append(adapterEnvironmentNames, name)
+		return kubeconfigpipe.ValidateEnvironmentNames(adapterEnvironmentNames)
+	})
 	approvalPath := flags.String("approval", "", "new owner-only approval report")
 	kubeconfigFD := flags.Int("kubeconfig-fd", -1, "pipe descriptor containing kubeconfig; consumed once and replayed in memory")
 	timeout := flags.Duration("timeout", 2*time.Minute, "adapter execution timeout")
@@ -96,7 +101,7 @@ func runDrillPreflight(ctx context.Context, arguments []string, stdout io.Writer
 		return errors.New("read backup drill pipe-backed kubeconfig")
 	}
 	defer replay.Close()
-	adapter, err := drill.PinAdapter(*adapterPath, *timeout, replay)
+	adapter, err := drill.PinAdapterWithEnvironmentNames(*adapterPath, *timeout, replay, adapterEnvironmentNames)
 	if err != nil {
 		return err
 	}
@@ -129,6 +134,11 @@ func runDrillApply(ctx context.Context, arguments []string, stdout io.Writer, re
 	planPath := flags.String("plan", "", "strict versioned drill plan JSON")
 	approvalPath := flags.String("approval", "", "owner-only approval report")
 	adapterPath := flags.String("adapter", "", "absolute reviewed adapter executable")
+	var adapterEnvironmentNames []string
+	flags.Func("adapter-env", "explicit environment variable name to pass to the pinned adapter; repeat for each name", func(name string) error {
+		adapterEnvironmentNames = append(adapterEnvironmentNames, name)
+		return kubeconfigpipe.ValidateEnvironmentNames(adapterEnvironmentNames)
+	})
 	journalPath := flags.String("journal", "", "owner-only append-only drill journal")
 	receiptPath := flags.String("receipt", "", "new owner-only execution receipt")
 	kubeconfigFD := flags.Int("kubeconfig-fd", -1, "pipe descriptor containing kubeconfig; consumed once and replayed in memory")
@@ -150,7 +160,7 @@ func runDrillApply(ctx context.Context, arguments []string, stdout io.Writer, re
 		return errors.New("read backup drill pipe-backed kubeconfig")
 	}
 	defer replay.Close()
-	adapter, err := drill.PinAdapter(*adapterPath, *timeout, replay)
+	adapter, err := drill.PinAdapterWithEnvironmentNames(*adapterPath, *timeout, replay, adapterEnvironmentNames)
 	if err != nil {
 		return err
 	}
@@ -188,6 +198,11 @@ func runDrillRollback(ctx context.Context, arguments []string, stdout io.Writer)
 	planPath := flags.String("plan", "", "strict versioned drill plan JSON")
 	approvalPath := flags.String("approval", "", "owner-only approval report")
 	adapterPath := flags.String("adapter", "", "absolute reviewed adapter executable")
+	var adapterEnvironmentNames []string
+	flags.Func("adapter-env", "explicit environment variable name to pass to the pinned adapter; repeat for each name", func(name string) error {
+		adapterEnvironmentNames = append(adapterEnvironmentNames, name)
+		return kubeconfigpipe.ValidateEnvironmentNames(adapterEnvironmentNames)
+	})
 	journalPath := flags.String("journal", "", "owner-only append-only drill journal")
 	confirmation := flags.String("confirm", "", "exact preflight-bound approval tuple")
 	kubeconfigFD := flags.Int("kubeconfig-fd", -1, "pipe descriptor containing kubeconfig; consumed once and replayed in memory")
@@ -200,7 +215,7 @@ func runDrillRollback(ctx context.Context, arguments []string, stdout io.Writer)
 		return errors.New("read backup drill pipe-backed kubeconfig")
 	}
 	defer replay.Close()
-	adapter, err := drill.PinAdapter(*adapterPath, *timeout, replay)
+	adapter, err := drill.PinAdapterWithEnvironmentNames(*adapterPath, *timeout, replay, adapterEnvironmentNames)
 	if err != nil {
 		return err
 	}

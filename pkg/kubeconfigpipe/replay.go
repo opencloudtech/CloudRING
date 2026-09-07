@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -60,6 +61,10 @@ func NewFromFD(fd int) (*Replay, error) {
 // complete process tree before invoking completion; prefer Run for the safe
 // combined lifecycle.
 func (replay *Replay) Attach(command *exec.Cmd) (func() error, error) {
+	return replay.attach(command, nil)
+}
+
+func (replay *Replay) attach(command *exec.Cmd, environmentNames []string) (func() error, error) {
 	if replay == nil || command == nil || command.Process != nil {
 		return nil, errors.New("invalid kubeconfig replay command")
 	}
@@ -88,7 +93,7 @@ func (replay *Replay) Attach(command *exec.Cmd) (func() error, error) {
 	if environment == nil {
 		environment = os.Environ()
 	}
-	command.Env = restrictedEnvironment(environment, fd)
+	command.Env = restrictedEnvironmentWithNames(environment, fd, environmentNames)
 
 	writeDone := make(chan error, 1)
 	go func() {
@@ -136,6 +141,10 @@ func (replay *Replay) Close() error {
 }
 
 func restrictedEnvironment(environment []string, kubeconfigFD int) []string {
+	return restrictedEnvironmentWithNames(environment, kubeconfigFD, nil)
+}
+
+func restrictedEnvironmentWithNames(environment []string, kubeconfigFD int, environmentNames []string) []string {
 	clean := make([]string, 0, len(environment)+2)
 	for _, entry := range environment {
 		name, _, ok := strings.Cut(entry, "=")
@@ -145,7 +154,7 @@ func restrictedEnvironment(environment []string, kubeconfigFD int) []string {
 		allowed := name == "PATH" || name == "HOME" || name == "LANG" || name == "SSL_CERT_FILE" || name == "SSL_CERT_DIR" ||
 			name == "HTTP_PROXY" || name == "HTTPS_PROXY" || name == "NO_PROXY" || name == "http_proxy" || name == "https_proxy" || name == "no_proxy" ||
 			strings.HasPrefix(name, "LC_")
-		if allowed {
+		if allowed || slices.Contains(environmentNames, name) {
 			clean = append(clean, entry)
 		}
 	}

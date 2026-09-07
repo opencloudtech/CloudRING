@@ -3,7 +3,7 @@
 
 // Command fakeadapter is a deterministic external protocol conformance helper.
 // It is test-only and selects failure injection solely from the synthetic
-// operation ID; it never accepts credentials, paths, or ambient configuration.
+// operation ID. Environment transport checks use only fixed synthetic values.
 package main
 
 import (
@@ -42,6 +42,20 @@ func main() {
 	decoder.DisallowUnknownFields()
 	if decoder.Decode(&request) != nil || request.RequestSHA256 != drill.AdapterRequestSHA256(request) {
 		os.Exit(3)
+	}
+	if strings.Contains(request.OperationID, "environment") {
+		for name, expected := range map[string]string{
+			"CLOUDRING_TEST_APPLICATION_KEY":    "synthetic-application-value-271828",
+			"CLOUDRING_TEST_APPLICATION_SECRET": "synthetic-application-secret-314159", // gitleaks:allow -- synthetic test-only value shared by the CLI and fake adapter.
+			"CLOUDRING_TEST_CONSUMER_KEY":       "synthetic-consumer-value-161803",
+		} {
+			if os.Getenv(name) != expected {
+				os.Exit(9)
+			}
+		}
+		if os.Getenv("CLOUDRING_TEST_UNSELECTED") != "" {
+			os.Exit(10)
+		}
 	}
 	if strings.HasPrefix(request.OperationID, "crash-") {
 		os.Exit(4)
@@ -95,7 +109,18 @@ func main() {
 			})
 		}
 	}
+	if strings.Contains(request.OperationID, "environment-echo") {
+		response.Evidence.Ref = "evidence/" + os.Getenv("CLOUDRING_TEST_APPLICATION_KEY")
+	}
 	response.ResponseSHA256 = drill.AdapterResponseSHA256(response)
+	if strings.Contains(request.OperationID, "environment-echo-escaped") {
+		payload, err := json.Marshal(response)
+		if err != nil {
+			os.Exit(5)
+		}
+		_, _ = os.Stdout.WriteString(strings.ReplaceAll(string(payload), "synthetic-application", `\u0073ynthetic-application`))
+		return
+	}
 	if json.NewEncoder(os.Stdout).Encode(response) != nil {
 		os.Exit(5)
 	}
