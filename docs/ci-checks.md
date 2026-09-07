@@ -32,7 +32,7 @@ The public CI contract covers these checks:
 | Check | Contract |
 | --- | --- |
 | Go tests | The public module must pass tests on supported minimum/current Go releases, plus race, vet, read-only module graph, and build checks. |
-| PostgreSQL integration | The transactional-state CAS, migrations, digest, and concurrent-writer behavior must pass against a real digest-pinned PostgreSQL service with synthetic, non-secret test configuration. |
+| PostgreSQL integration | Transactional-state CAS, migrations, concurrent writers, and the public runtime/session journey must pass against real digest-pinned PostgreSQL. The pinned Linux test container also exercises interrupted guest database directory setup and ownership rejection as UID 0; it asserts that identity before running these filesystem tests. |
 | Windows | The same unit suite is run on `windows-latest` as a portability signal. Native Windows support is not a release-readiness blocker for the current goal. |
 | OCS validation | Every shipped connector package selected by the shared CI package list must pass `go run ./cmd/ocsctl validate`. |
 | OCS conformance | The same exact shipped connector packages must pass `go run ./cmd/ocsctl conformance`; validation cannot be green for an artifact that CI omits from conformance. |
@@ -91,7 +91,7 @@ granted.
 ## Release provenance
 
 `.github/workflows/release-provenance.yml` is triggered only by pushes to
-`main` or `v*` tags, and both jobs additionally require `push`,
+`main` or `v*` tags, and all three jobs additionally require `push`,
 `github.ref_protected`, and the exact `main|v*` ref shape. It has no
 `workflow_dispatch` or pull-request trigger. A protected tag ruleset is
 therefore a prerequisite for version-tag publication. One job builds all
@@ -99,7 +99,7 @@ public Go commands for Linux AMD64 with read-only modules and embedded VCS
 metadata, packages `LICENSE`, `NOTICE`, and the module CycloneDX SBOM, records
 the bundle checksum, and creates GitHub artifact attestations.
 
-The image job independently reproduces the worker binary and two OCI image
+The recovery image job independently reproduces the worker binary and two OCI image
 layouts, checks their Linux AMD64 subject manifest digests are identical, and
 requires the separately pushed registry subject to match that reviewed digest.
 The official `etcdutl` 3.6.14 source is rebuilt twice with Go 1.26.8 and
@@ -114,8 +114,21 @@ published digest; component inventory and identity attestations bind their own
 files rather than being mislabeled as image SBOMs. Finally the job logs out and
 requires an anonymous digest pull.
 
-Job-local `packages`, `id-token`, and `attestations` writes are limited to those
-two exact guarded release jobs. The first GHCR package creation may still need
+The development image job consumes the same run's reproduced command bundle,
+checks its checksums and embedded clean source identity, and compares the
+direct Linux installer asset with its bundled executable. It verifies the
+unchanged Ubuntu QCOW2 and package manifest against Canonical's signed
+checksums and the separately reviewed hashes. Two independent OCI builds for
+each development image must match the pushed subject. The runtime image gets
+a Syft package inventory; the guest SBOM uses Canonical's signed package
+manifest and explicitly records that inventory method. The exact BOM and
+image identities are attested. Anonymous pulls of both published digests
+are required. These checks establish artifact identity, not live installation
+acceptance.
+
+Job-local `id-token` and `attestations` writes are limited to those three exact
+guarded release jobs. Only `recovery-worker-image` and `development-images`
+receive `packages: write`. The first GHCR package creation may still need
 an organization owner to set package visibility to public and confirm
 repository permission inheritance; the OCI source label links the package to
 this repository, but it does not override organization policy. A failed
