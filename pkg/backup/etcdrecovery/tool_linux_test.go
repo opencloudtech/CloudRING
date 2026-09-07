@@ -113,7 +113,7 @@ func main() {
   child := exec.Command("/bin/sleep", "30")
   if err := child.Start(); err != nil { os.Exit(2) }
   if err := os.WriteFile(filepath.Join(os.Getenv("TMPDIR"), "child.pid"), []byte(strconv.Itoa(child.Process.Pid)), 0600); err != nil { os.Exit(3) }
-  fmt.Println("etcdutl version: 3.6.13")
+  fmt.Println("etcdutl version: 3.6.14")
   fmt.Println("API version: 3.6")
 }`
 	if err := os.WriteFile(source, []byte(helper), 0o600); err != nil {

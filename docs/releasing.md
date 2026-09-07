@@ -6,8 +6,8 @@ the successful `release-provenance` run. Billing failures, missing runners,
 failed provenance, and incomplete builds leave the release unpublished.
 
 The workflow independently builds the Linux command bundle and its SBOM twice
-with separate Go build caches. The SBOM omits volatile serial/timestamp fields
-and binds its main module identity and graph references to the source commit,
+with separate Go build caches. The SBOM uses a content-derived UUIDv5 serial,
+omits wall-clock timestamps and binds its main module identity and graph references to the source commit,
 independent of Git tags. The archive uses fixed modes, the commit timestamp,
 fixed owners, sorted paths and a gzip
 header without local filename/time. A byte mismatch fails before attestation.
@@ -18,8 +18,27 @@ metadata does not acquire a dirty flag from the build itself.
 Each build uses a separate shallow checkout of the exact accepted commit,
 without tags. This preserves embedded VCS SHA/time while keeping Go's main
 module version independent of tags added after the main build. Reproduce with
-the exact Go toolchain pinned in the workflow, Linux/amd64 target and GNU tar;
+the exact Go toolchain pinned in the workflow, Linux/amd64 target, GNU tar and
+Python 3 (standard-library UUID generation only);
 using a different compiler is a different build input.
+
+The release compiler is Go 1.26.8, a supported patch release. The required
+pull-request build check also reproduces the complete bundle with this exact
+compiler. Before artifacts are uploaded or attested, pinned `govulncheck`
+examines every compiled command, including the recovery worker and its upstream
+`etcdutl` binary, against the current Go vulnerability database. Source scans
+alone cannot validate an older compiler embedded in a release. Findings or an
+unavailable scanner/database fail the release; update and reverify the affected
+build inputs before publication. Release executables retain symbol tables so
+the binary scan can identify compiled functions instead of falling back to
+reports for every package in a dependency module.
+
+The upstream recovery tool is rebuilt from the hash-pinned official etcd
+3.6.14 source using the release compiler, without source or dependency patches.
+Two independent builds must match the binary digest pinned by the recovery
+worker. The separately attested `etcdutl-source.json` records the source commit,
+archive hash, compiler and resulting binary hash. The real offline snapshot
+test restores with this exact executable.
 
 ## Repository prerequisites
 
@@ -72,7 +91,8 @@ The operator checks those three concrete values before running the sequence.
    Use `--predicate-type https://slsa.dev/provenance/v1` for provenance and
    `--predicate-type https://cyclonedx.org/bom` for the SBOM. Inspect the
    returned source SHA, guarded workflow and selected run identity. Verify
-   SLSA provenance for the worker identity/component-SBOM files, then verify
+   SLSA provenance for the worker identity/component-SBOM and
+   `etcdutl-source.json` files, then verify
    both SLSA and CycloneDX predicates for the published OCI digest from the
    same run with those source/workflow constraints. The identity's source SHA
    must match the accepted SHA; an older worker image is not this release.
@@ -84,7 +104,7 @@ The operator checks those three concrete values before running the sequence.
 5. Create a **draft** GitHub release with `gh release create TAG --repo
    opencloudtech/CloudRING --verify-tag --draft --prerelease --latest=false
    --notes-file RELEASE_NOTES`. Upload the bundle, SBOM, checksums, worker
-   identity, component SBOM and image SBOM using `gh release upload TAG FILES
+   identity, component SBOM, image SBOM and `etcdutl-source.json` using `gh release upload TAG FILES
    --repo opencloudtech/CloudRING`. Use an explicit reviewed file list, not an
    entire working directory. Also retain downloaded build-attestation bundles
    when offline verification is required.

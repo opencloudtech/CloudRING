@@ -10,6 +10,8 @@ LABEL org.opencontainers.image.source="https://github.com/opencloudtech/CloudRIN
 
 COPY --chown=65532:65532 --chmod=0555 dist/etcd-recovery-worker/cloudring-etcd-recovery-worker /usr/local/bin/cloudring-etcd-recovery-worker
 COPY --chown=65532:65532 --chmod=0555 dist/etcd-recovery-worker/etcdutl /usr/local/bin/etcdutl
+COPY --chown=65532:65532 --chmod=0444 LICENSE NOTICE /usr/share/licenses/cloudring/
+COPY --chown=65532:65532 --chmod=0444 dist/etcd-licenses/ /usr/share/licenses/etcd/
 
 USER 65532:65532
 WORKDIR /work
