@@ -131,3 +131,11 @@ gh attestation verify cloudring-linux-amd64.tar.gz \
 An attestation binds an artifact to its accepted source and build workflow; it
 does not replace vulnerability scanning, code review, release policy, or live
 service validation.
+
+The Linux bundle is now independently reproduced with separate build caches,
+stable SBOM fields and deterministic archive metadata before it is attested.
+Build artifacts retained by Actions for 30 days are not the permanent release.
+Follow [retained release publication](releasing.md) to verify the exact accepted
+run, attach all assets to a draft and publish an immutable versioned release.
+The workflow retains its existing minimal permissions; release administration
+and final publication use the maintainer's existing authenticated GitHub CLI.
