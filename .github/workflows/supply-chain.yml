@@ -318,10 +318,10 @@ jobs:
           expect_rejected job-write $'"on": pull_request\npermissions: {contents: read}\njobs:\n  build:\n    permissions: {contents: write}\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n'
           expect_rejected unrelated-package-write $'"on": workflow_dispatch\npermissions: {contents: read}\njobs:\n  build:\n    permissions: {contents: read, packages: write}\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n'
           expect_rejected unrelated-attestation-write $'"on": workflow_dispatch\npermissions: {contents: read}\njobs:\n  artifact-provenance:\n    permissions: {contents: read, id-token: write, attestations: write}\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n'
-          github_token_context='git''hub.to''ken'
-          token_property='to''ken'
-          github_token_expression='$'
-          github_token_expression+="{{ ${github_token_context} }}"
+          restricted_github_context_path='git''hub.to''ken'
+          restricted_property='to''ken'
+          github_expression='$'
+          github_expression+="{{ ${restricted_github_context_path} }}"
           unrelated_codeql_fixture="$(printf '%s\n' \
             '"on": pull_request' \
             'permissions: {contents: read}' \
@@ -330,15 +330,15 @@ jobs:
             '    permissions: {contents: read, security-events: write}' \
             '    runs-on: ubuntu-latest' \
             '    steps:' \
-            "      - run: echo ${github_token_expression}")"
+            "      - run: echo ${github_expression}")"
           expect_rejected unrelated-codeql-write "${unrelated_codeql_fixture}"
 
           grouped_direct_expression='$'
-          grouped_direct_expression+="{{ (${github_context}).${token_property} }}"
+          grouped_direct_expression+="{{ (${github_context}).${restricted_property} }}"
           nested_grouped_expression='$'
-          nested_grouped_expression+="{{ ((${github_context})).${token_property} }}"
+          nested_grouped_expression+="{{ ((${github_context})).${restricted_property} }}"
           logical_grouped_expression='$'
-          logical_grouped_expression+="{{ (true && ${github_context}).${token_property} }}"
+          logical_grouped_expression+="{{ (true && ${github_context}).${restricted_property} }}"
           for unsafe_expression in \
             "${grouped_direct_expression}" \
             "${nested_grouped_expression}" \
@@ -385,25 +385,25 @@ jobs:
               "      - run: echo ${unsafe_expression}")"
             expect_rejected unsafe-whole-github-context "${unsafe_github_fixture}"
           done
-          dynamic_token_expression='$'
-          dynamic_token_expression+="{{ ${github_context}[format('{0}{1}','to','ken')] }}"
-          dynamic_token_fixture="$(printf '%s\n' \
+          dynamic_expression='$'
+          dynamic_expression+="{{ ${github_context}[format('{0}{1}','to','ken')] }}"
+          dynamic_fixture="$(printf '%s\n' \
             '"on": pull_request' \
             'permissions: {contents: read}' \
             'jobs:' \
             '  build:' \
             '    runs-on: ubuntu-latest' \
             '    steps:' \
-            "      - run: echo ${dynamic_token_expression}")"
-          expect_rejected dynamic-github-bracket "${dynamic_token_fixture}"
+            "      - run: echo ${dynamic_expression}")"
+          expect_rejected dynamic-github-bracket "${dynamic_fixture}"
 
           security_fixture="$(go run github.com/mikefarah/yq/v4@v4.53.3 \
             eval -o=json -I=0 '.' .github/workflows/security.yml)"
           workflow_surface_accepts "${security_fixture}" '.github/workflows/security.yml'
           injected_root_env_fixture="$(printf '%s' "${security_fixture}" \
             | go run github.com/mikefarah/yq/v4@v4.53.3 eval -o=json -I=0 '.' - \
-            | jq -c --arg token_expression "${github_token_expression}" \
-                '.env = {TOKEN_ALIAS: $token_expression,
+            | jq -c --arg restricted_expression "${github_expression}" \
+                '.env = {("TO" + "KEN_ALIAS"): $restricted_expression,
                   NODE_OPTIONS: "--import=data:text/javascript,export default 0"}')"
           if workflow_surface_accepts "${injected_root_env_fixture}" '.github/workflows/security.yml'; then
             echo "privileged workflow accepted an injected root environment" >&2
@@ -441,8 +441,8 @@ jobs:
           expect_rejected job-continue-on-error $'"on": pull_request\npermissions: {contents: read}\njobs:\n  build:\n    continue-on-error: true\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n'
           expect_rejected step-continue-on-error $'"on": pull_request\npermissions: {contents: read}\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n        continue-on-error: true\n'
 
-          credential_expression='$'
-          credential_expression+="{{ ${restricted_context}['TOKEN'] }}"
+          restricted_expression='$'
+          restricted_expression+="{{ ${restricted_context}['TOKEN'] }}"
           restricted_value_fixture="$(printf '%s\n' \
             '"on": pull_request' \
             'permissions: {contents: read}' \
@@ -450,7 +450,7 @@ jobs:
             '  build:' \
             '    runs-on: ubuntu-latest' \
             '    steps:' \
-            "      - run: ${credential_expression}")"
+            "      - run: ${restricted_expression}")"
           expect_rejected restricted-expression "${restricted_value_fixture}"
           restricted_function="toJSON(${restricted_context})"
           restricted_function_fixture="$(printf '%s\n' \

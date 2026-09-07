@@ -32,26 +32,46 @@ var directContentRules = []contentRule{
 }
 
 var (
-	credentialKeyPattern        = regexp.MustCompile(`(?i)(?:^|[\s,{])["']?([a-z][a-z0-9_-]*)["']?\s*([:=])`)
-	environmentReferencePattern = regexp.MustCompile(`^(?:\$\{[A-Z_][A-Z0-9_]*\}|\$[A-Z_][A-Z0-9_]*|(?:os[.])?(?:Getenv|LookupEnv)[(]["'][A-Z_][A-Z0-9_]*["'][)])$`)
+	credentialKeyPattern        = regexp.MustCompile(`(?i)(?:^|[\s,{])["']?([a-z][a-z0-9_.-]*)["']?\s*([:=])`)
+	xmlCredentialPattern        = regexp.MustCompile(`(?i)<\s*([a-z][a-z0-9_.:-]*)\s*>\s*([^<\r\n]+?)\s*</`)
+	urlCredentialPattern        = regexp.MustCompile(`(?i)\b[a-z][a-z0-9+.-]{1,31}://[^/\s:@]+:([^@\s/]+)@[^/\s]+`)
+	environmentReferencePattern = regexp.MustCompile(`^(?:\$\{[A-Z_][A-Z0-9_]*\}|(?:os[.])?(?:Getenv|LookupEnv)[(]["'][A-Z_][A-Z0-9_]*["'][)])$`)
 	environmentNamePattern      = regexp.MustCompile(`^[A-Z_][A-Z0-9_]*$`)
 	dnsReferencePattern         = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?$`)
 	structuredReferencePattern  = regexp.MustCompile(`^(?:secretref|secretstore|credentialref)[.][a-z0-9](?:[a-z0-9._:/-]*[a-z0-9])?$`)
 	goTemplateReferencePattern  = regexp.MustCompile(`^{{-?\s*\.[A-Za-z][A-Za-z0-9_.]*\s*-?}}$`)
 	ipv4TokenPattern            = regexp.MustCompile(`\b(?:[0-9]{1,3}[.]){3}[0-9]{1,3}\b`)
 	ipv6TokenPattern            = regexp.MustCompile(`\[?[0-9A-Fa-f:]*:[0-9A-Fa-f:]+\]?`)
-	privateHostnamePattern      = regexp.MustCompile(`(?i)(?:https?://|ssh://|git@)(?:[a-z0-9-]+[.])+(?:in` + `ternal|lo` + `cal)(?::[0-9]+)?`)
-	barePrivateHostnamePattern  = regexp.MustCompile(`(?i)\b(?:[a-z0-9-]+[.])+(?:in` + `ternal|lo` + `cal)(?::[0-9]+)?\b`)
+	privateHostnamePattern      = regexp.MustCompile(`(?i)(?:https?://|ssh://|git@)(?:[a-z0-9-]+[.])+(?:in` + `ternal|lo` + `cal|co` + `rp|la` + `n|intra` + `net|ho` + `me|local` + `domain)(?::[0-9]+)?`)
+	barePrivateHostnamePattern  = regexp.MustCompile(`(?i)\b(?:[a-z0-9-]+[.])+(?:in` + `ternal|lo` + `cal|co` + `rp|la` + `n|intra` + `net|ho` + `me|local` + `domain)(?::[0-9]+)?\b`)
 	unixUserPathPattern         = regexp.MustCompile(`(?i)/(?:Us` + `ers|ho` + `me)/[^\s"']+`)
 	windowsUserPathPattern      = regexp.MustCompile(`(?i)[a-z]:[\\/](?:Us` + `ers|Documents and Settings)[\\/][^\s"']+`)
-	credentialKeys              = exactStringSet(
+	referenceCredentialKeys     = exactStringSet(
+		"access"+"keyref", "api"+"keyref", "client"+"secretref", "credential"+"ref", "pass"+"wordref",
+		"private"+"keyref", "secret"+"keyref", "secret"+"name", "secret"+"namespace", "secret"+"ref", "secret"+"storeref", "token"+"env",
+	)
+	baseCredentialKeys = exactStringSet(
 		"access"+"key", "access"+"keyid", "access"+"token", "api"+"key", "api"+"token", "auth"+"token",
 		"client"+"secret", "credential", "pass"+"word", "pass"+"wd", "private"+"key", "refresh"+"token",
 		"se"+"cret", "secret"+"value", "signing"+"key", "to"+"ken",
 	)
-	referenceCredentialKeys = exactStringSet(
-		"access"+"keyref", "api"+"keyref", "client"+"secretref", "credential"+"ref", "pass"+"wordref",
-		"private"+"keyref", "secret"+"keyref", "secret"+"name", "secret"+"ref", "secret"+"storeref", "token"+"env",
+	nonCredentialConfigKeys = exactStringSet(
+		"id"+"token",
+		"automount"+"serviceaccounttoken",
+		"create"+"secret",
+		"credential"+"class",
+		"contains"+"credentials",
+		"contains"+"secrets",
+		"password"+"encryption",
+		"persist"+"credentials",
+		"token"+"ttl",
+		"token"+"maxttl",
+		"token"+"nodefaultpolicy",
+		"serviceaccount"+"tokencreate",
+		"enable"+"tokencache",
+		"secret"+"key",
+		"image"+"pull"+"secrets",
+		"aggregate"+"proof"+"path"+"token",
 	)
 )
 
@@ -63,6 +83,7 @@ func scanContent(path string, content string) []Finding {
 
 func scanContentWithBudget(path string, sourceVariant string, inputKind string, content string, budget *findingBudget) ([]Finding, error) {
 	var findings []Finding
+	pendingCredentialLine := 0
 	lineNumber := 1
 	previousLine := ""
 	reviewedVendoredDocumentation := reviewedVendoredPrivateKeyDocumentation(path, sourceVariant, inputKind, content)
@@ -77,6 +98,16 @@ func scanContentWithBudget(path string, sourceVariant string, inputKind string, 
 		if err := budget.consumeLine(); err != nil {
 			return nil, err
 		}
+		if pendingCredentialLine != 0 {
+			if value, resolved := multilineCredentialScalar(line); resolved {
+				if value != "" && !structuralCredentialReference(value) {
+					if err := budget.add(&findings, Finding{Rule: "credential_assignment", Class: "secret", Line: pendingCredentialLine, Message: "credential-like assignment contains a value instead of a reference"}); err != nil {
+						return nil, err
+					}
+				}
+				pendingCredentialLine = 0
+			}
+		}
 		for _, rule := range directContentRules {
 			if rule.pattern.FindStringIndex(line) != nil && !(rule.id == "private_key_block" && reviewedVendoredDocumentation && exactVendoredPrivateKeyDocumentationLine(previousLine, line)) {
 				if err := budget.add(&findings, Finding{Rule: rule.id, Class: rule.class, Line: lineNumber, Message: rule.message}); err != nil {
@@ -84,10 +115,23 @@ func scanContentWithBudget(path string, sourceVariant string, inputKind string, 
 				}
 			}
 		}
-		if credentialAssignment(line) {
+		if credentialAssignmentForPath(path, line) {
 			if err := budget.add(&findings, Finding{Rule: "credential_assignment", Class: "secret", Line: lineNumber, Message: "credential-like assignment contains a value instead of a reference"}); err != nil {
 				return nil, err
 			}
+		}
+		if xmlCredentialAssignment(line) {
+			if err := budget.add(&findings, Finding{Rule: "credential_xml", Class: "secret", Line: lineNumber, Message: "credential-like XML element contains a value instead of a reference"}); err != nil {
+				return nil, err
+			}
+		}
+		if urlCredentialAssignment(line) {
+			if err := budget.add(&findings, Finding{Rule: "credential_url", Class: "secret", Line: lineNumber, Message: "URL contains embedded credential userinfo"}); err != nil {
+				return nil, err
+			}
+		}
+		if pendingCredentialLine == 0 && credentialAssignmentAwaitsValue(path, line) {
+			pendingCredentialLine = lineNumber
 		}
 		if privateEndpoint(line) {
 			if err := budget.add(&findings, Finding{Rule: "private_endpoint", Class: "private_endpoint", Line: lineNumber, Message: "private or host-local endpoint value"}); err != nil {
@@ -124,9 +168,14 @@ func scanContentWithBudget(path string, sourceVariant string, inputKind string, 
 }
 
 func credentialAssignment(line string) bool {
+	return credentialAssignmentForPath("synthetic-config.yaml", line)
+}
+
+func credentialAssignmentForPath(path string, line string) bool {
 	if strings.HasPrefix(strings.TrimSpace(line), "type ") {
 		return false
 	}
+	extendedKeys := credentialConfigPath(path)
 	for _, match := range credentialKeyPattern.FindAllStringSubmatchIndex(line, -1) {
 		if len(match) != 6 {
 			continue
@@ -149,16 +198,91 @@ func credentialAssignment(line string) bool {
 		if value == "" {
 			continue
 		}
-		if referenceCredentialKey(key) {
-			if !validReferenceCredentialValue(key, value) {
+		if referenceKind, ok := referenceCredentialKind(key, extendedKeys); ok {
+			if !validReferenceCredentialValue(referenceKind, value) {
 				return true
 			}
 			continue
 		}
-		if !credentialKey(key) {
+		if !credentialKey(key, extendedKeys) {
 			continue
 		}
-		if !structuralCredentialReference(value) {
+		if !credentialContainer(value) && !structuralCredentialReference(value) {
+			return true
+		}
+	}
+	return false
+}
+
+func credentialAssignmentAwaitsValue(path string, line string) bool {
+	if strings.Contains(line, "{{") || strings.Contains(line, "}}") {
+		return false
+	}
+	if !credentialConfigPath(path) || strings.HasPrefix(strings.TrimSpace(line), "type ") {
+		return false
+	}
+	extendedKeys := credentialConfigPath(path)
+	for _, match := range credentialKeyPattern.FindAllStringSubmatchIndex(line, -1) {
+		if len(match) != 6 {
+			continue
+		}
+		key := normalizeCredentialKey(line[match[2]:match[3]])
+		if _, ok := referenceCredentialKind(key, extendedKeys); ok || !credentialKey(key, extendedKeys) {
+			continue
+		}
+		if credentialScalar(line[match[1]:]) == "" {
+			return true
+		}
+	}
+	return false
+}
+
+func multilineCredentialScalar(line string) (string, bool) {
+	value := strings.TrimSpace(line)
+	if value == "" || strings.HasPrefix(value, "#") || strings.HasPrefix(value, "//") {
+		return "", false
+	}
+	if credentialContainer(value) {
+		return "", true
+	}
+	if value == "}" || value == "}," || value == "]" || value == "]," {
+		return "", true
+	}
+	// A following mapping entry is independently scanned. Only a standalone
+	// scalar resolves a pending sensitive JSON/YAML key.
+	if credentialKeyPattern.FindStringIndex(value) != nil {
+		return "", true
+	}
+	value = strings.TrimSuffix(value, ",")
+	if len(value) >= 2 && ((value[0] == '"' && value[len(value)-1] == '"') || (value[0] == '\'' && value[len(value)-1] == '\'')) {
+		return value, true
+	}
+	return value, true
+}
+
+func xmlCredentialAssignment(line string) bool {
+	for _, match := range xmlCredentialPattern.FindAllStringSubmatchIndex(line, -1) {
+		if len(match) != 6 {
+			continue
+		}
+		key := normalizeCredentialKey(line[match[2]:match[3]])
+		if _, ok := referenceCredentialKind(key, true); ok || !credentialKey(key, true) {
+			continue
+		}
+		if value := strings.TrimSpace(line[match[4]:match[5]]); value != "" && !structuralCredentialReference(value) {
+			return true
+		}
+	}
+	return false
+}
+
+func urlCredentialAssignment(line string) bool {
+	for _, match := range urlCredentialPattern.FindAllStringSubmatchIndex(line, -1) {
+		if len(match) != 4 {
+			continue
+		}
+		value := line[match[2]:match[3]]
+		if value != "" && !structuralCredentialReference(value) {
 			return true
 		}
 	}
@@ -225,21 +349,93 @@ func credentialScalar(remainder string) string {
 func normalizeCredentialKey(value string) string {
 	var builder strings.Builder
 	for _, character := range value {
-		if character != '_' && character != '-' {
+		if character != '_' && character != '-' && character != '.' && character != ':' {
 			builder.WriteRune(unicode.ToLower(character))
 		}
 	}
 	return builder.String()
 }
 
-func credentialKey(key string) bool {
-	_, ok := credentialKeys[key]
-	return ok
+func credentialKey(key string, extended bool) bool {
+	if _, ok := baseCredentialKeys[key]; ok {
+		return true
+	}
+	if !extended {
+		return false
+	}
+	if _, ok := nonCredentialConfigKeys[key]; ok {
+		return false
+	}
+	for _, marker := range []string{
+		"pass" + "word",
+		"pass" + "wd",
+		"se" + "cret",
+		"to" + "ken",
+		"private" + "key",
+		"api" + "key",
+		"credential",
+	} {
+		if strings.Contains(key, marker) {
+			return true
+		}
+	}
+	return strings.Contains(key, "access"+"key") ||
+		strings.HasSuffix(key, "signing"+"key") ||
+		strings.HasSuffix(key, "signing"+"keyid")
 }
 
-func referenceCredentialKey(key string) bool {
-	_, ok := referenceCredentialKeys[key]
-	return ok
+func credentialConfigPath(path string) bool {
+	lower := strings.ToLower(strings.ReplaceAll(path, `\`, "/"))
+	base := lower[strings.LastIndex(lower, "/")+1:]
+	if strings.HasSuffix(base, ".schema.json") {
+		return false
+	}
+	if base == ".env" || strings.HasPrefix(base, ".env.") {
+		return true
+	}
+	for _, suffix := range []string{".conf", ".config", ".ini", ".json", ".properties", ".toml", ".xml", ".yaml", ".yml"} {
+		if strings.HasSuffix(base, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
+func referenceCredentialKind(key string, qualified bool) (string, bool) {
+	if _, ok := referenceCredentialKeys[key]; ok {
+		return key, true
+	}
+	if !qualified {
+		return "", false
+	}
+	for _, suffix := range []string{
+		"access" + "keyref",
+		"api" + "keyref",
+		"client" + "secretref",
+		"credential" + "ref",
+		"pass" + "wordref",
+		"private" + "keyref",
+		"secret" + "keyref",
+		"secret" + "name",
+		"secret" + "namespace",
+		"secret" + "ref",
+		"secret" + "storeref",
+		"token" + "env",
+	} {
+		if strings.HasSuffix(key, suffix) {
+			return suffix, true
+		}
+	}
+	for _, suffix := range []string{
+		"credential" + "secret",
+		"registry" + "secret",
+		"tls" + "secret",
+	} {
+		if strings.HasSuffix(key, suffix) {
+			return "secret" + "name", true
+		}
+	}
+	return "", false
 }
 
 func exactStringSet(values ...string) map[string]struct{} {
@@ -251,12 +447,29 @@ func exactStringSet(values ...string) map[string]struct{} {
 }
 
 func structuralCredentialReference(raw string) bool {
+	if nullCredentialScalar(raw) {
+		return true
+	}
 	value := unquoteScalar(raw)
 	if environmentReferencePattern.MatchString(value) || structuredReferencePattern.MatchString(value) || goTemplateReferencePattern.MatchString(value) {
 		return true
 	}
 	switch strings.ToLower(value) {
-	case "<redacted>", "***redacted***", "<placeholder>":
+	case "<redacted>", "***redacted***", "<placeholder>", "<password>", "<passwd>", "<pswd>", "<secret>", "<token>":
+		return true
+	default:
+		return false
+	}
+}
+
+func nullCredentialScalar(raw string) bool {
+	value := strings.TrimSpace(raw)
+	return value == "~" || strings.EqualFold(value, "null")
+}
+
+func credentialContainer(raw string) bool {
+	switch strings.TrimSpace(raw) {
+	case "{", "}", "[", "]", "{}", "[]":
 		return true
 	default:
 		return false
@@ -297,14 +510,20 @@ func exactVendoredPrivateKeyDocumentationLine(previousLine, line string) bool {
 }
 
 func validReferenceCredentialValue(key string, raw string) bool {
+	if nullCredentialScalar(raw) {
+		return true
+	}
 	value := unquoteScalar(raw)
+	if value == "" {
+		return true
+	}
 	if environmentReferencePattern.MatchString(value) || goTemplateReferencePattern.MatchString(value) {
 		return true
 	}
 	switch key {
 	case "token" + "env":
 		return environmentNamePattern.MatchString(value)
-	case "secret" + "name":
+	case "secret" + "name", "secret" + "namespace":
 		return dnsReferencePattern.MatchString(value)
 	case "secret" + "ref", "secret" + "keyref", "secret" + "storeref", "credential" + "ref", "password" + "ref", "apikey" + "ref", "accesskey" + "ref", "clientsecret" + "ref", "privatekey" + "ref":
 		return structuredReferencePattern.MatchString(value)
@@ -341,7 +560,8 @@ func privateEndpoint(line string) bool {
 		if err != nil || !address.Is4() {
 			continue
 		}
-		if address.IsPrivate() || address.IsLoopback() || address.IsLinkLocalUnicast() || address.IsUnspecified() {
+		sharedAddressSpace := netip.MustParsePrefix("100." + "64.0.0/10")
+		if address.IsPrivate() || sharedAddressSpace.Contains(address) || address.IsLoopback() || address.IsLinkLocalUnicast() || address.IsUnspecified() {
 			return true
 		}
 	}

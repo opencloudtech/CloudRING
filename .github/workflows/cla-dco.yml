@@ -21,98 +21,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - if: github.event_name == 'pull_request'
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Validate every pull request commit
-        if: github.event_name == 'pull_request'
+      - name: Validate every contributor-authored commit
         shell: bash
-        env:
-          DCO_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          DCO_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          git cat-file -e "${DCO_BASE_SHA}^{commit}"
-          git cat-file -e "${DCO_HEAD_SHA}^{commit}"
-
-          identity_pattern='^([^<>]*[^<>[:space:]])[[:space:]]+<([^<>[:space:]]+@[^<>[:space:]]+)>$'
-          commit_count=0
-          failed=0
-          while IFS= read -r commit; do
-            commit_count=$((commit_count + 1))
-            author_name="$(git show -s --format='%an' "${commit}")"
-            author_email="$(git show -s --format='%ae' "${commit}")"
-            author_identity="${author_name} <${author_email}>"
-            if [[ ! "${author_identity}" =~ ${identity_pattern} ]]; then
-              git show -s --format='Invalid raw author identity: %h' "${commit}" >&2
-              failed=1
-              continue
-            fi
-            author_key="${BASH_REMATCH[1]}<${BASH_REMATCH[2],,}>"
-
-            signoffs=()
-            coauthors=()
-            malformed=0
-            while IFS= read -r trailer; do
-              key="${trailer%%:*}"
-              value="${trailer#*:}"
-              value="${value#"${value%%[![:space:]]*}"}"
-              value="${value%"${value##*[![:space:]]}"}"
-              case "${key,,}" in
-                signed-off-by)
-                  if [[ ! "${value}" =~ ${identity_pattern} ]]; then
-                    malformed=1
-                    continue
-                  fi
-                  signoffs+=("${BASH_REMATCH[1]}<${BASH_REMATCH[2],,}>")
-                  ;;
-                co-authored-by)
-                  if [[ ! "${value}" =~ ${identity_pattern} ]]; then
-                    malformed=1
-                    continue
-                  fi
-                  coauthors+=("${BASH_REMATCH[1]}<${BASH_REMATCH[2],,}>")
-                  ;;
-              esac
-            done < <(git show -s --format=%B "${commit}" | git interpret-trailers --parse)
-
-            author_signed=0
-            for signoff in "${signoffs[@]}"; do
-              if [[ "${signoff}" == "${author_key}" ]]; then
-                author_signed=1
-                break
-              fi
-            done
-            if (( malformed != 0 || author_signed == 0 )); then
-              git show -s --format='DCO author sign-off mismatch: %h' "${commit}" >&2
-              failed=1
-            fi
-            for coauthor_key in "${coauthors[@]}"; do
-              coauthor_signed=0
-              for signoff in "${signoffs[@]}"; do
-                if [[ "${signoff}" == "${coauthor_key}" ]]; then
-                  coauthor_signed=1
-                  break
-                fi
-              done
-              if (( coauthor_signed == 0 )); then
-                git show -s --format='DCO co-author sign-off missing: %h' "${commit}" >&2
-                failed=1
-              fi
-            done
-          done < <(git rev-list --reverse "${DCO_BASE_SHA}..${DCO_HEAD_SHA}")
-
-          if (( commit_count == 0 )); then
-            echo "No commits found in pull request range ${DCO_BASE_SHA}..${DCO_HEAD_SHA}" >&2
-            exit 1
-          fi
-          exit "${failed}"
-      - name: Keep the dco context stable outside pull requests
-        if: github.event_name != 'pull_request'
-        shell: bash
-        run: echo "DCO is validated on the pull request commit range; no revalidation is needed for this event."
+        run: .github/scripts/validate-contribution-range.sh dco
 
   cla:
     runs-on: ubuntu-latest
@@ -120,11 +35,8 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          fetch-depth: 0
           persist-credentials: false
-      - shell: bash
-        run: |
-          set -euo pipefail
-          test -s CLA.md
-          grep -Fq "By submitting a contribution" CLA.md
-          grep -Fq "right to contribute" CLA.md
-          grep -Fq "Apache-2.0" CLA.md
+      - name: Validate recorded contributor assent
+        shell: bash
+        run: .github/scripts/validate-contribution-range.sh cla

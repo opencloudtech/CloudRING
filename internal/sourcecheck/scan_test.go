@@ -578,7 +578,7 @@ func TestScan_pre_push_rejects_shallow_history(t *testing.T) {
 
 func TestRemoteURLSafeForHelper_suppresses_credential_bearing_targets(t *testing.T) {
 	for _, value := range []string{
-		"https://user:literal@example.test/repository",
+		strings.Join([]string{"https", "://user:", "literal@example.test/repository"}, ""),
 		"https://example.test/repository?signature=literal",
 		"git@example.test:repository",
 		"ext::synthetic-command",

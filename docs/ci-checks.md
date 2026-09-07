@@ -38,9 +38,10 @@ The public CI contract covers these checks:
 | OCS conformance | The same exact shipped connector packages must pass `go run ./cmd/ocsctl conformance`; validation cannot be green for an artifact that CI omits from conformance. |
 | Synthetic reference image | The digest-pinned `Containerfile` must build and its local mock-provider self-check must pass. |
 | Source-safety | The Go scanner must approve the complete tree and pre-push commit range, including intermediate commits and reviewed non-text artifacts. |
-| Security | CodeQL, govulncheck, gosec, and both current-tree and Git-history secret scans must pass without broad exclusions. |
+| Security | CodeQL, govulncheck, gosec, and both current-tree and Git-history secret scans must pass without broad exclusions. Repository gitleaks rules cover password-shaped assignments, XML values, and URL userinfo independently of entropy. |
 | Supply chain | Actions must be commit-pinned; workflows must be syntax-checked and must not request unexpected write permissions or PR secrets. The protected-push release workflow builds the Linux CLI bundle plus the digest-pinned etcd recovery worker image, verifies two independent OCI builds have the same Linux AMD64 subject digest, requires the published subject to match, emits separate component-inventory and real image SBOMs, publishes only the immutable GHCR image, creates GitHub/Sigstore attestations, and confirms the published digest is anonymously pullable. |
 | License and contribution docs | `LICENSE`, `NOTICE`, `CONTRIBUTING.md`, `SECURITY.md`, `GOVERNANCE.md`, `CLA.md`, `DCO.md`, and `TRADEMARKS.md` must exist in the public root. |
+| CLA/DCO | Matching author and co-author sign-offs are checked on pull-request, merge-queue, and protected-branch push ranges. The sign-off records both DCO certification and CLA assent under the published contribution terms. |
 
 The PostgreSQL service is an isolated CI dependency. This does not claim that
 a provider database or its backup and failover have been verified live.

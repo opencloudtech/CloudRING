@@ -54,6 +54,10 @@ func TestScanContent_allows_references_and_explicit_non_claims(t *testing.T) {
 		"endpoint: https://service.example",
 		"test endpoints: 192.0.2.10 198.51.100.20 203.0.113.30",
 		"secret" + "Name: {{ .Values.ingress.tlsSecret }}",
+		strings.Join([]string{"backupTargetCredentialSecret", ": ~"}, ""),
+		strings.Join([]string{"registryPasswd", ": null"}, ""),
+		strings.Join([]string{"registrySecret", ": registry.synthetic"}, ""),
+		strings.Join([]string{"tlsSecret", ": longhorn.example-tls"}, ""),
 		"This does not claim live production readiness.",
 	}, "\n")
 	if findings := scanContent("README.md", content); len(findings) != 0 {
@@ -154,7 +158,7 @@ func TestReadinessOverclaim_non_claim_does_not_mask_later_claim(t *testing.T) {
 	}
 }
 
-func TestCredentialAssignment_uses_exact_keys_and_structural_references(t *testing.T) {
+func TestCredentialAssignment_uses_substring_markers_and_structural_references(t *testing.T) {
 	unsafe := []string{
 		"pass" + "word: x",
 		"pass" + "word: p@()[]!",
@@ -162,6 +166,8 @@ func TestCredentialAssignment_uses_exact_keys_and_structural_references(t *testi
 		"pass" + "word: ${lower_case}",
 		"pass" + "word: ${CLOUDRING_PASSWORD_ENV}literal",
 		"pass" + "word: ${CLOUDRING_PASSWORD_ENV} literal",
+		"pass" + "word: prefix${CLOUDRING_PASSWORD_ENV}",
+		"pass" + "word: $CLOUDRING_PASSWORD_ENV",
 		"pass" + `word: os.Getenv("CLOUDRING_PASSWORD_ENV")+"literal"`,
 		"pass" + `word: "${CLOUDRING_PASSWORD_ENV}"suffix`,
 		"pass" + `word = "${CLOUDRING_PASSWORD_ENV}" + "literal"`,
@@ -169,6 +175,7 @@ func TestCredentialAssignment_uses_exact_keys_and_structural_references(t *testi
 		"pass" + "word: <redacted>suffix",
 		"secret" + "Ref: literal-value",
 		"token" + "Env: lower_case",
+		strings.Join([]string{"registryPasswd", ": literal"}, ""),
 	}
 	for _, line := range unsafe {
 		if !credentialAssignment(line) {
@@ -176,7 +183,16 @@ func TestCredentialAssignment_uses_exact_keys_and_structural_references(t *testi
 		}
 	}
 	for _, line := range []string{
-		"notasecretary: literal-value",
+		"password_encryption: scram-sha-256",
+		"persist-credentials: false",
+		"credentialClass: interactive_session",
+		"containsCredentials: false",
+		"containsSecrets: false",
+		"tokenTTL: 10m",
+		"tokenMaxTTL: 30m",
+		"tokenNoDefaultPolicy: true",
+		"serviceAccountTokenCreate: false",
+		"enableTokenCache: false",
 		"private" + "Key:",
 		"sec" + "ret:",
 		"sec" + "retRef:",
@@ -184,12 +200,132 @@ func TestCredentialAssignment_uses_exact_keys_and_structural_references(t *testi
 		"pass" + `word: os.Getenv("CLOUDRING_PASSWORD_ENV")`,
 		"pass" + `word := os.Getenv("CLOUDRING_PASSWORD_ENV")`,
 		"secret" + "Ref: secretref.synthetic.access",
+		"csi.storage.k8s.io/provisioner-" + "secret-name" + ": rook-csi-rbd-provisioner",
+		"csi.storage.k8s.io/provisioner-" + "secret-namespace" + ": rook-ceph",
 		"token" + "Env: CLOUDRING_SYNTHETIC_TOKEN_ENV",
 		"pass" + "word: <redacted>",
 		"secret" + "Name: {{ .Values.ingress.tlsSecret }}",
 	} {
 		if credentialAssignment(line) {
 			t.Fatalf("legitimate exact reference was rejected: %q", line)
+		}
+	}
+}
+
+func TestScanContent_allows_structural_credential_containers(t *testing.T) {
+	content := "{\n  \"se" + "crets\": {\n    \"se" + "cretRefs\": []\n  }\n}"
+	if findings := scanContent("synthetic-config.json", content); len(findings) != 0 {
+		t.Fatalf("structural credential containers were rejected: %+v", findings)
+	}
+}
+
+func TestScanContent_does_not_treat_Go_switch_case_as_multiline_credential(t *testing.T) {
+	content := "switch value {\ncase \"auth\", \"to" + "ken\":\n\treturn true\n}"
+	if findings := scanContent("validate.go", content); len(findings) != 0 {
+		t.Fatalf("Go switch case was treated as a credential mapping: %+v", findings)
+	}
+}
+
+func TestScanContent_rejects_password_shaped_config_credentials(t *testing.T) {
+	tests := []struct {
+		name string
+		text string
+		rule string
+		line int
+	}{
+		{
+			name: "database password key",
+			text: "db_" + "password" + ": \"Synthetic$Value#123\"",
+			rule: "credential_assignment",
+			line: 1,
+		},
+		{
+			name: "dotted property key",
+			text: "spring.datasource." + "password" + "=Synthetic$Value#123",
+			rule: "credential_assignment",
+			line: 1,
+		},
+		{
+			name: "secret access key",
+			text: "aws_" + "secret_access_key" + ": Synthetic$Value#123",
+			rule: "credential_assignment",
+			line: 1,
+		},
+		{
+			name: "xml password element",
+			text: "<" + "password>Synthetic$Value#123</" + "password>",
+			rule: "credential_xml",
+			line: 1,
+		},
+		{
+			name: "URL userinfo",
+			text: "postgres" + "://synthetic-user:Synthetic$Value#123@service.example:5432/database",
+			rule: "credential_url",
+			line: 1,
+		},
+		{
+			name: "multiline JSON password",
+			text: "{\n  \"" + "password" + "\":\n  \"Synthetic$Value#123\"\n}",
+			rule: "credential_assignment",
+			line: 2,
+		},
+		{
+			name: "multiline YAML unquoted password",
+			text: "database_" + "password" + ":\n  Synthetic$Value#123",
+			rule: "credential_assignment",
+			line: 1,
+		},
+		{
+			name: "password marker embedded in key",
+			text: "database_" + "password_hash" + ": Synthetic$Value#123",
+			rule: "credential_assignment",
+			line: 1,
+		},
+		{
+			name: "secret marker embedded in key with dollar-prefixed literal",
+			text: "service_" + "secret_hash" + ": \"$Synthetic#Value123456789\"",
+			rule: "credential_assignment",
+			line: 1,
+		},
+		{
+			name: "token marker embedded in key with dollar-prefixed literal",
+			text: "service_" + "token_hint" + ": \"$Synthetic#Value123456789\"",
+			rule: "credential_assignment",
+			line: 1,
+		},
+		{
+			name: "credential marker embedded in key with dollar-prefixed literal",
+			text: "service_" + "credential_kind" + ": \"$Synthetic#Value123456789\"",
+			rule: "credential_assignment",
+			line: 1,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			findings := scanContent("synthetic-config.yaml", test.text)
+			if !containsRule(findings, test.rule) {
+				t.Fatalf("expected %q, got %+v", test.rule, findings)
+			}
+			for _, finding := range findings {
+				if finding.Rule == test.rule && finding.Line != test.line {
+					t.Fatalf("finding line = %d, want %d", finding.Line, test.line)
+				}
+			}
+		})
+	}
+}
+
+func TestScanContent_allows_structural_secret_references_in_extended_syntax(t *testing.T) {
+	safe := []string{
+		"spring.datasource." + "password" + "=${CLOUDRING_SYNTHETIC_PASSWORD}",
+		"service_" + "secret_hash" + ": \"${UPPER_ENV}\"",
+		"<" + "password>${CLOUDRING_SYNTHETIC_PASSWORD}</" + "password>",
+		"postgres" + "://synthetic-user:${CLOUDRING_SYNTHETIC_PASSWORD}@service.example/database",
+		"{\n  \"" + "password" + "\":\n  \"${CLOUDRING_SYNTHETIC_PASSWORD}\"\n}",
+	}
+	for _, content := range safe {
+		if findings := scanContent("synthetic-config.yaml", content); len(findings) != 0 {
+			t.Fatalf("structural credential reference was rejected: %+v", findings)
 		}
 	}
 }
@@ -242,7 +378,20 @@ func TestSymlinkTargetEscapes_is_platform_neutral(t *testing.T) {
 }
 
 func TestPrivateEndpoint_rejects_private_and_allows_documentation_ranges(t *testing.T) {
-	for _, value := range []string{"127." + "0.0.1", "169.254." + "10.20", "172.20." + "1.2", "192.168." + "1.2", "fd00" + ":" + ":1", ":" + ":1"} {
+	for _, value := range []string{
+		"127." + "0.0.1",
+		"169.254." + "10.20",
+		"172.20." + "1.2",
+		"192.168." + "1.2",
+		"100." + "64.10.20",
+		"https://database." + "corp:5432",
+		"https://database." + "lan:5432",
+		"https://database." + "intranet:5432",
+		"https://database." + "home:5432",
+		"https://database." + "localdomain:5432",
+		"fd00" + ":" + ":1",
+		":" + ":1",
+	} {
 		if !privateEndpoint(value) {
 			t.Fatalf("expected private endpoint %q to be rejected", value)
 		}
@@ -255,7 +404,7 @@ func TestPrivateEndpoint_rejects_private_and_allows_documentation_ranges(t *test
 }
 
 func TestScanPath_rejects_credential_bearing_filenames(t *testing.T) {
-	for _, path := range []string{"kubeconfig", "cluster.kubeconfig", "id_ed25519", "tls.key", ".env", "terraform.tfstate"} {
+	for _, path := range []string{"kubeconfig", "cluster.kubeconfig", "id_ed25519", "tls.key", ".env", ".env.production", ".env.staging", "terraform.tfstate"} {
 		input := classifyInput(scanInput{path: path, variant: "worktree", data: []byte("synthetic")})
 		if findings := scanPath(input); !containsRule(findings, "unsafe_credential_filename") {
 			t.Fatalf("expected unsafe filename %q to fail: %+v", path, findings)
