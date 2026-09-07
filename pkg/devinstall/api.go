@@ -82,14 +82,20 @@ func (client *Client) request(ctx context.Context, method, path string, query ur
 		return errors.New("development substrate API transport failed")
 	}
 	defer response.Body.Close()
+	if err := requestCtx.Err(); err != nil {
+		return err
+	}
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		return &APIError{StatusCode: response.StatusCode}
 	}
 	data, err := io.ReadAll(io.LimitReader(response.Body, maximumAPIBytes+1))
+	defer clear(data)
+	if err := requestCtx.Err(); err != nil {
+		return err
+	}
 	if err != nil || len(data) > maximumAPIBytes {
 		return errors.New("development API response exceeds bound")
 	}
-	defer clear(data)
 	if result != nil && json.Unmarshal(data, result) != nil {
 		return errors.New("development API returned invalid JSON")
 	}
