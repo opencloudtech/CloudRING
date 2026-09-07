@@ -1,0 +1,5 @@
+# Upstream kube-proxy regression fixture
+
+`kube-proxy-v1.35.8.yaml` contains all six objects assembled by kubeadm's print-only kube-proxy phase. The test fills the ConfigMap's native service-account context from public file references before invoking the parser, so the repository contains no captured credential document. The ConfigMap and DaemonSet are derived from the Apache-2.0 upstream templates; the four RBAC/service-account objects follow the same upstream assembly. The control-plane endpoint and proxy settings are synthetic public test inputs. This fixture is not a live Kubernetes acceptance observation.
+
+Sources: [Kubernetes v1.35.8 proxy templates](https://github.com/kubernetes/kubernetes/blob/v1.35.8/cmd/kubeadm/app/phases/addons/proxy/manifests.go) and [print assembly](https://github.com/kubernetes/kubernetes/blob/v1.35.8/cmd/kubeadm/app/phases/addons/proxy/proxy.go). The regression checks that only the DaemonSet's image reference and pull policy change before applying the native objects.

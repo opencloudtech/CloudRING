@@ -32,8 +32,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - name: Verify delivery roadmap
         run: go run ./cmd/cloudring-roadmap verify --root ./roadmap
@@ -89,13 +89,6 @@ jobs:
           CLOUDRING_TEST_ETCD_SNAPSHOT="${snapshot}" \
           CLOUDRING_TEST_ETCDUTL="${RUNNER_TEMP}/release-etcdutl/etcdutl" \
             go test -tags=etcdrecoveryintegration ./pkg/backup/etcdrecovery -run '^TestRealSyntheticSnapshotRecovery$' -count=1
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: 1.26.x
-          check-latest: true
-          cache: true
-      - name: Test current Go
-        run: go test ./... -count=1
 
   go-test-race:
     runs-on: ubuntu-latest
@@ -106,8 +99,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - run: go test -race ./... -count=1
 
@@ -115,10 +108,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
-      image: golang:1.25.7-bookworm@sha256:564e366a28ad1d70f460a2b97d1d299a562f08707eb0ecb24b659e5bd6c108e1
+      image: golang:1.26.8-bookworm@sha256:9fdc884aacc3bec89b20ffc69f4bb369c78210e3e4f600387b5128b12c199f81
     services:
       postgres:
-        image: postgres:18.4@sha256:c2d42a104eb6b37b286a2d9c5cf83f349de4d6516d513d00a2bd9610e2c2e5e4
+        image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
@@ -134,13 +127,19 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
-      - name: Test transactional state against PostgreSQL
+      - name: Test transactional state and public runtime against PostgreSQL
         env:
           CLOUDRING_POSTGRES_TEST_DSN: host=postgres port=5432 user=postgres dbname=postgres sslmode=disable
-        run: go test ./pkg/transactionalstate -run '^TestPostgreSQLDocumentLifecycleAndConcurrency$' -count=1
+        run: |
+          go test ./pkg/transactionalstate -run '^TestPostgreSQLDocumentLifecycleAndConcurrency$' -count=1
+          go test ./pkg/controlplane -run '^TestPostgreSQLProviderRuntimeJourney$' -count=1 -v
+      - name: Test guest database directory interruption and ownership as root
+        run: |
+          test "$(id -u)" -eq 0
+          go test ./pkg/devinstall -run 'TestGuestPostgreSQLDirectory.*AsRoot$' -count=1 -timeout=2m -v
 
   go-vet:
     runs-on: ubuntu-latest
@@ -151,8 +150,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - run: go vet ./...
 
@@ -165,8 +164,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - name: Verify generic platform manifests
         run: |
@@ -184,17 +183,10 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - name: Test minimum supported Go
-        run: go test ./... -count=1
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: 1.26.x
-          check-latest: true
-          cache: true
-      - name: Test current Go
         run: go test ./... -count=1
 
   go-build-module-integrity:
@@ -206,8 +198,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - name: Verify module graph and build
         shell: bash
@@ -239,8 +231,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - name: Validate every shipped connector package
         shell: bash
@@ -261,8 +253,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - name: Check conformance for the same shipped connector packages
         shell: bash
@@ -307,8 +299,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - name: Scan complete checkout
         run: go run ./cmd/cloudring-sourcecheck scan --scope full

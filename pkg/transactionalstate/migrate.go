@@ -227,6 +227,10 @@ func verifyMigrationRoles(ctx context.Context, tx pgx.Tx, ownerRole, application
 	`).Scan(&currentUser, &databaseOwner); err != nil || currentUser != ownerRole || databaseOwner != ownerRole {
 		return errors.New("migration owner is invalid")
 	}
+	return verifyApplicationRole(ctx, tx, applicationRole)
+}
+
+func verifyApplicationRole(ctx context.Context, tx pgx.Tx, applicationRole string) error {
 	var superuser, inherit, createRole, createDatabase, login, replication, bypassRLS bool
 	if err := tx.QueryRow(ctx, `
 		SELECT rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, rolreplication, rolbypassrls
