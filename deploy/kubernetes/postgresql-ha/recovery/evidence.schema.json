@@ -1,9 +1,1141 @@
 {
+  "$defs": {
+    "application": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {
+          "items": false,
+          "maxItems": 6,
+          "minItems": 6,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationAllow"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "documents-insert"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationAllow"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "documents-read"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationAllow"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "documents-update-cas"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationAllow"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "documents-delete"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationAllow"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "audit-insert"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationAllow"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "audit-read"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "type": "array"
+        },
+        "authenticated": {
+          "const": true
+        },
+        "completedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "denied": {
+          "items": false,
+          "maxItems": 8,
+          "minItems": 8,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationDeny"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "audit-update"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationDeny"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "audit-delete"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationDeny"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "schema-create"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationDeny"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "migration-read"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationDeny"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "migration-write"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationDeny"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "document-truncate"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationDeny"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "document-maintenance"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/applicationDeny"
+                },
+                {
+                  "properties": {
+                    "operation": {
+                      "const": "role-escalation"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "type": "array"
+        },
+        "identityVerified": {
+          "const": true
+        },
+        "postProbeCapturedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "postProbeCatalogDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "postProbeLogicalDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "principalIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "residualAuditRows": {
+          "const": 0
+        },
+        "residualDocumentRows": {
+          "const": 0
+        },
+        "rolledBack": {
+          "const": true
+        },
+        "startedAt": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "principalIdentity",
+        "startedAt",
+        "completedAt",
+        "authenticated",
+        "identityVerified",
+        "allowed",
+        "denied",
+        "rolledBack",
+        "residualDocumentRows",
+        "residualAuditRows",
+        "postProbeCapturedAt",
+        "postProbeLogicalDigest",
+        "postProbeCatalogDigest"
+      ],
+      "type": "object"
+    },
+    "applicationAllow": {
+      "additionalProperties": false,
+      "properties": {
+        "affectedRows": {
+          "const": 1
+        },
+        "operation": {
+          "enum": [
+            "documents-insert",
+            "documents-read",
+            "documents-update-cas",
+            "documents-delete",
+            "audit-insert",
+            "audit-read"
+          ]
+        },
+        "principalIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "valuesMatched": {
+          "const": true
+        }
+      },
+      "required": [
+        "operation",
+        "principalIdentity",
+        "affectedRows",
+        "valuesMatched"
+      ],
+      "type": "object"
+    },
+    "applicationDeny": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "enum": [
+            "audit-update",
+            "audit-delete",
+            "schema-create",
+            "migration-read",
+            "migration-write",
+            "document-truncate",
+            "document-maintenance",
+            "role-escalation"
+          ]
+        },
+        "principalIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "sqlState": {
+          "const": "42501"
+        }
+      },
+      "required": [
+        "operation",
+        "principalIdentity",
+        "sqlState"
+      ],
+      "type": "object"
+    },
+    "catalog": {
+      "additionalProperties": false,
+      "properties": {
+        "applicationIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "contractVersion": {
+          "const": "cloudring.transactional-state.recovery-contract/v1"
+        },
+        "ownerIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "recovered": {
+          "$ref": "#/$defs/digest"
+        },
+        "recoveredCapturedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "recoveredContractValid": {
+          "const": true
+        },
+        "source": {
+          "$ref": "#/$defs/digest"
+        },
+        "sourceCapturedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "sourceContractValid": {
+          "const": true
+        },
+        "sourceSnapshotIdentity": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "contractVersion",
+        "ownerIdentity",
+        "applicationIdentity",
+        "sourceSnapshotIdentity",
+        "source",
+        "recovered",
+        "sourceCapturedAt",
+        "recoveredCapturedAt",
+        "sourceContractValid",
+        "recoveredContractValid"
+      ],
+      "type": "object"
+    },
+    "cleanupSweep": {
+      "additionalProperties": false,
+      "properties": {
+        "accessObjectCount": {
+          "const": 0
+        },
+        "clusterCount": {
+          "const": 0
+        },
+        "inventoryDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "observedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "persistentVolumeClaimCount": {
+          "const": 0
+        },
+        "recoveryNamespaceCount": {
+          "const": 0
+        },
+        "routeCount": {
+          "const": 0
+        },
+        "serviceCount": {
+          "const": 0
+        }
+      },
+      "required": [
+        "observedAt",
+        "inventoryDigest",
+        "recoveryNamespaceCount",
+        "clusterCount",
+        "accessObjectCount",
+        "persistentVolumeClaimCount",
+        "serviceCount",
+        "routeCount"
+      ],
+      "type": "object"
+    },
+    "consistency": {
+      "additionalProperties": false,
+      "properties": {
+        "archiveObjectIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "archiveVerifiedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "archivedMarkerWalIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "baseBackupPrecedesMarker": {
+          "const": true
+        },
+        "boundaryDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "exactMarkerArchived": {
+          "const": true
+        },
+        "exactRecoveredTargetVerified": {
+          "const": true
+        },
+        "firstXidMatchesSnapshot": {
+          "const": true
+        },
+        "logicalCatalogSameSnapshot": {
+          "const": true
+        },
+        "markerCommitConfirmed": {
+          "const": true
+        },
+        "markerCreatedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "markerIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "markerLsnIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "markerNameUnique": {
+          "const": true
+        },
+        "markerSameTransaction": {
+          "const": true
+        },
+        "markerStatementsOrdered": {
+          "const": true
+        },
+        "markerWalIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "markerXidAfterAssigned": {
+          "const": false
+        },
+        "markerXidBeforeAssigned": {
+          "const": false
+        },
+        "method": {
+          "const": "postgresql-post-marker-first-xid/v1"
+        },
+        "primaryIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "qualifiedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "recoveredLsnIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "recoveredMarkerIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "recoveredTargetVerifiedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "snapshotActiveXidCount": {
+          "const": 0
+        },
+        "snapshotBoundsEqual": {
+          "const": true
+        },
+        "snapshotIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "snapshotIsolation": {
+          "const": "repeatable read"
+        },
+        "snapshotReadOnly": {
+          "const": true
+        },
+        "snapshotXidAssigned": {
+          "const": false
+        },
+        "sourceIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "sourceIdentityUnchanged": {
+          "const": true
+        }
+      },
+      "required": [
+        "method",
+        "boundaryDigest",
+        "sourceIdentity",
+        "primaryIdentity",
+        "snapshotIdentity",
+        "snapshotIsolation",
+        "snapshotReadOnly",
+        "snapshotXidAssigned",
+        "snapshotBoundsEqual",
+        "snapshotActiveXidCount",
+        "logicalCatalogSameSnapshot",
+        "markerIdentity",
+        "markerLsnIdentity",
+        "markerWalIdentity",
+        "markerNameUnique",
+        "markerXidBeforeAssigned",
+        "markerXidAfterAssigned",
+        "markerStatementsOrdered",
+        "markerSameTransaction",
+        "markerCommitConfirmed",
+        "firstXidMatchesSnapshot",
+        "sourceIdentityUnchanged",
+        "markerCreatedAt",
+        "qualifiedAt",
+        "archiveVerifiedAt",
+        "archivedMarkerWalIdentity",
+        "archiveObjectIdentity",
+        "exactMarkerArchived",
+        "baseBackupPrecedesMarker",
+        "recoveredMarkerIdentity",
+        "recoveredLsnIdentity",
+        "recoveredTargetVerifiedAt",
+        "exactRecoveredTargetVerified"
+      ],
+      "type": "object"
+    },
+    "digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "logicalClass": {
+      "additionalProperties": false,
+      "properties": {
+        "dataClass": {
+          "enum": [
+            "portal-state",
+            "orders",
+            "support-tickets",
+            "audit-events",
+            "postgresql-cnpg"
+          ]
+        },
+        "matched": {
+          "const": true
+        },
+        "recovered": {
+          "$ref": "#/$defs/digest"
+        },
+        "recoveredBytes": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "recoveredRows": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "source": {
+          "$ref": "#/$defs/digest"
+        },
+        "sourceBytes": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "sourceRows": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "dataClass",
+        "source",
+        "recovered",
+        "sourceBytes",
+        "recoveredBytes",
+        "sourceRows",
+        "recoveredRows",
+        "matched"
+      ],
+      "type": "object"
+    },
+    "recoveryAccess": {
+      "additionalProperties": false,
+      "properties": {
+        "administrationDenied": {
+          "const": true
+        },
+        "allowlistedProjectionOnly": {
+          "const": true
+        },
+        "baseBackupIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "baseBackupReadPassed": {
+          "const": true
+        },
+        "credentialExpiresAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "deleteDenied": {
+          "const": true
+        },
+        "expected": {
+          "$ref": "#/$defs/recoveryAccessBinding"
+        },
+        "expiresAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "expiryChecked": {
+          "const": true
+        },
+        "independentPolicyVerified": {
+          "const": true
+        },
+        "markerWalIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "markerWalReadPassed": {
+          "const": true
+        },
+        "observed": {
+          "$ref": "#/$defs/recoveryAccessBinding"
+        },
+        "outsideScopeDenied": {
+          "const": true
+        },
+        "requiredReadPermissions": {
+          "const": true
+        },
+        "sourceBindingUnchanged": {
+          "const": true
+        },
+        "verifiedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "writeDenied": {
+          "const": true
+        },
+        "writerPrincipalIdentity": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "expected",
+        "observed",
+        "writerPrincipalIdentity",
+        "verifiedAt",
+        "expiresAt",
+        "credentialExpiresAt",
+        "expiryChecked",
+        "independentPolicyVerified",
+        "requiredReadPermissions",
+        "writeDenied",
+        "deleteDenied",
+        "administrationDenied",
+        "outsideScopeDenied",
+        "baseBackupIdentity",
+        "markerWalIdentity",
+        "baseBackupReadPassed",
+        "markerWalReadPassed",
+        "allowlistedProjectionOnly",
+        "sourceBindingUnchanged"
+      ],
+      "type": "object"
+    },
+    "recoveryAccessBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "destinationIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "objectIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "objectVersionIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "policyIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "policyRevisionIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "principalIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "scopeIdentity": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "principalIdentity",
+        "policyIdentity",
+        "policyRevisionIdentity",
+        "objectIdentity",
+        "objectVersionIdentity",
+        "destinationIdentity",
+        "scopeIdentity"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://cloudring.org/schemas/postgresql-cnpg-offcell-recovery-evidence-v2.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://cloudring.org/schemas/postgresql-cnpg-offcell-recovery-evidence-v1.json",
-  "title": "CloudRING PostgreSQL CNPG off-cell recovery evidence",
-  "type": "object",
   "additionalProperties": false,
+  "properties": {
+    "application": {
+      "$ref": "#/$defs/application"
+    },
+    "baseBackup": {
+      "additionalProperties": false,
+      "properties": {
+        "bytes": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "completedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "identity": {
+          "$ref": "#/$defs/digest"
+        },
+        "objectInventoryDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "startedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "const": "completed"
+        }
+      },
+      "required": [
+        "identity",
+        "startedAt",
+        "completedAt",
+        "status",
+        "bytes",
+        "objectInventoryDigest"
+      ],
+      "type": "object"
+    },
+    "catalog": {
+      "$ref": "#/$defs/catalog"
+    },
+    "checksum": {
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "const": "sha256"
+        },
+        "matched": {
+          "const": true
+        },
+        "projectionVersion": {
+          "const": "cloudring-postgresql-logical-state/v1"
+        },
+        "recovered": {
+          "$ref": "#/$defs/digest"
+        },
+        "recoveredCapturedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "recoveredLogicalBytes": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "recoveredRowCount": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "source": {
+          "$ref": "#/$defs/digest"
+        },
+        "sourceCapturedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "sourceLogicalBytes": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "sourceRowCount": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "algorithm",
+        "projectionVersion",
+        "source",
+        "recovered",
+        "sourceCapturedAt",
+        "recoveredCapturedAt",
+        "sourceLogicalBytes",
+        "recoveredLogicalBytes",
+        "sourceRowCount",
+        "recoveredRowCount",
+        "matched"
+      ],
+      "type": "object"
+    },
+    "classes": {
+      "items": false,
+      "maxItems": 5,
+      "minItems": 5,
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/logicalClass"
+            },
+            {
+              "properties": {
+                "dataClass": {
+                  "const": "portal-state"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/logicalClass"
+            },
+            {
+              "properties": {
+                "dataClass": {
+                  "const": "orders"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/logicalClass"
+            },
+            {
+              "properties": {
+                "dataClass": {
+                  "const": "support-tickets"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/logicalClass"
+            },
+            {
+              "properties": {
+                "dataClass": {
+                  "const": "audit-events"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/logicalClass"
+            },
+            {
+              "properties": {
+                "dataClass": {
+                  "const": "postgresql-cnpg"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "type": "array"
+    },
+    "cleanup": {
+      "additionalProperties": false,
+      "properties": {
+        "complete": {
+          "const": true
+        },
+        "completedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "startedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "sweeps": {
+          "items": {
+            "$ref": "#/$defs/cleanupSweep"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "twoSweepQuietWindowSeconds": {
+          "maximum": 9223372036,
+          "minimum": 30,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "startedAt",
+        "completedAt",
+        "complete",
+        "twoSweepQuietWindowSeconds",
+        "sweeps"
+      ],
+      "type": "object"
+    },
+    "collectedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "consistency": {
+      "$ref": "#/$defs/consistency"
+    },
+    "expiresAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "offCell": {
+      "additionalProperties": false,
+      "properties": {
+        "controlDeleteDenied": {
+          "const": true
+        },
+        "destinationIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "failureDomainDistinct": {
+          "const": true
+        },
+        "objectLockMinimumDays": {
+          "minimum": 30,
+          "type": "integer"
+        },
+        "objectLockMode": {
+          "enum": [
+            "governance",
+            "compliance"
+          ]
+        },
+        "observedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "retentionDays": {
+          "minimum": 30,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "observedAt",
+        "destinationIdentity",
+        "failureDomainDistinct",
+        "retentionDays",
+        "objectLockMode",
+        "objectLockMinimumDays",
+        "controlDeleteDenied"
+      ],
+      "type": "object"
+    },
+    "recovery": {
+      "additionalProperties": false,
+      "properties": {
+        "clusterIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "expectedInstances": {
+          "const": 1
+        },
+        "namespaceIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "productionRouteCount": {
+          "const": 0
+        },
+        "readyAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "readyInstances": {
+          "const": 1
+        },
+        "sourceIdentity": {
+          "$ref": "#/$defs/digest"
+        },
+        "startedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "validatedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "writeProbePassed": {
+          "const": true
+        }
+      },
+      "required": [
+        "namespaceIdentity",
+        "clusterIdentity",
+        "sourceIdentity",
+        "startedAt",
+        "readyAt",
+        "validatedAt",
+        "readyInstances",
+        "expectedInstances",
+        "productionRouteCount",
+        "writeProbePassed"
+      ],
+      "type": "object"
+    },
+    "recoveryAccess": {
+      "$ref": "#/$defs/recoveryAccess"
+    },
+    "redaction": {
+      "additionalProperties": false,
+      "properties": {
+        "containsCredentials": {
+          "const": false
+        },
+        "containsEndpoints": {
+          "const": false
+        },
+        "containsTenantData": {
+          "const": false
+        },
+        "verdict": {
+          "const": "pass"
+        }
+      },
+      "required": [
+        "containsCredentials",
+        "containsEndpoints",
+        "containsTenantData",
+        "verdict"
+      ],
+      "type": "object"
+    },
+    "schemaVersion": {
+      "const": "cloudring.postgresql-cnpg-offcell-recovery-evidence/v2"
+    },
+    "sourceRevision": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "verdict": {
+      "const": "pass"
+    },
+    "walArchive": {
+      "additionalProperties": false,
+      "properties": {
+        "continuous": {
+          "const": true
+        },
+        "firstRecoverabilityPoint": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "lastArchivedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "lastFailedAt": {
+          "type": "null"
+        },
+        "replayedThrough": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "firstRecoverabilityPoint",
+        "lastArchivedAt",
+        "lastFailedAt",
+        "replayedThrough",
+        "continuous"
+      ],
+      "type": "object"
+    }
+  },
   "required": [
     "schemaVersion",
     "sourceRevision",
@@ -14,135 +1146,15 @@
     "walArchive",
     "recovery",
     "checksum",
+    "consistency",
+    "recoveryAccess",
+    "catalog",
+    "application",
+    "classes",
     "cleanup",
     "redaction",
     "verdict"
   ],
-  "properties": {
-    "schemaVersion": {"const": "cloudring.postgresql-cnpg-offcell-recovery-evidence/v1"},
-    "sourceRevision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-    "collectedAt": {"type": "string", "format": "date-time"},
-    "expiresAt": {"type": "string", "format": "date-time"},
-    "offCell": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["observedAt", "destinationIdentity", "failureDomainDistinct", "retentionDays", "objectLockMode", "objectLockMinimumDays", "controlDeleteDenied"],
-      "properties": {
-        "observedAt": {"type": "string", "format": "date-time"},
-        "destinationIdentity": {"$ref": "#/$defs/digest"},
-        "failureDomainDistinct": {"const": true},
-        "retentionDays": {"type": "integer", "minimum": 30},
-        "objectLockMode": {"enum": ["governance", "compliance"]},
-        "objectLockMinimumDays": {"type": "integer", "minimum": 30},
-        "controlDeleteDenied": {"const": true}
-      }
-    },
-    "baseBackup": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["identity", "startedAt", "completedAt", "status", "bytes", "objectInventoryDigest"],
-      "properties": {
-        "identity": {"$ref": "#/$defs/digest"},
-        "startedAt": {"type": "string", "format": "date-time"},
-        "completedAt": {"type": "string", "format": "date-time"},
-        "status": {"const": "completed"},
-        "bytes": {"type": "integer", "minimum": 1},
-        "objectInventoryDigest": {"$ref": "#/$defs/digest"}
-      }
-    },
-    "walArchive": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["firstRecoverabilityPoint", "lastArchivedAt", "lastFailedAt", "replayedThrough", "continuous"],
-      "properties": {
-        "firstRecoverabilityPoint": {"type": "string", "format": "date-time"},
-        "lastArchivedAt": {"type": "string", "format": "date-time"},
-        "lastFailedAt": {"type": "null"},
-        "replayedThrough": {"type": "string", "format": "date-time"},
-        "continuous": {"const": true}
-      }
-    },
-    "recovery": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["namespaceIdentity", "clusterIdentity", "sourceIdentity", "startedAt", "readyAt", "validatedAt", "readyInstances", "expectedInstances", "productionRouteCount", "writeProbePassed"],
-      "properties": {
-        "namespaceIdentity": {"$ref": "#/$defs/digest"},
-        "clusterIdentity": {"$ref": "#/$defs/digest"},
-        "sourceIdentity": {"$ref": "#/$defs/digest"},
-        "startedAt": {"type": "string", "format": "date-time"},
-        "readyAt": {"type": "string", "format": "date-time"},
-        "validatedAt": {"type": "string", "format": "date-time"},
-        "readyInstances": {"const": 1},
-        "expectedInstances": {"const": 1},
-        "productionRouteCount": {"const": 0},
-        "writeProbePassed": {"const": true}
-      }
-    },
-    "checksum": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["algorithm", "projectionVersion", "source", "recovered", "sourceCapturedAt", "recoveredCapturedAt", "sourceLogicalBytes", "recoveredLogicalBytes", "sourceRowCount", "recoveredRowCount", "matched"],
-      "properties": {
-        "algorithm": {"const": "sha256"},
-        "projectionVersion": {"const": "cloudring-postgresql-logical-state/v1"},
-        "source": {"$ref": "#/$defs/digest"},
-        "recovered": {"$ref": "#/$defs/digest"},
-        "sourceCapturedAt": {"type": "string", "format": "date-time"},
-        "recoveredCapturedAt": {"type": "string", "format": "date-time"},
-        "sourceLogicalBytes": {"type": "integer", "minimum": 1},
-        "recoveredLogicalBytes": {"type": "integer", "minimum": 1},
-        "sourceRowCount": {"type": "integer", "minimum": 1},
-        "recoveredRowCount": {"type": "integer", "minimum": 1},
-        "matched": {"const": true}
-      }
-    },
-    "cleanup": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["startedAt", "completedAt", "complete", "twoSweepQuietWindowSeconds", "sweeps"],
-      "properties": {
-        "startedAt": {"type": "string", "format": "date-time"},
-        "completedAt": {"type": "string", "format": "date-time"},
-        "complete": {"const": true},
-        "twoSweepQuietWindowSeconds": {"type": "integer", "minimum": 30},
-        "sweeps": {
-          "type": "array",
-          "minItems": 2,
-          "maxItems": 2,
-          "items": {"$ref": "#/$defs/cleanupSweep"}
-        }
-      }
-    },
-    "redaction": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["containsCredentials", "containsEndpoints", "containsTenantData", "verdict"],
-      "properties": {
-        "containsCredentials": {"const": false},
-        "containsEndpoints": {"const": false},
-        "containsTenantData": {"const": false},
-        "verdict": {"const": "pass"}
-      }
-    },
-    "verdict": {"const": "pass"}
-  },
-  "$defs": {
-    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
-    "cleanupSweep": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["observedAt", "inventoryDigest", "recoveryNamespaceCount", "clusterCount", "credentialSecretCount", "persistentVolumeClaimCount", "serviceCount", "routeCount"],
-      "properties": {
-        "observedAt": {"type": "string", "format": "date-time"},
-        "inventoryDigest": {"$ref": "#/$defs/digest"},
-        "recoveryNamespaceCount": {"const": 0},
-        "clusterCount": {"const": 0},
-        "credentialSecretCount": {"const": 0},
-        "persistentVolumeClaimCount": {"const": 0},
-        "serviceCount": {"const": 0},
-        "routeCount": {"const": 0}
-      }
-    }
-  }
+  "title": "CloudRING PostgreSQL CNPG off-cell recovery evidence",
+  "type": "object"
 }
