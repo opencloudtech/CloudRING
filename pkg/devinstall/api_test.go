@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -222,4 +223,61 @@ func TestResourceAccountingAndNetworkBoundary(t *testing.T) {
 	if err != nil || cpu != 3100 || memory != (3*(1<<30)+128*(1<<20))*1000 {
 		t.Fatalf("parent pod reservation understated: %d %d %v", cpu, memory, err)
 	}
+}
+
+// TestSubstrateCancellationAtResponseBoundary deterministically exercises the
+// timing seen in PR161 CI without relying on HTTP scheduling or sleeps.
+func TestSubstrateCancellationAtResponseBoundary(t *testing.T) {
+	for _, stage := range []string{"headers", "body-eof", "body-error", "body-valid-json"} {
+		t.Run(stage, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			body := &cancelAPIResponseBody{reader: strings.NewReader(""), cancel: cancel}
+			if stage == "body-error" {
+				body.readError = errors.New("synthetic body interruption")
+			}
+			if stage == "body-valid-json" {
+				body.reader = strings.NewReader(`{"verified":true}`)
+			}
+			client := &Client{profile: testProfile(), http: &http.Client{Transport: apiResponseTransport(func(request *http.Request) (*http.Response, error) {
+				if stage == "headers" {
+					cancel()
+				}
+				return &http.Response{StatusCode: http.StatusOK, Body: body, Header: make(http.Header), Request: request}, nil
+			})}}
+			err := client.request(ctx, http.MethodGet, "/cancel-boundary", nil, nil, new(any))
+			if !body.closed {
+				t.Fatal("cancelled response body was not closed")
+			}
+			if !errors.Is(err, context.Canceled) {
+				t.Fatalf("cancellation lost at %s: %v", stage, err)
+			}
+		})
+	}
+}
+
+type apiResponseTransport func(*http.Request) (*http.Response, error)
+
+func (transport apiResponseTransport) RoundTrip(request *http.Request) (*http.Response, error) {
+	return transport(request)
+}
+
+type cancelAPIResponseBody struct {
+	reader    io.Reader
+	cancel    context.CancelFunc
+	readError error
+	closed    bool
+}
+
+func (body *cancelAPIResponseBody) Read(output []byte) (int, error) {
+	body.cancel()
+	if body.readError != nil {
+		return 0, body.readError
+	}
+	return body.reader.Read(output)
+}
+
+func (body *cancelAPIResponseBody) Close() error {
+	body.closed = true
+	return nil
 }
