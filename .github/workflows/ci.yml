@@ -25,7 +25,7 @@ concurrency:
 jobs:
   go-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -43,13 +43,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version='3.6.13'
+          version='3.6.14'
           archive="${RUNNER_TEMP}/etcd-v${version}-linux-amd64.tar.gz"
           release="${RUNNER_TEMP}/etcd-v${version}-linux-amd64"
           curl --fail --location --proto '=https' --tlsv1.2 \
             --output "${archive}" \
             "https://github.com/etcd-io/etcd/releases/download/v${version}/etcd-v${version}-linux-amd64.tar.gz"
-          echo 'b4928654aed84d90952620c7144555e4186d795e1e7414e65fe0cf6265fd0465  '"${archive}" | sha256sum --check --strict
+          echo 'ffe840ff9295808e88cce2794a18a5ac87f12a5203c8314d0bf6aa119b41bac5  '"${archive}" | sha256sum --check --strict
           tar --extract --gzip --file "${archive}" --directory "${RUNNER_TEMP}"
           data_dir="${RUNNER_TEMP}/synthetic-etcd"
           snapshot="${RUNNER_TEMP}/synthetic-snapshot.db"
@@ -83,8 +83,11 @@ jobs:
           wait "${etcd_pid}" || true
           trap - EXIT
           chmod 0600 "${snapshot}"
+          GOTOOLCHAIN=go1.26.8 bash .github/scripts/build-release-etcdutl.sh \
+            "${RUNNER_TEMP}/release-etcdutl"
+          bash .github/scripts/check-release-binaries.sh "${RUNNER_TEMP}/release-etcdutl/etcdutl"
           CLOUDRING_TEST_ETCD_SNAPSHOT="${snapshot}" \
-          CLOUDRING_TEST_ETCDUTL="${release}/etcdutl" \
+          CLOUDRING_TEST_ETCDUTL="${RUNNER_TEMP}/release-etcdutl/etcdutl" \
             go test -tags=etcdrecoveryintegration ./pkg/backup/etcdrecovery -run '^TestRealSyntheticSnapshotRecovery$' -count=1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -196,7 +199,7 @@ jobs:
 
   go-build-module-integrity:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -214,6 +217,18 @@ jobs:
           go mod tidy -diff
           go list -mod=readonly -m all
           go build -mod=readonly -trimpath ./...
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: 1.26.8
+          check-latest: false
+          cache: true
+      - name: Reproduce, scan and execute the complete release bundle
+        run: |
+          bash .github/scripts/build-release-bundle.sh "${RUNNER_TEMP}/release-bundle"
+          tar --extract --gzip \
+            --file "${RUNNER_TEMP}/release-bundle/cloudring-linux-amd64.tar.gz" \
+            --directory "${RUNNER_TEMP}"
+          "${RUNNER_TEMP}/cloudring-linux-amd64/bin/cloudring-roadmap" verify --root ./roadmap
 
   ocs-validate:
     runs-on: ubuntu-latest

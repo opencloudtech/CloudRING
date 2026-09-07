@@ -102,7 +102,8 @@ the bundle checksum, and creates GitHub artifact attestations.
 The image job independently reproduces the worker binary and two OCI image
 layouts, checks their Linux AMD64 subject manifest digests are identical, and
 requires the separately pushed registry subject to match that reviewed digest.
-The official `etcdutl` 3.6.13 archive, binary, BuildKit, Dockerfile frontend,
+The official `etcdutl` 3.6.14 source is rebuilt twice with Go 1.26.8 and
+independent caches. The source archive, rebuilt binary, BuildKit, Dockerfile frontend,
 Buildx and Syft inputs are immutable-version or content pinned. The job
 publishes only `sha-<commit>`, creates a real Syft image-package SBOM plus a
 separately named release-component inventory, and emits a canonical
@@ -134,6 +135,10 @@ service validation.
 
 The Linux bundle is now independently reproduced with separate build caches,
 stable SBOM fields and deterministic archive metadata before it is attested.
+The required pull-request build check exercises that same bundle build with
+the exact release compiler. Every shipped Go binary retains symbols and passes
+a binary vulnerability scan before upload and attestation. The offline etcd
+snapshot integration test uses the same rebuilt, hash-pinned recovery tool.
 Build artifacts retained by Actions for 30 days are not the permanent release.
 Follow [retained release publication](releasing.md) to verify the exact accepted
 run, attach all assets to a draft and publish an immutable versioned release.

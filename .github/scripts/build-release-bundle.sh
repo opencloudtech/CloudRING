@@ -34,7 +34,7 @@ for attempt in 1 2; do
   while IFS= read -r command_dir; do
     command_name="$(basename "${command_dir}")"
     go build -mod=readonly -trimpath -buildvcs=true \
-      -ldflags='-s -w -buildid=' \
+      -ldflags='-buildid=' \
       -o "${root}/bin/${command_name}" "./${command_dir}"
   done < <(find cmd -mindepth 1 -maxdepth 1 -type d -print | LC_ALL=C sort)
   cp LICENSE NOTICE "${root}/"
@@ -75,6 +75,8 @@ PY
     | gzip -n >"${work}/bundle-${attempt}.tar.gz"
 done
 cmp "${work}/bundle-1.tar.gz" "${work}/bundle-2.tar.gz"
+bash .github/scripts/check-release-binaries.sh \
+  "${work}/attempt-1/cloudring-linux-amd64/bin/"*
 mkdir -p "$1"
 cp "${work}/bundle-1.tar.gz" "$1/cloudring-linux-amd64.tar.gz"
 cp "${work}/attempt-1/cloudring-linux-amd64/cloudring-sbom.cdx.json" "$1/"
