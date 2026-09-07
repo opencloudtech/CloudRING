@@ -33,6 +33,20 @@ func IsLifecycleFailure(err error) bool {
 // Process-tree cleanup always finishes before replay completion, so a child
 // cannot keep either inherited output descriptors or the replay writer blocked.
 func Run(command *exec.Cmd, replay *Replay) error {
+	return run(command, replay, nil)
+}
+
+// RunWithEnvironmentNames preserves only explicitly named additional variables
+// from command.Env across the replay boundary. It never reads ambient values.
+// Callers must review these names as part of trusting the child executable.
+func RunWithEnvironmentNames(command *exec.Cmd, replay *Replay, environmentNames []string) error {
+	if command == nil || command.Env == nil || ValidateEnvironmentNames(environmentNames) != nil {
+		return errors.New("invalid explicit kubeconfig command environment")
+	}
+	return run(command, replay, environmentNames)
+}
+
+func run(command *exec.Cmd, replay *Replay, environmentNames []string) error {
 	if command == nil || command.Process != nil {
 		return errors.New("invalid kubeconfig command")
 	}
@@ -40,7 +54,7 @@ func Run(command *exec.Cmd, replay *Replay) error {
 	complete := func() error { return nil }
 	if replay != nil {
 		var err error
-		complete, err = replay.Attach(command)
+		complete, err = replay.attach(command, environmentNames)
 		if err != nil {
 			return err
 		}
