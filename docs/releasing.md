@@ -6,8 +6,8 @@ the successful `release-provenance` run. Billing failures, missing runners,
 failed provenance, and incomplete builds leave the release unpublished.
 
 The workflow independently builds the Linux command bundle and its SBOM twice
-with separate Go build caches. The SBOM omits volatile serial/timestamp fields
-and binds its main module identity and graph references to the source commit,
+with separate Go build caches. The SBOM uses a content-derived UUIDv5 serial,
+omits wall-clock timestamps and binds its main module identity and graph references to the source commit,
 independent of Git tags. The archive uses fixed modes, the commit timestamp,
 fixed owners, sorted paths and a gzip
 header without local filename/time. A byte mismatch fails before attestation.
@@ -18,7 +18,8 @@ metadata does not acquire a dirty flag from the build itself.
 Each build uses a separate shallow checkout of the exact accepted commit,
 without tags. This preserves embedded VCS SHA/time while keeping Go's main
 module version independent of tags added after the main build. Reproduce with
-the exact Go toolchain pinned in the workflow, Linux/amd64 target and GNU tar;
+the exact Go toolchain pinned in the workflow, Linux/amd64 target, GNU tar and
+Python 3 (standard-library UUID generation only);
 using a different compiler is a different build input.
 
 ## Repository prerequisites
