@@ -26,6 +26,10 @@ trap 'rm -rf "${work}"' EXIT
 for attempt in 1 2; do
   export GOCACHE="${work}/go-cache-${attempt}"
   root="${work}/attempt-${attempt}/cloudring-linux-amd64"
+  source_tree="${work}/source-${attempt}"
+  bash .github/scripts/checkout-release-source.sh "${source_sha}" "${source_tree}"
+  (
+  cd "${source_tree}"
   mkdir -p "${root}/bin"
   while IFS= read -r command_dir; do
     command_name="$(basename "${command_dir}")"
@@ -48,6 +52,7 @@ for attempt in 1 2; do
     "${root}/cloudring-sbom.cdx.json" >/dev/null
   chmod 0755 "${root}" "${root}/bin" "${root}"/bin/*
   chmod 0644 "${root}/LICENSE" "${root}/NOTICE" "${root}/cloudring-sbom.cdx.json"
+  )
   tar --sort=name --mtime="@${SOURCE_DATE_EPOCH}" --owner=0 --group=0 \
     --numeric-owner -C "${work}/attempt-${attempt}" -cf - cloudring-linux-amd64 \
     | gzip -n >"${work}/bundle-${attempt}.tar.gz"

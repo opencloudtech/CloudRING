@@ -15,6 +15,12 @@ The recovery worker separately proves binary and OCI subject reproducibility.
 Both workflows build their executables before creating in-tree output so VCS
 metadata does not acquire a dirty flag from the build itself.
 
+Each build uses a separate shallow checkout of the exact accepted commit,
+without tags. This preserves embedded VCS SHA/time while keeping Go's main
+module version independent of tags added after the main build. Reproduce with
+the exact Go toolchain pinned in the workflow, Linux/amd64 target and GNU tar;
+using a different compiler is a different build input.
+
 ## Repository prerequisites
 
 An administrator enables release immutability and protects `refs/tags/v*`

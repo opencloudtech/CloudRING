@@ -98,14 +98,19 @@ jobs:
           set -euo pipefail
           source_date_epoch="$(git show -s --format=%ct HEAD)"
           test -z "$(git status --porcelain)"
+          bash .github/scripts/checkout-release-source.sh \
+            "${GITHUB_SHA}" "${RUNNER_TEMP}/worker-source"
           for attempt in 1 2; do
+            (
+            cd "${RUNNER_TEMP}/worker-source"
             GOCACHE="${RUNNER_TEMP}/go-cache-${attempt}" \
             SOURCE_DATE_EPOCH="${source_date_epoch}" \
             CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
               go build -mod=readonly -trimpath -buildvcs=true \
                 -ldflags='-s -w -buildid=' \
-                -o "${RUNNER_TEMP}/cloudring-etcd-recovery-worker-${attempt}" \
-                ./cmd/cloudring-etcd-recovery-worker
+              -o "${RUNNER_TEMP}/cloudring-etcd-recovery-worker-${attempt}" \
+              ./cmd/cloudring-etcd-recovery-worker
+            )
           done
           cmp \
             "${RUNNER_TEMP}/cloudring-etcd-recovery-worker-1" \
