@@ -107,7 +107,7 @@ func TestSubstrateCredentialsRejectAmbientFallbackAndAmbiguity(t *testing.T) {
 
 func TestSubstrateRequestsPinTLSAndDoNotFollowRedirectsOrExposeBodies(t *testing.T) {
 	var calls atomic.Int32
-	client, _, _ := testAPIClient(t, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+	client, profile, payload := testAPIClient(t, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		calls.Add(1)
 		if request.Header.Get("Authorization") != "Bearer "+testSubstrateBearer() {
 			t.Error("missing selected credential")
@@ -137,10 +137,30 @@ func TestSubstrateRequestsPinTLSAndDoNotFollowRedirectsOrExposeBodies(t *testing
 	if calls.Load() != 3 {
 		t.Fatal("redirect followed")
 	}
-	client.transport.TLSClientConfig.RootCAs = nil
-	client.transport.CloseIdleConnections()
-	if err := client.request(context.Background(), http.MethodGet, "/valid", nil, nil, &result); err == nil {
+	var changed map[string]any
+	if err := yaml.Unmarshal(payload, &changed); err != nil {
+		t.Fatal("decode TLS test payload")
+	}
+	wrongCredentials, err := newCredentials(profile, time.Now())
+	if err != nil {
+		t.Fatalf("generate unrelated CA: %v", err)
+	}
+	cluster := changed["clusters"].([]any)[0].(map[string]any)["cluster"].(map[string]any)
+	cluster["certificate-authority-data"] = base64.StdEncoding.EncodeToString([]byte(wrongCredentials.CACertificate))
+	wrongPayload, err := yaml.Marshal(changed)
+	if err != nil {
+		t.Fatal("encode wrong CA test payload")
+	}
+	wrongClient, err := NewClient(bytes.NewReader(wrongPayload), profile)
+	if err != nil {
+		t.Fatalf("construct wrong CA client: %v", err)
+	}
+	t.Cleanup(func() { _ = wrongClient.Close() })
+	if err := wrongClient.request(context.Background(), http.MethodGet, "/valid", nil, nil, &result); err == nil {
 		t.Fatal("untrusted TLS accepted")
+	}
+	if calls.Load() != 3 {
+		t.Fatal("untrusted TLS request reached API handler")
 	}
 }
 
