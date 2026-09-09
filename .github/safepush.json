@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "cloudring.safepush.github/v1",
+  "repository": "opencloudtech/CloudRING",
+  "repositoryId": 1288130713,
+  "workflows": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "jobs": [
+        "docscheck",
+        "go-build-module-integrity",
+        "go-test",
+        "go-test-race",
+        "go-vet",
+        "ocs-conformance",
+        "ocs-validate",
+        "platform-manifests",
+        "postgres-integration",
+        "source-safety",
+        "windows-go-test"
+      ]
+    },
+    {
+      "path": ".github/workflows/cla-dco.yml",
+      "jobs": [
+        "cla",
+        "dco"
+      ]
+    },
+    {
+      "path": ".github/workflows/license.yml",
+      "jobs": [
+        "license-check"
+      ]
+    },
+    {
+      "path": ".github/workflows/security.yml",
+      "jobs": [
+        "codeql",
+        "gosec",
+        "govulncheck",
+        "secret-scan"
+      ]
+    },
+    {
+      "path": ".github/workflows/supply-chain.yml",
+      "jobs": [
+        "supply-chain-policy"
+      ]
+    }
+  ],
+  "excludedWorkflows": [
+    ".github/workflows/release-provenance.yml"
+  ]
+}

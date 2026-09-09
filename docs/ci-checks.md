@@ -1,8 +1,7 @@
 # CloudRING CI Checks
 
-Public CI for a clean clone runs these read-only checks on the latest security
-patch of the minimum supported Go release (1.25) and runs unit tests again on
-the current supported release (1.26):
+Public CI for a clean clone runs these read-only checks with the workflow's
+pinned Go toolchain, currently Go 1.26.8:
 
 ```bash
 go mod download
@@ -31,9 +30,9 @@ The public CI contract covers these checks:
 
 | Check | Contract |
 | --- | --- |
-| Go tests | The public module must pass tests on supported minimum/current Go releases, plus race, vet, read-only module graph, and build checks. |
+| Go tests | The complete public module must pass tests with the pinned CI toolchain, plus race, vet, read-only module graph, and build checks. |
 | PostgreSQL integration | Transactional-state CAS, migrations, concurrent writers, and the public runtime/session journey must pass against real digest-pinned PostgreSQL. The pinned Linux test container also exercises interrupted guest database directory setup and ownership rejection as UID 0; it asserts that identity before running these filesystem tests. |
-| Windows | The same unit suite is run on `windows-latest` as a portability signal. Native Windows support is not a release-readiness blocker for the current goal. |
+| Windows | The same unit suite runs on `windows-latest` and is included in the SafePush pre-merge policy. A passing suite does not establish native Windows release readiness. |
 | OCS validation | Every shipped connector package selected by the shared CI package list must pass `go run ./cmd/ocsctl validate`. |
 | OCS conformance | The same exact shipped connector packages must pass `go run ./cmd/ocsctl conformance`; validation cannot be green for an artifact that CI omits from conformance. |
 | Synthetic reference image | The digest-pinned `Containerfile` must build and its local mock-provider self-check must pass. |
@@ -66,27 +65,27 @@ runtime image, credential context, conditional skip, and `continue-on-error`.
 Changing a reviewed workflow requires changing its recorded digest in the same
 review.
 
-This repository check is defense in depth, not a self-authenticating policy: a
-pull request controls the workflow revision that evaluates that pull request.
-The server-side trust control for external contributors is protected `main`
-with an up-to-date branch, one approving owner review, stale-review dismissal,
-last-push approval, required conversations and checks, and no force-push or
-branch deletion. The project founder and lead maintainer, `@trukhinyuri`, is
-the final acceptance authority. Contributor-authored changes require that
-owner review; automated or AI-assisted review does not replace the founder's
-decision.
+This repository check is defense in depth: a pull request controls the
+workflow revision that evaluates that pull request. The separate
+[SafePush verifier and deployment contract](safepush.md) bind CI observations
+to the accepted policy, workflow sources, repository, pull request and commit.
+The verifier must run from trusted immutable source and be required by the
+hosting platform. Its presence in the repository does not enable that control.
 
-GitHub does not let a pull-request author submit the approval required by the
-same branch rule. While the repository has a single founder/administrator, a
-founder-authored pull request may therefore use the administrator merge path
-after a recorded founder review of the exact head SHA. This narrow owner path
-still requires every configured status check to succeed on the current head,
-an up-to-date base, resolved conversations, source-safety approval, and a
-post-merge `main` verification. It does not authorize direct pushes, skipped
-checks, force-pushes, branch deletion, or bypasses for other contributors.
-Adding another administrator changes this trust assumption and requires an
-explicit governance and branch-protection review before that access is
-granted.
+The required acceptance policy is an up-to-date protected target, every
+required test passing and an owner-approved merge. Both `main` and `master`
+must be covered; ordinary working branches remain unrestricted. The project
+founder and lead maintainer, `@trukhinyuri`, is the final acceptance authority.
+Automated or AI-assisted review does not replace that decision. Native review
+rules must dismiss stale approvals and prevent unauthorized dismissal.
+
+Only the explicitly designated owner may bypass test and review requirements;
+future delegates require an explicit policy change. Administrator or
+Maintainer status alone must not grant that exception. This owner path also
+handles the platform's prohibition on approving one's own pull request.
+Force-push and deletion controls remain separate from the test/review
+exception. The actual installed rules and both ordinary and bypass behavior
+must be read back and tested before claiming SafePush is enabled.
 
 ## Release provenance
 
