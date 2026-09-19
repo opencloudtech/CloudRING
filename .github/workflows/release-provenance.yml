@@ -50,6 +50,7 @@ jobs:
           name: cloudring-linux-amd64
           path: |
             dist/cloudring-linux-amd64.tar.gz
+            dist/cloudring-linux-amd64
             dist/cloudring-linux-amd64.tar.gz.sha256
             dist/cloudring-sbom.cdx.json
             dist/SHA256SUMS
@@ -64,6 +65,124 @@ jobs:
         with:
           subject-path: dist/cloudring-linux-amd64.tar.gz
           sbom-path: dist/cloudring-sbom.cdx.json
+      - name: Attest direct development installer provenance
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-path: dist/cloudring-linux-amd64
+      - name: Attest direct development installer SBOM
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-path: dist/cloudring-linux-amd64
+          sbom-path: dist/cloudring-sbom.cdx.json
+
+  development-images:
+    needs: artifact-provenance
+    if: >-
+      github.event_name == 'push' &&
+      github.ref_protected &&
+      ((github.ref_type == 'branch' && github.ref_name == 'main') ||
+      (github.ref_type == 'tag' && startsWith(github.ref_name, 'v')))
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: 1.26.8
+          check-latest: false
+          cache: true
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        with:
+          version: v0.34.1
+          driver-opts: image=moby/buildkit@sha256:2f5adac4ecd194d9f8c10b7b5d7bceb5186853db1b26e5abd3a657af0b7e26ec
+      - name: Download this run's reproduced and attested commands
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: cloudring-linux-amd64
+          path: dist/release-bundle
+      - name: Verify command identity and signed Canonical guest inputs
+        shell: bash
+        run: bash .github/scripts/prepare-development-images.sh
+      - name: Authenticate to GHCR for the release-only push
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' "${{ github.token }}" | \
+            docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+      - name: Independently reproduce and publish exact development images
+        id: images
+        shell: bash
+        run: bash .github/scripts/build-development-images.sh
+      - name: Upload development release identities and SBOMs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cloudring-development-release-evidence
+          path: |
+            dist/cloudring-dev-artifacts.json
+            dist/cloudring-dev-egress-domains.json
+            dist/development-runtime-image.json
+            dist/development-runtime.cdx.json
+            dist/development-guest-image.json
+            dist/development-guest.cdx.json
+            dist/development-guest-source.json
+            dist/development-guest-packages.manifest
+            dist/development-ubuntu-SHA256SUMS
+            dist/development-ubuntu-SHA256SUMS.gpg
+            dist/ubuntu-cloud-key.asc
+          if-no-files-found: error
+          retention-days: 30
+      - name: Attest development runtime provenance
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-name: ghcr.io/opencloudtech/cloudring-development-runtime
+          subject-digest: ${{ steps.images.outputs.runtime-digest }}
+          push-to-registry: true
+      - name: Attest development runtime image SBOM
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-name: ghcr.io/opencloudtech/cloudring-development-runtime
+          subject-digest: ${{ steps.images.outputs.runtime-digest }}
+          sbom-path: dist/development-runtime.cdx.json
+          push-to-registry: true
+      - name: Attest unchanged development guest provenance
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-name: ghcr.io/opencloudtech/cloudring-development-guest
+          subject-digest: ${{ steps.images.outputs.guest-digest }}
+          push-to-registry: true
+      - name: Attest development guest signed package inventory
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-name: ghcr.io/opencloudtech/cloudring-development-guest
+          subject-digest: ${{ steps.images.outputs.guest-digest }}
+          sbom-path: dist/development-guest.cdx.json
+          push-to-registry: true
+      - name: Attest exact development BOM and image identities
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-path: |
+            dist/cloudring-dev-artifacts.json
+            dist/cloudring-dev-egress-domains.json
+            dist/development-runtime-image.json
+            dist/development-guest-image.json
+            dist/development-guest-source.json
+      - name: Verify anonymous pulls of both exact development images
+        shell: bash
+        run: |
+          set -euo pipefail
+          anonymous_config="$(mktemp -d)"
+          trap 'rm -rf "${anonymous_config}"' EXIT
+          for kind in runtime guest; do
+            reference="$(jq -er '.imageName + "@" + .imageDigest' "dist/development-${kind}-image.json")"
+            docker --config "${anonymous_config}" pull "${reference}"
+          done
 
   recovery-worker-image:
     if: >-

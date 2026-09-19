@@ -26,8 +26,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - name: Validate workflow syntax
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
@@ -115,10 +115,10 @@ jobs:
                  $workflow_path == ".github/workflows/security.yml") or
                 (.value == "write" and
                  (.key == "id-token" or .key == "attestations") and
-                 ($job_key == "artifact-provenance" or $job_key == "recovery-worker-image") and
+                 ($job_key == "artifact-provenance" or $job_key == "recovery-worker-image" or $job_key == "development-images") and
                  $workflow_path == ".github/workflows/release-provenance.yml") or
                 (.value == "write" and .key == "packages" and
-                 $job_key == "recovery-worker-image" and
+                 ($job_key == "recovery-worker-image" or $job_key == "development-images") and
                  $workflow_path == ".github/workflows/release-provenance.yml"))
               end;
             def no_pull_request_target:
@@ -143,7 +143,7 @@ jobs:
               end;
             def exact_job_condition($job_key; $workflow_path; $release_guard):
               if $workflow_path == ".github/workflows/release-provenance.yml" and
-                ($job_key == "artifact-provenance" or $job_key == "recovery-worker-image")
+                ($job_key == "artifact-provenance" or $job_key == "recovery-worker-image" or $job_key == "development-images")
               then has("if") and .if == $release_guard
               else has("if") | not
               end;
@@ -152,6 +152,7 @@ jobs:
               (. == "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" or
                . == "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e" or
                . == "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" or
+               . == "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" or
                . == "actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6" or
                . == "docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f" or
                test("^github/codeql-action/(init|autobuild|analyze)@7188fc363630916deb702c7fdcf4e481b751f97a$") or
@@ -285,6 +286,22 @@ jobs:
           expect_rejected release-missing-protected-ref-guard "$(
             jq -c '.jobs["recovery-worker-image"].if |= gsub("github.ref_protected && "; "")' \
               <<<"${valid_release_fixture}"
+          )" '.github/workflows/release-provenance.yml'
+
+          valid_development_release_fixture="$(jq -c '
+            .jobs["development-images"] = .jobs["recovery-worker-image"] |
+            del(.jobs["recovery-worker-image"])' <<<"${valid_release_fixture}")"
+          policy_accepts "${valid_development_release_fixture}" '.github/workflows/release-provenance.yml'
+          expect_rejected development-release-missing-protected-ref-guard "$(
+            jq -c '.jobs["development-images"].if |= gsub("github.ref_protected && "; "")' \
+              <<<"${valid_development_release_fixture}"
+          )" '.github/workflows/release-provenance.yml'
+          expect_rejected development-release-pull-request-event "$(
+            jq -c '."on" = {"pull_request": {}}' <<<"${valid_development_release_fixture}"
+          )" '.github/workflows/release-provenance.yml'
+          expect_rejected development-release-unrelated-publisher "$(
+            jq -c '.jobs["unrelated-publisher"] = .jobs["development-images"] |
+              del(.jobs["development-images"])' <<<"${valid_development_release_fixture}"
           )" '.github/workflows/release-provenance.yml'
 
           multi_document_fixture=$'"on": pull_request_target\npermissions: {contents: read}\njobs:\n  unsafe:\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n---\n'
@@ -500,7 +517,7 @@ jobs:
                 expected_jobs='["license-check"]'
                 ;;
               .github/workflows/release-provenance.yml)
-                expected_jobs='["artifact-provenance","recovery-worker-image"]'
+                expected_jobs='["artifact-provenance","development-images","recovery-worker-image"]'
                 ;;
               .github/workflows/security.yml)
                 expected_jobs='["codeql","gosec","govulncheck","secret-scan"]'

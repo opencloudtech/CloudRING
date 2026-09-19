@@ -12,7 +12,8 @@ independent of Git tags. The archive uses fixed modes, the commit timestamp,
 fixed owners, sorted paths and a gzip
 header without local filename/time. A byte mismatch fails before attestation.
 The recovery worker separately proves binary and OCI subject reproducibility.
-Both workflows build their executables before creating in-tree output so VCS
+The development runtime and guest images each require matching independently
+built OCI subjects. All jobs build their executables before creating in-tree output so VCS
 metadata does not acquire a dirty flag from the build itself.
 
 Each build uses a separate shallow checkout of the exact accepted commit,
@@ -48,7 +49,7 @@ is restricted to the release maintainer. No workflow receives an administrator
 credential. Check the existing policy before changing it; do not replace
 unrelated repository rules.
 
-The recovery-worker package must allow anonymous pulls. Its public source
+The recovery-worker and both development packages must allow anonymous pulls. Their public source
 repository does not automatically make the GHCR package public. The workflow
 verifies the exact OCI digest with an empty Docker credential directory;
 private visibility fails this check. Changing an organization-wide package
@@ -128,6 +129,40 @@ The versioned release assets survive expiration of the 30-day Actions artifact
 copies. GitHub locks published immutable assets and their tag and provides a
 separate release attestation. Build provenance establishes how the binary was
 built; release attestation establishes which assets belong to that release.
+
+## Development installation assets
+
+For a C02 prerelease, use the exact prerelease version recorded in
+`build/development/upstream.json`. Before a subsequent retained release,
+advance that version through a reviewed change; never overwrite an existing
+tag or published BOM. The immutable release contains the direct
+`cloudring-linux-amd64` executable as well as the command archive. Both have
+SLSA provenance and the module SBOM attestation. The direct executable must
+match `cloudring-linux-amd64/bin/cloudring` inside the verified archive.
+
+Also download the selected run's `cloudring-development-release-evidence`
+artifact. Retain its exact `cloudring-dev-artifacts.json`, the reviewed registry
+and CDN host list `cloudring-dev-egress-domains.json`, both image identity
+documents and SBOMs, `development-guest-source.json`, the guest
+package manifest, Canonical's signed checksums/signature and public key. Verify
+SLSA provenance for the BOM, egress list and three identity/source documents with the same
+source-digest and signer-workflow constraints used above. Verify SLSA and
+CycloneDX predicates for both immutable OCI references in the BOM.
+
+Check the BOM's `sourceCommit`, installer prerelease URL and executable hash
+against the selected commit and direct asset. Match both image references to
+their identity files, verify their SBOM and Containerfile hashes, and compare
+the guest source hash/signing fingerprint with the reviewed upstream input.
+The guest SBOM is the signed Canonical package inventory of the unchanged
+QCOW2, not a claim that CloudRING independently scanned its mounted filesystem.
+The guest source document hashes the retained signed checksums and signature.
+An empty Docker credential directory must pull both exact images successfully.
+
+Upload this explicit development asset set to the same draft release before
+the asset readback and publication steps. The release notes distinguish the
+candidate's implemented behavior from its completed live acceptance. Artifact
+verification does not establish successful VM creation, isolation, restart or
+complete deletion; those require the actual development installation journey.
 Installation, runtime behavior and restore require their separate acceptance
 evidence before any deployment capability can be claimed.
 

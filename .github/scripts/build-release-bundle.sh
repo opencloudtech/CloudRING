@@ -80,7 +80,10 @@ bash .github/scripts/check-release-binaries.sh \
 mkdir -p "$1"
 cp "${work}/bundle-1.tar.gz" "$1/cloudring-linux-amd64.tar.gz"
 cp "${work}/attempt-1/cloudring-linux-amd64/cloudring-sbom.cdx.json" "$1/"
+# The client streams this exact Linux executable to an owned guest. Its bytes
+# are already covered by the independently reproduced and scanned bundle.
+cp "${work}/attempt-1/cloudring-linux-amd64/bin/cloudring" "$1/cloudring-linux-amd64"
 (
   cd "$1"
-  sha256sum cloudring-linux-amd64.tar.gz cloudring-sbom.cdx.json > SHA256SUMS
+  sha256sum cloudring-linux-amd64.tar.gz cloudring-linux-amd64 cloudring-sbom.cdx.json > SHA256SUMS
 )

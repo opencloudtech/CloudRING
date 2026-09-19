@@ -29,8 +29,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - uses: github/codeql-action/init@7188fc363630916deb702c7fdcf4e481b751f97a # v4.37.1
         with:
@@ -48,8 +48,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - run: go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
 
@@ -62,8 +62,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - run: go run github.com/securego/gosec/v2/cmd/gosec@v2.27.1 -quiet -fmt=golint -tests -nosec-require-justification -nosec-require-rules ./...
 
@@ -77,8 +77,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - name: Scan current tree and pushed history
         shell: bash
