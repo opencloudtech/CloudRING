@@ -47,3 +47,5 @@ acceptance records, not by intent.
 
 This charter is maintained like code: changes arrive by pull request with review, and the
 charter is binding for all CloudRING repositories.
+
+The stage invariants of this charter are enforced through the roadmap in [ROADMAP.md](ROADMAP.md).
