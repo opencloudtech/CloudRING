@@ -24,12 +24,12 @@ to stop.
 | P4 | Unkillability | ≥3 independent owners/jurisdictions at the network level; the federation runs with no central point |
 | P5 | OCS is alive | ≥2 independent implementations of the contract (CNCF Sandbox will expect 3+); a third-party product runs without core changes |
 | P6 | Quality #1 | comparable to or better than the leaders on every dimension; stage invariants enforced on every release |
-| P7 | The company | a working commercial entity (OpenCloudTech) with the first paid event |
+| P7 | The company | a working commercial entity of the owner with the first paid event |
 | P8 | A decade | the domain core carries no substrate types (substrate rotation every 5–10 years); standard stewardship institutionalized |
 
 ## Stage invariants (enforced on every release; see QUALITY.md)
 
-I1 production-ready at every stage · I2 code is the complete source of truth · I3
+I1 production-grade at every stage · I2 code is the complete source of truth · I3
 reliable updates (pinned artifacts, rollback, deprecation policy) · I4 no operator IT
 competence required · I5 modern architecture and process.
 
@@ -85,7 +85,7 @@ the standard (foundation/association).
 
 ## Stewardship and economics (cross-cutting; owner decisions)
 
-- Era 0: IP held by Elena Trukhina ZZP; OpenCloudTech is the intended future owner
+- Era 0: IP held by the founder's entity; a dedicated vehicle is the intended future owner
   ("ethereum foundation" model) — transfer not yet executed; stewardship form is an
   Era II decision.
 - Monetization per the transformation ladder: the OSS core is free; the Business tier

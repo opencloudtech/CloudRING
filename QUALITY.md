@@ -1,7 +1,7 @@
 # CloudRING Quality Charter
 
 This charter is the repository-owned statement of product quality requirements. It binds
-every contribution, release, and milestone: CloudRING must be a stable, production-ready
+every contribution, release, and milestone: CloudRING must be a stable, production-grade
 product at every stage of its evolution — not only at major releases — and it must deploy,
 operate, and update reliably from code alone.
 
