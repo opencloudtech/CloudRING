@@ -1,0 +1,113 @@
+{
+  "apiVersion": "cloudring.development-release-inputs/v1",
+  "artifacts": {
+    "ciliumChart": {
+      "sha256": "06210eef7c23d15f7699c79e2fe3a1ec9c389024c5c5c006ea04022d322449a2",
+      "url": "https://helm.cilium.io/cilium-1.20.1.tgz",
+      "version": "v1.20.1"
+    },
+    "ciliumImage": "quay.io/cilium/cilium@sha256:f70030cc1ee5aad3e15a5b37324a5f3dd4ec039c082a22c589d439fbaf3ac68d",
+    "ciliumOperatorImage": "quay.io/cilium/operator-generic@sha256:8b613c2e5e3debc1e189f30a258189788b3bd55f29ce9519e505148a22213663",
+    "cniPlugins": {
+      "sha256": "b98f74a0f8522f0a83867178729c1aa70f2158f90c45a2ca8fa791db1c76b303",
+      "url": "https://github.com/containernetworking/plugins/releases/download/v1.9.1/cni-plugins-linux-amd64-v1.9.1.tgz",
+      "version": "v1.9.1"
+    },
+    "containerd": {
+      "sha256": "27b74a4f85c9bf5ffcedcbc4aaa7408ae3c5e7079a6130aeda5c252288d59d67",
+      "url": "https://github.com/containerd/containerd/releases/download/v2.2.8/containerd-2.2.8-linux-amd64.tar.gz",
+      "version": "v2.2.8"
+    },
+    "crictl": {
+      "sha256": "2e141e5b22cb189c40365a11807d69b76b9b3caced89fac2f4ec879408ce2177",
+      "url": "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.35.0/crictl-v1.35.0-linux-amd64.tar.gz",
+      "version": "v1.35.0"
+    },
+    "helm": {
+      "sha256": "61f88ab166748cb19604d7884cb100ae9ccb13804ddeb98e08af167eacbb6a14",
+      "url": "https://get.helm.sh/helm-v3.21.4-linux-amd64.tar.gz",
+      "version": "v3.21.4"
+    },
+    "kubeadm": {
+      "sha256": "1bbc64a2be5b300880ae9330c6bba592ec2a2b8ecb79c527b0c7cc0f44070e5e",
+      "url": "https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubeadm",
+      "version": "v1.35.8"
+    },
+    "kubectl": {
+      "sha256": "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf",
+      "url": "https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl",
+      "version": "v1.35.8"
+    },
+    "kubelet": {
+      "sha256": "6971b9f95e54dbed67a2271abe6e78f8cc2894494649f3cf39e4b25a82dca923",
+      "url": "https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubelet",
+      "version": "v1.35.8"
+    },
+    "kubernetesImages": [
+      {
+        "digest": "sha256:1ca06c62c256f8336f6bc5ad9be1bc9e6298dcf4a91de5ecd55a3831d0dc2276",
+        "name": "registry.k8s.io/kube-apiserver:v1.35.8"
+      },
+      {
+        "digest": "sha256:5705680203ce0bc4f9ea7593d16ee96685bb3b62fe6e3b170c184b088f98bbc7",
+        "name": "registry.k8s.io/kube-controller-manager:v1.35.8"
+      },
+      {
+        "digest": "sha256:fed5f9a7b9e2a799ec24ca9f6438df6991a05e0e4f6274b34ca5375023137970",
+        "name": "registry.k8s.io/kube-scheduler:v1.35.8"
+      },
+      {
+        "digest": "sha256:fa9db975627d896cbfa140b6bf64e4966566d09ffe0b8b512b8c4d9a6395d793",
+        "name": "registry.k8s.io/kube-proxy:v1.35.8"
+      },
+      {
+        "digest": "sha256:e5b941ef8f71de54dc3a13398226c269ba217d06650a21bd3afcf9d890cf1f41",
+        "name": "registry.k8s.io/pause:3.10.1"
+      },
+      {
+        "digest": "sha256:6efdcd9a81c9063554d107d0c163523e8bc1984d1245d914b56065f614d4d67b",
+        "name": "registry.k8s.io/etcd:3.6.14-0"
+      },
+      {
+        "digest": "sha256:2329f5f0e7e79fbe56dcdf11ecc4337ee2476bb251095bc275fe9461cb88a55b",
+        "name": "registry.k8s.io/coredns/coredns:v1.14.7"
+      }
+    ],
+    "postgresqlImage": "registry-1.docker.io/library/postgres@sha256:a10c981235b4f635e65df0cfb66a5598064628128505dbc6a3ed4ca303717521",
+    "runc": {
+      "sha256": "177df879d50c913eb205e898d5c1c05a18f574053c0ce5524c471208eaf06f6f",
+      "url": "https://github.com/opencontainers/runc/releases/download/v1.5.1/runc.amd64",
+      "version": "v1.5.1"
+    }
+  },
+  "egressDomains": [
+    "auth.docker.io",
+    "cdn.registry.k8s.io",
+    "cdn01.quay.io",
+    "dl.k8s.io",
+    "europe-west4-docker.pkg.dev",
+    "get.helm.sh",
+    "ghcr.io",
+    "github.com",
+    "helm.cilium.io",
+    "pkg-containers.githubusercontent.com",
+    "production.cloudfront.docker.com",
+    "quay.io",
+    "registry-1.docker.io",
+    "registry.k8s.io",
+    "release-assets.githubusercontent.com"
+  ],
+  "guestSource": {
+    "architecture": "linux/amd64",
+    "bytes": 624829952,
+    "format": "qcow2-v3",
+    "name": "Ubuntu Server 24.04 LTS Noble",
+    "packageManifestSHA256": "1177681b71597d1f76b8302a566267765bd5eab5fcfdfb9282bff18bad34e65d",
+    "packageManifestURL": "https://cloud-images.ubuntu.com/releases/noble/release-20260826/ubuntu-24.04-server-cloudimg-amd64.manifest",
+    "sha256": "d0fe84bb5f80853425fa6be28e2c106f30104c3cfe8611933f2e65c9b63f0e30",
+    "signerFingerprint": "D2EB44626FDDC30B513D5BB71A5D6C4C7DB87C81",
+    "url": "https://cloud-images.ubuntu.com/releases/noble/release-20260826/ubuntu-24.04-server-cloudimg-amd64.img",
+    "version": "20260826"
+  },
+  "releaseVersion": "v0.1.0-c02.1"
+}

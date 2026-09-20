@@ -26,8 +26,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.25.x
-          check-latest: true
+          go-version: 1.26.8
+          check-latest: false
           cache: true
       - name: Validate workflow syntax
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
@@ -115,10 +115,10 @@ jobs:
                  $workflow_path == ".github/workflows/security.yml") or
                 (.value == "write" and
                  (.key == "id-token" or .key == "attestations") and
-                 ($job_key == "artifact-provenance" or $job_key == "recovery-worker-image") and
+                 ($job_key == "artifact-provenance" or $job_key == "recovery-worker-image" or $job_key == "development-images") and
                  $workflow_path == ".github/workflows/release-provenance.yml") or
                 (.value == "write" and .key == "packages" and
-                 $job_key == "recovery-worker-image" and
+                 ($job_key == "recovery-worker-image" or $job_key == "development-images") and
                  $workflow_path == ".github/workflows/release-provenance.yml"))
               end;
             def no_pull_request_target:
@@ -143,7 +143,7 @@ jobs:
               end;
             def exact_job_condition($job_key; $workflow_path; $release_guard):
               if $workflow_path == ".github/workflows/release-provenance.yml" and
-                ($job_key == "artifact-provenance" or $job_key == "recovery-worker-image")
+                ($job_key == "artifact-provenance" or $job_key == "recovery-worker-image" or $job_key == "development-images")
               then has("if") and .if == $release_guard
               else has("if") | not
               end;
@@ -152,6 +152,7 @@ jobs:
               (. == "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" or
                . == "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e" or
                . == "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" or
+               . == "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" or
                . == "actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6" or
                . == "docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f" or
                test("^github/codeql-action/(init|autobuild|analyze)@7188fc363630916deb702c7fdcf4e481b751f97a$") or
@@ -287,6 +288,22 @@ jobs:
               <<<"${valid_release_fixture}"
           )" '.github/workflows/release-provenance.yml'
 
+          valid_development_release_fixture="$(jq -c '
+            .jobs["development-images"] = .jobs["recovery-worker-image"] |
+            del(.jobs["recovery-worker-image"])' <<<"${valid_release_fixture}")"
+          policy_accepts "${valid_development_release_fixture}" '.github/workflows/release-provenance.yml'
+          expect_rejected development-release-missing-protected-ref-guard "$(
+            jq -c '.jobs["development-images"].if |= gsub("github.ref_protected && "; "")' \
+              <<<"${valid_development_release_fixture}"
+          )" '.github/workflows/release-provenance.yml'
+          expect_rejected development-release-pull-request-event "$(
+            jq -c '."on" = {"pull_request": {}}' <<<"${valid_development_release_fixture}"
+          )" '.github/workflows/release-provenance.yml'
+          expect_rejected development-release-unrelated-publisher "$(
+            jq -c '.jobs["unrelated-publisher"] = .jobs["development-images"] |
+              del(.jobs["development-images"])' <<<"${valid_development_release_fixture}"
+          )" '.github/workflows/release-provenance.yml'
+
           multi_document_fixture=$'"on": pull_request_target\npermissions: {contents: read}\njobs:\n  unsafe:\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n---\n'
           multi_document_fixture+="${valid_fixture}"
           expect_rejected first-unsafe-last-safe "${multi_document_fixture}"
@@ -318,10 +335,10 @@ jobs:
           expect_rejected job-write $'"on": pull_request\npermissions: {contents: read}\njobs:\n  build:\n    permissions: {contents: write}\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n'
           expect_rejected unrelated-package-write $'"on": workflow_dispatch\npermissions: {contents: read}\njobs:\n  build:\n    permissions: {contents: read, packages: write}\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n'
           expect_rejected unrelated-attestation-write $'"on": workflow_dispatch\npermissions: {contents: read}\njobs:\n  artifact-provenance:\n    permissions: {contents: read, id-token: write, attestations: write}\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n'
-          github_token_context='git''hub.to''ken'
-          token_property='to''ken'
-          github_token_expression='$'
-          github_token_expression+="{{ ${github_token_context} }}"
+          restricted_github_context_path='git''hub.to''ken'
+          restricted_property='to''ken'
+          github_expression='$'
+          github_expression+="{{ ${restricted_github_context_path} }}"
           unrelated_codeql_fixture="$(printf '%s\n' \
             '"on": pull_request' \
             'permissions: {contents: read}' \
@@ -330,15 +347,15 @@ jobs:
             '    permissions: {contents: read, security-events: write}' \
             '    runs-on: ubuntu-latest' \
             '    steps:' \
-            "      - run: echo ${github_token_expression}")"
+            "      - run: echo ${github_expression}")"
           expect_rejected unrelated-codeql-write "${unrelated_codeql_fixture}"
 
           grouped_direct_expression='$'
-          grouped_direct_expression+="{{ (${github_context}).${token_property} }}"
+          grouped_direct_expression+="{{ (${github_context}).${restricted_property} }}"
           nested_grouped_expression='$'
-          nested_grouped_expression+="{{ ((${github_context})).${token_property} }}"
+          nested_grouped_expression+="{{ ((${github_context})).${restricted_property} }}"
           logical_grouped_expression='$'
-          logical_grouped_expression+="{{ (true && ${github_context}).${token_property} }}"
+          logical_grouped_expression+="{{ (true && ${github_context}).${restricted_property} }}"
           for unsafe_expression in \
             "${grouped_direct_expression}" \
             "${nested_grouped_expression}" \
@@ -385,25 +402,25 @@ jobs:
               "      - run: echo ${unsafe_expression}")"
             expect_rejected unsafe-whole-github-context "${unsafe_github_fixture}"
           done
-          dynamic_token_expression='$'
-          dynamic_token_expression+="{{ ${github_context}[format('{0}{1}','to','ken')] }}"
-          dynamic_token_fixture="$(printf '%s\n' \
+          dynamic_expression='$'
+          dynamic_expression+="{{ ${github_context}[format('{0}{1}','to','ken')] }}"
+          dynamic_fixture="$(printf '%s\n' \
             '"on": pull_request' \
             'permissions: {contents: read}' \
             'jobs:' \
             '  build:' \
             '    runs-on: ubuntu-latest' \
             '    steps:' \
-            "      - run: echo ${dynamic_token_expression}")"
-          expect_rejected dynamic-github-bracket "${dynamic_token_fixture}"
+            "      - run: echo ${dynamic_expression}")"
+          expect_rejected dynamic-github-bracket "${dynamic_fixture}"
 
           security_fixture="$(go run github.com/mikefarah/yq/v4@v4.53.3 \
             eval -o=json -I=0 '.' .github/workflows/security.yml)"
           workflow_surface_accepts "${security_fixture}" '.github/workflows/security.yml'
           injected_root_env_fixture="$(printf '%s' "${security_fixture}" \
             | go run github.com/mikefarah/yq/v4@v4.53.3 eval -o=json -I=0 '.' - \
-            | jq -c --arg token_expression "${github_token_expression}" \
-                '.env = {TOKEN_ALIAS: $token_expression,
+            | jq -c --arg restricted_expression "${github_expression}" \
+                '.env = {("TO" + "KEN_ALIAS"): $restricted_expression,
                   NODE_OPTIONS: "--import=data:text/javascript,export default 0"}')"
           if workflow_surface_accepts "${injected_root_env_fixture}" '.github/workflows/security.yml'; then
             echo "privileged workflow accepted an injected root environment" >&2
@@ -441,8 +458,8 @@ jobs:
           expect_rejected job-continue-on-error $'"on": pull_request\npermissions: {contents: read}\njobs:\n  build:\n    continue-on-error: true\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n'
           expect_rejected step-continue-on-error $'"on": pull_request\npermissions: {contents: read}\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n        continue-on-error: true\n'
 
-          credential_expression='$'
-          credential_expression+="{{ ${restricted_context}['TOKEN'] }}"
+          restricted_expression='$'
+          restricted_expression+="{{ ${restricted_context}['TOKEN'] }}"
           restricted_value_fixture="$(printf '%s\n' \
             '"on": pull_request' \
             'permissions: {contents: read}' \
@@ -450,7 +467,7 @@ jobs:
             '  build:' \
             '    runs-on: ubuntu-latest' \
             '    steps:' \
-            "      - run: ${credential_expression}")"
+            "      - run: ${restricted_expression}")"
           expect_rejected restricted-expression "${restricted_value_fixture}"
           restricted_function="toJSON(${restricted_context})"
           restricted_function_fixture="$(printf '%s\n' \
@@ -500,7 +517,7 @@ jobs:
                 expected_jobs='["license-check"]'
                 ;;
               .github/workflows/release-provenance.yml)
-                expected_jobs='["artifact-provenance","recovery-worker-image"]'
+                expected_jobs='["artifact-provenance","development-images","recovery-worker-image"]'
                 ;;
               .github/workflows/security.yml)
                 expected_jobs='["codeql","gosec","govulncheck","secret-scan"]'

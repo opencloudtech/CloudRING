@@ -55,9 +55,9 @@ func TestValidateRejectsInvalidGraphAndContracts(t *testing.T) {
 		{
 			name: "missing canonical dependency",
 			mutate: func(document string) string {
-				return strings.Replace(document, "dependsOn: [G23] # G24", "dependsOn: [G22] # G24", 1)
+				return strings.Replace(document, "dependsOn: [G22, G23] # G24", "dependsOn: [G22] # G24", 1)
 			},
-			want: "G24: dependsOn must be exactly [G23]",
+			want: "G24: dependsOn must be exactly [G22 G23]",
 		},
 		{
 			name: "dependency cycle",
@@ -185,12 +185,12 @@ func TestValidateRejectsInvalidRequirementIDs(t *testing.T) {
 func TestValidateRejectsHeadingAndUnsafeStatus(t *testing.T) {
 	root, repository, document := writeFixture(t)
 	defer repository.Close()
-	writeFile(t, repository, "roadmap.yaml", strings.Replace(document, "status: not_started # G01", "status: in_progress # G01", 1))
+	writeFile(t, repository, "roadmap.yaml", strings.Replace(document, "status: not_started # G02", "status: delivered # G02", 1))
 	writeFile(t, repository, "goals/G00.md", "# G99 — Wrong goal\n")
 
 	err := ValidateDir(root)
 	if err == nil || !strings.Contains(err.Error(), "G00: goal file heading must start with G00") ||
-		!strings.Contains(err.Error(), "G01: in_progress status requires delivered dependency G00") {
+		!strings.Contains(err.Error(), "G02: delivered status requires delivered dependency G00") {
 		t.Fatalf("ValidateDir() error = %v, want heading and dependency-state blockers", err)
 	}
 }
@@ -228,23 +228,38 @@ func TestCanTransitionEnforcesStateMachineAndDependencies(t *testing.T) {
 		t.Fatalf("Load() error = %v", err)
 	}
 
-	if err := roadmap.CanTransition("G01", StatusInProgress); err == nil || !strings.Contains(err.Error(), "G00") {
-		t.Fatalf("G01 should wait for G00, got %v", err)
-	}
-	roadmap.Spec.DeliveryOrder[0].Status = StatusInProgress
-	if err := roadmap.CanTransition("G00", StatusDelivered); err != nil {
-		t.Fatalf("G00 should transition from in_progress to delivered: %v", err)
-	}
-	roadmap.Spec.DeliveryOrder[0].Status = StatusDelivered
 	if err := roadmap.CanTransition("G01", StatusInProgress); err != nil {
-		t.Fatalf("G01 should start after G00: %v", err)
+		t.Fatalf("G01 may start after the C01 delivery slice without full G00: %v", err)
 	}
-	if err := roadmap.CanTransition("G01", StatusDelivered); err == nil || !strings.Contains(err.Error(), "cannot transition from not_started") {
+	if err := roadmap.CanTransition("G02", StatusInProgress); err != nil {
+		t.Fatalf("independent G02 work may start without claiming qualification: %v", err)
+	}
+	goals := roadmap.goalIndex()
+	goals["G02"].Status = StatusInProgress
+	if err := roadmap.CanTransition("G02", StatusDelivered); err == nil || !strings.Contains(err.Error(), "G00, G01") {
+		t.Fatalf("G02 delivery must still wait for full G00 and G01: %v", err)
+	}
+	goals["G00"].Status = StatusInProgress
+	if err := roadmap.CanTransition("G00", StatusDelivered); err != nil {
+		t.Fatalf("G00 transition should be eligible for separate full evidence validation: %v", err)
+	}
+	goals["G00"].Status = StatusDelivered
+	goals["G01"].Status = StatusDelivered
+	if err := roadmap.CanTransition("G02", StatusDelivered); err != nil {
+		t.Fatalf("G02 transition should pass after both prerequisites: %v", err)
+	}
+	if err := roadmap.CanTransition("G03", StatusDelivered); err == nil || !strings.Contains(err.Error(), "cannot transition from not_started") {
 		t.Fatalf("direct delivery should be rejected, got %v", err)
 	}
 	if err := roadmap.CanTransition("G00", StatusBlocked); err == nil || !strings.Contains(err.Error(), "cannot transition from delivered") {
 		t.Fatalf("delivered goal must be terminal, got %v", err)
 	}
+	goals["G24"].Status = StatusInProgress
+	goals["G23"].Status = StatusDelivered
+	if err := roadmap.CanTransition("G24", StatusDelivered); err == nil || !strings.Contains(err.Error(), "G22") {
+		t.Fatalf("resilience alone cannot substitute independent human operations: %v", err)
+	}
+
 }
 
 func writeFixture(t *testing.T) (string, *os.Root, string) {
@@ -264,35 +279,18 @@ func writeFixture(t *testing.T) (string, *os.Root, string) {
 	for _, name := range []string{
 		"EXECUTION_CONTRACT.md", "TARGET_ARCHITECTURE.md", "CURRENT_STATE.md", "ISSUE_MAP.md",
 		"LEGACY_WORK_MAP.md", "HUB_PREREQUISITES.md", "MEASUREMENT_CONTRACT.md", "EVIDENCE_POLICY.md",
-		"VERIFICATION_MATRIX.md", "COVERAGE.md",
+		"VERIFICATION_MATRIX.md", "COVERAGE.md", "DELIVERY_SLICES.md",
 	} {
 		writeFile(t, repository, name, "# Contract\n")
 	}
 	copyShippedRoadmapFile(t, repository, "state.schema.json")
 	copyShippedRoadmapFile(t, repository, "evidence.schema.json")
+	copyShippedRoadmapFile(t, repository, "measurement-profiles.json")
 
 	var goals strings.Builder
 	for _, id := range requiredGoalOrder {
 		writeFile(t, repository, "goals/"+id+".md", "# "+id+" — Goal\n")
-		dependency := "[]"
-		switch id {
-		case "G00":
-		case "G27", "G25", "G26":
-			if id == "G27" {
-				dependency = "[G24]"
-			} else {
-				dependency = "[G27]"
-			}
-		default:
-			var number int
-			if _, err := fmt.Sscanf(id, "G%02d", &number); err != nil {
-				if closeErr := repository.Close(); closeErr != nil {
-					t.Fatalf("parse fixture goal id: %v; close fixture root: %v", err, closeErr)
-				}
-				t.Fatal(err)
-			}
-			dependency = fmt.Sprintf("[G%02d]", number-1)
-		}
+		dependency := "[" + strings.Join(canonicalDependencies()[id], ", ") + "]"
 		releaseTrack := ""
 		if id == "G25" || id == "G26" {
 			releaseTrack = "      releaseTrack: post_1_0 # " + id + "\n"
@@ -321,6 +319,8 @@ spec:
   legacyWorkMap: LEGACY_WORK_MAP.md
   hubPrerequisites: HUB_PREREQUISITES.md
   measurementContract: MEASUREMENT_CONTRACT.md
+  measurementProfiles: measurement-profiles.json
+  deliverySlices: DELIVERY_SLICES.md
   evidencePolicy: EVIDENCE_POLICY.md
   verificationMatrix: VERIFICATION_MATRIX.md
   stateSchema: state.schema.json

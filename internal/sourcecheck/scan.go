@@ -282,7 +282,7 @@ func scanPath(input scanInput) []Finding {
 	var findings []Finding
 	unsafeName := base == "kubeconfig" || strings.HasPrefix(base, "kubeconfig.") || strings.HasSuffix(base, ".kubeconfig") ||
 		base == "id_rsa" || base == "id_ed25519" || base == "id_ecdsa" || strings.HasSuffix(base, ".pem") || strings.HasSuffix(base, ".key") ||
-		strings.HasSuffix(base, ".p12") || strings.HasSuffix(base, ".pfx") || base == ".env" || base == ".env.local" ||
+		strings.HasSuffix(base, ".p12") || strings.HasSuffix(base, ".pfx") || base == ".env" || strings.HasPrefix(base, ".env.") ||
 		base == "terraform.tfstate" || strings.HasPrefix(base, "terraform.tfstate.") ||
 		base == "credentials.json" || base == "credentials.yaml" || base == "credentials.yml" ||
 		base == "secrets.json" || base == "secrets.yaml" || base == "secrets.yml"

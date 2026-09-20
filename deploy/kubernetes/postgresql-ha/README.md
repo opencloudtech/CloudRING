@@ -132,27 +132,70 @@ or VIP, so the site must bind the effective destination CIDRs and prove the
 result with its actual CNI. Until then, recovery is intentionally unable to
 reach either endpoint.
 
-[`recovery/evidence.schema.json`](recovery/evidence.schema.json) is the minimum
-sanitized pass contract. A pass requires a completed non-empty base backup,
-continuous WAL replay, a distinct off-cell destination, 30-day retention and
-Object Lock with a denied control deletion, one Ready recovered instance, zero
-production routes, a successful write probe, equal source/recovered canonical
-logical-state SHA-256 values with positive row and byte counts, and two-sweep
-cleanup proving the recovery namespace, Cluster, credential Secret, PVCs,
-Services, and routes are absent. Evidence contains only hashes and counts—never
-bucket names, endpoints, credentials, database values, tenant identifiers, or
-raw command errors. Until a real drill satisfies this schema, the Goal01
-`postgresql-cnpg` evidence class remains blocked.
+[`recovery/evidence.schema.json`](recovery/evidence.schema.json) defines the
+sanitized **v2** pass contract. Historical v1 receipts remain historical and
+cannot qualify this contract. V2 retains the completed non-empty base backup,
+continuous WAL, distinct off-cell destination, 30-day retention and Object Lock
+with denied control deletion, one Ready recovered instance, zero production
+routes, positive matching combined row/byte counts, and two cleanup sweeps
+separated by at least 30 seconds. It also requires these concrete results:
 
-The public `pkg/backup/cnpgrecovery.VerifyEvidence` API validates one evidence
-instance as strict JSON: duplicate or unknown fields fail, every identity and
-inventory checksum must have the required SHA-256 form, and source/recovered
-logical checksums, positive byte counts, and positive row counts must match
-exactly. It also enforces the backup/WAL/recovery/checksum/cleanup/collection
-chronology and exactly two zero-residue cleanup sweeps separated by the
-declared quiet window of at least 30 seconds. Validating the schema in the
-source tree does not run this instance verifier and cannot substitute for
-independently collected live evidence.
+- Capture all protected logical classes and the validated ownership/ACL catalog
+  in one repeatable-read, read-only snapshot with no assigned XID. The snapshot
+  must have equal bounds and no active XIDs. On the same bound primary, create a
+  unique marker, observe no assigned XID before and after it, then allocate the
+  fresh marker transaction's first XID and confirm commit in the specified
+  order. That allocation must equal the snapshot bound. Hashes supplement these
+  facts; matching hashes alone do not qualify the interval.
+- Verify archival of the exact marker record's WAL segment, select a base backup
+  that precedes the marker, and prove that physical recovery reached the exact
+  marker and LSN. Restore-point LSNs identify the record end, so segment selection
+  uses the preceding byte at an exact WAL boundary.
+- Bind the expected recovery principal, policy and policy revision, Secret and
+  Secret version, destination, and read scope to independent readback before
+  projection. The reader must differ from the backup writer. Effective policy
+  must permit the required reads and deny writes, deletes, administration, and
+  access outside that scope. Read the selected base backup and exact marker WAL
+  object, and project only the allowlisted recovery inputs. Object Lock denial
+  alone does not establish a read-only principal.
+- Validate source and recovered ownership, role, ACL, migration, table, column,
+  constraint, and index contracts and compare their canonical digests. Use a
+  real application connection for six successful document/audit operations and
+  eight specific SQLSTATE `42501` denials. Every probe must identify the actual
+  application role. Roll back, verify zero synthetic rows, and compare logical
+  and catalog digests again before cleanup.
+- Retain exactly `portal-state`, `orders`, `support-tickets`, `audit-events`, and
+  `postgresql-cnpg`, in that order. Each class must match its recovered digest,
+  byte count, and row count. The combined class must match the existing checksum
+  fields and the sum of the three detail-class row counts. Empty individual
+  detail classes are supported; the existing positive combined-count gate is
+  retained.
+
+The public `pkg/backup/cnpgrecovery.Evidence` and its exported nested types allow
+an installation adapter to construct this receipt without maintaining another
+schema model. `VerifyEvidence` validates supplied v2 facts; use
+`VerifyEvidenceForRevision` to bind them to the accepted public-core commit.
+Both reject missing, duplicate, unknown, malformed, downgraded, or mutually
+inconsistent facts, including absent denial and zero-count fields. JSON null is
+accepted only for the two explicitly nullable timestamps. They enforce
+capture, marker, archive, access, recovery, probe, cleanup, and collection
+chronology. All operational identities are SHA-256 identities; receipts must
+contain no raw XIDs, LSNs, marker names, endpoints, credential values, tenant
+identifiers, database values, or raw command errors.
+
+`recoveryAccess.expiresAt` bounds the independently verified access evidence and
+must outlast recovered validation. `credentialExpiresAt` reports the provider
+credential's actual expiry, or explicit JSON null only when independent checking
+establishes that it does not expire. `expiryChecked` is always required.
+The allow/deny operation names, exact object shape, and ordered class/probe lists
+are shown in the [synthetic v2 fixture](../../../pkg/backup/cnpgrecovery/testdata/synthetic-v2-evidence.json).
+That fixture is test data and contains no completed live recovery claim.
+
+Source-schema validation checks the complete v2 shape and constraints. Receipt
+validation checks only supplied facts; neither replaces their independent live
+collection, exact source/primary binding, off-cell continuity, recovered access
+probes, or cleanup evidence. Until a real drill supplies them, the Goal01
+`postgresql-cnpg` evidence class remains blocked.
 
 The machine source verifier therefore reports the PostgreSQL profile as
 `status: source-contract-ready` with `liveStatus: blocked` and explicit live

@@ -16,8 +16,8 @@ const (
 	ImageIdentitySchemaVersion   = "cloudring.etcd-recovery.image-identity/v1"
 	SandboxStateSchemaVersion    = "cloudring.etcd-recovery.sandbox-state/v1"
 	ToolName                     = "etcdutl"
-	ToolVersion                  = "3.6.13"
-	ToolSHA256                   = "d3b1ab51f3277a60ee37dfd749941e663c14184d5bc0c26d0cf06f5414d18199"
+	ToolVersion                  = "3.6.14"
+	ToolSHA256                   = "2b7fea46e31fda1989168fbd8f7ec73f5839155f4b1af7bab274950e337e996d"
 
 	DefaultRequestPath     = "/run/cloudring/request/request.json"
 	DefaultArchivePath     = "/run/cloudring/archive/snapshot.db"

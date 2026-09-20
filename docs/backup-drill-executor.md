@@ -34,14 +34,32 @@ operation before its identity is compared with the plan. It receives one
 request on stdin, the literal `drill` argument, bounded stdout/stderr, and a
 deadline. The CLI requires a pipe-backed kubeconfig descriptor. Each adapter
 phase receives a fresh anonymous replay pipe referenced only as
-`KUBECONFIG=/dev/fd/<n>`; credential bytes never appear in the plan, argv, or
-environment. The environment is rebuilt from the fixed locale seed plus the
-replay's fail-closed prompt and descriptor variables, so ambient cloud or home
-credentials are not inherited. The engine never invokes a shell and rejects
+`KUBECONFIG=/dev/fd/<n>`; kubeconfig bytes never appear in the plan, argv, or
+environment. By default the environment is rebuilt from the fixed locale seed
+plus the replay's fail-closed prompt and descriptor variables, so ambient cloud
+or home credentials are not inherited. The engine never invokes a shell and rejects
 credential-like response material. The adapter may consume its child
 kubeconfig descriptor into its own in-memory replay for multiple cluster calls.
 The running `cloudring-backup` executable is independently content-pinned and
 must match the plan's exact tool digest before any approval or mutation.
+
+If the reviewed adapter requires provider credentials, each drill command accepts
+repeatable `--adapter-env NAME` options, for example
+`--adapter-env PROVIDER_APPLICATION_KEY --adapter-env PROVIDER_CONSUMER_KEY`.
+Only names belong in argv. The CLI snapshots the selected values from its own
+environment when pinning the adapter and passes them through both execution and
+kubeconfig replay boundaries. No provider names are built into this transport.
+Missing or empty values, duplicate or malformed names, and reserved locale,
+kubeconfig, shell, or dynamic-loader names fail before adapter execution. The
+selected names must be reviewed for the exact adapter: this opt-in is a trust
+decision, not an environment sandbox. The downstream adapter must separately
+restrict which of its children and phases receive those values.
+
+Values are transport-only: they do not enter plans, approval bindings, requests,
+journals, receipts, or CLI status output. The engine rejects responses containing
+selected values (including JSON-escaped values). Supply the required names again
+for apply, recover, or rollback; omitting the option preserves the default scrubbed
+environment and does not change the transaction or cleanup protocol.
 
 ## Commands
 

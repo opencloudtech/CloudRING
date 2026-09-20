@@ -42,7 +42,8 @@ results from different profiles are not silently compared.
 
 ## Reference load profiles
 
-G00 creates machine-readable profiles for at least:
+C01 freezes `measurement-profiles.json` before developer delivery; full G00
+verifies these acceptance inputs. The profiles cover at least:
 
 - management API mix: reads, lists/watches and durable mutations by multiple
   tenants, including one noisy tenant;
@@ -99,3 +100,71 @@ traffic must pass while one cell is deliberately overloaded.
 - Report setup time, active development time, conformance failures, documentation
   defects and the exact package digest. The two-hour target is not met by a
   generated unchanged template.
+
+## Frozen qualification inputs
+
+`measurement-profiles.json` version `cloudring-qualification-v1` contains numeric
+**acceptance targets, not observed performance**. `roadmapcheck` requires every
+listed profile and rejects omitted numeric limits, unsafe windows and weakened
+original recovery/human objectives. Concrete test implementations and measured
+hardware capacity are delivered by the owning G goal, using these fixed inputs.
+A profile cannot pass before its generator, dataset and topology digests and raw
+results are present in signed evidence. Changing any input creates a reviewed
+new version before running a qualification; a failing run cannot lower targets.
+
+Each statistical run measures at least the common baseline window and its
+`minimumSamples` for the explicit `sampleUnit`, whichever takes longer. The
+sample unit distinguishes data requests, durable acknowledgements and human
+responses from expensive complete lifecycle journeys. The integrated management
+campaign additionally uses the full 24-hour qualification window. Report sample
+counts by method and tenant; a p50/p95/p99 qualification claim for a named
+population requires its minimum sample count, not a few successful trials.
+
+Every supported lifecycle method and declared failure domain additionally needs
+at least `minimumLifecycleTrialsPerMethod` complete real trials with success,
+retry/restart/failure, denial where applicable, actual backend/data readback and
+cleanup. Those numeric completion/recovery bounds are checked on every trial;
+three trials never prove statistical p99. The original owning goal may require
+more journeys, participants or data classes and still governs acceptance. Report
+unique resources, actual provider effects, bytes copied/recovered and retries
+separately: policy/read/replayed requests cannot represent create, restore or
+upgrade throughput. No simulated backend substitutes for a complete trial.
+
+`concurrency` counts request actors, not a grant of backend resources. Workload
+text bounds simultaneous resource stock; provisioning/deletion cycles balance
+and resource-dependent actions await real completion. Approved capacity and
+ownership still govern every run. Missing capacity is an explicit dependency,
+not permission to exceed a site envelope or buy resources.
+
+All control mutations use the common durable-acknowledgement p50/p95/p99 limits,
+including profiles whose primary metric measures data or user response. Product
+latency thresholds apply to the stated data unit; slower asynchronous work has a
+separate numeric completion deadline and a visible durable operation. Read/list
+results finish only when the bounded result is available. Report each class and
+tenant separately, with qualified percentiles only for sufficient samples. At the offered rate, require every latency and throughput
+threshold, the common availability/error formula and bounded resource/queue
+limits. Queue depth includes all accepted unfinished work, including retries.
+
+The workload text freezes data sizes, mix, tenant count, denial cases and failure
+set. Deterministic generators record the fixed seed and exact content digest;
+external datasets additionally bind approved immutable source digests. The
+common provider-latency and ambiguity mix exercises delayed or lost responses
+around real backend side effects; simulated provider-only runs never prove
+product readiness. Reconciliation has its own bounded deadline after recovery.
+
+Measure saturation by increasing the offered rate in the published bounded steps
+for at least the specified seconds per step until any SLO fails or the search
+ceiling is reached. Stop on an abort threshold; preserve the failure evidence.
+Saturation is the first failing rate, with the previous fully green rate reported
+as useful capacity. If the ceiling remains green, report only a lower bound.
+The recommended rate must reserve at least 30% of measured useful capacity; the
+same hardware/topology and every SLO apply to the one-cell/two-cell comparison.
+Do not claim a saturation point from an arbitrary fixed load. G25 owns the
+post-1.0 two-cell ratio; this numeric input is not a current scale claim.
+
+Record peak and steady-state CPU, memory, queue depth and per-tenant throughput,
+p50/p95/p99, all error classes and recovery time. Noisy-tenant tests must preserve
+absolute SLOs and the frozen other-tenant relative p99/throughput limits. Abort
+on unauthorized success, corruption, lost accepted work, invalid billing,
+unbounded queue/resource growth, or the numeric utilization threshold. Cleanup,
+rollback and missing-sample checks remain mandatory even after abort.

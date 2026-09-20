@@ -26,8 +26,8 @@
     },
     "workerExecutableSha256": {"$ref": "#/$defs/sha"},
     "workerImageDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
-    "etcdutlVersion": {"const": "3.6.13"},
-    "etcdutlSha256": {"const": "d3b1ab51f3277a60ee37dfd749941e663c14184d5bc0c26d0cf06f5414d18199"},
+    "etcdutlVersion": {"const": "3.6.14"},
+    "etcdutlSha256": {"const": "2b7fea46e31fda1989168fbd8f7ec73f5839155f4b1af7bab274950e337e996d"},
     "issuedAt": {"type": "string", "format": "date-time"},
     "expiresAt": {"type": "string", "format": "date-time"},
     "timeoutSeconds": {"type": "integer", "minimum": 1, "maximum": 1800}

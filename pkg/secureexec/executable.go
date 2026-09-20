@@ -154,7 +154,7 @@ func (executable *Executable) IdentitySHA256() string {
 // Run executes the pinned identity with bounded output. The optional replay is
 // attached after the executable descriptor, so its fd is calculated safely.
 func (executable *Executable) Run(ctx context.Context, arguments []string, input []byte, maximumStdout, maximumStderr int64, replay *kubeconfigpipe.Replay) ([]byte, []byte, error) {
-	return executable.run(ctx, arguments, input, maximumStdout, maximumStderr, nil, replay)
+	return executable.run(ctx, arguments, input, maximumStdout, maximumStderr, nil, replay, nil)
 }
 
 // RunWithEnvironment executes the pinned identity with an explicit environment.
@@ -165,10 +165,20 @@ func (executable *Executable) RunWithEnvironment(ctx context.Context, arguments 
 	if environment == nil || !validEnvironment(environment) {
 		return nil, nil, errors.New("invalid pinned command environment")
 	}
-	return executable.run(ctx, arguments, input, maximumStdout, maximumStderr, append([]string(nil), environment...), replay)
+	return executable.run(ctx, arguments, input, maximumStdout, maximumStderr, append([]string(nil), environment...), replay, nil)
 }
 
-func (executable *Executable) run(ctx context.Context, arguments []string, input []byte, maximumStdout, maximumStderr int64, environment []string, replay *kubeconfigpipe.Replay) ([]byte, []byte, error) {
+// RunWithEnvironmentNames retains explicitly approved additional environment
+// names through kubeconfig replay. Existing RunWithEnvironment filtering remains
+// unchanged. Values must already be present in the explicit environment.
+func (executable *Executable) RunWithEnvironmentNames(ctx context.Context, arguments []string, input []byte, maximumStdout, maximumStderr int64, environment []string, replay *kubeconfigpipe.Replay, environmentNames []string) ([]byte, []byte, error) {
+	if environment == nil || !validEnvironment(environment) || kubeconfigpipe.ValidateEnvironmentNames(environmentNames) != nil {
+		return nil, nil, errors.New("invalid pinned command environment")
+	}
+	return executable.run(ctx, arguments, input, maximumStdout, maximumStderr, append([]string(nil), environment...), replay, append([]string(nil), environmentNames...))
+}
+
+func (executable *Executable) run(ctx context.Context, arguments []string, input []byte, maximumStdout, maximumStderr int64, environment []string, replay *kubeconfigpipe.Replay, environmentNames []string) ([]byte, []byte, error) {
 	if executable == nil || ctx == nil || maximumStdout <= 0 || maximumStdout > maxCapturedOutputBytes ||
 		maximumStderr <= 0 || maximumStderr > maxCapturedOutputBytes {
 		return nil, nil, errors.New("invalid pinned command")
@@ -200,7 +210,12 @@ func (executable *Executable) run(ctx context.Context, arguments []string, input
 	stderr := boundedBuffer{maximum: int(maximumStderr)}
 	command.Stdout = &stdout
 	command.Stderr = &stderr
-	runErr := kubeconfigpipe.Run(command, replay)
+	var runErr error
+	if len(environmentNames) == 0 {
+		runErr = kubeconfigpipe.Run(command, replay)
+	} else {
+		runErr = kubeconfigpipe.RunWithEnvironmentNames(command, replay, environmentNames)
+	}
 	if stdout.exceeded || stderr.exceeded {
 		zero(stdout.buffer.Bytes())
 		zero(stderr.buffer.Bytes())

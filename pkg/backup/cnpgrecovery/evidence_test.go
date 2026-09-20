@@ -33,35 +33,35 @@ func TestVerifyEvidenceRejectsAdversarialProofs(t *testing.T) {
 	failureTime := "2026-07-23T00:03:30Z"
 	tests := []struct {
 		name   string
-		mutate func(*postgresqlRecoveryEvidence)
+		mutate func(*Evidence)
 	}{
-		{"checksum mismatch", func(value *postgresqlRecoveryEvidence) {
+		{"checksum mismatch", func(value *Evidence) {
 			value.Checksum.Recovered = "sha256:" + strings.Repeat("b", 64)
 		}},
-		{"source bytes absent", func(value *postgresqlRecoveryEvidence) { value.Checksum.SourceLogicalBytes = 0 }},
-		{"recovered bytes differ", func(value *postgresqlRecoveryEvidence) { value.Checksum.RecoveredLogicalBytes++ }},
-		{"row count absent", func(value *postgresqlRecoveryEvidence) { value.Checksum.SourceRowCount = 0 }},
-		{"row count differs", func(value *postgresqlRecoveryEvidence) { value.Checksum.RecoveredRowCount++ }},
-		{"backup not ordered", func(value *postgresqlRecoveryEvidence) { value.BaseBackup.StartedAt = value.BaseBackup.CompletedAt }},
-		{"WAL does not cover source", func(value *postgresqlRecoveryEvidence) { value.WALArchive.LastArchivedAt = "2026-07-23T00:02:30Z" }},
-		{"WAL failure retained", func(value *postgresqlRecoveryEvidence) { value.WALArchive.LastFailedAt = &failureTime }},
-		{"WAL replay timestamp after recovered checksum", func(value *postgresqlRecoveryEvidence) { value.WALArchive.ReplayedThrough = "2026-07-23T02:13:00Z" }},
-		{"recovery starts before archive", func(value *postgresqlRecoveryEvidence) { value.Recovery.StartedAt = "2026-07-23T00:03:30Z" }},
-		{"recovery starts at archive boundary", func(value *postgresqlRecoveryEvidence) { value.Recovery.StartedAt = value.WALArchive.LastArchivedAt }},
-		{"checksum before recovery Ready", func(value *postgresqlRecoveryEvidence) { value.Checksum.RecoveredCapturedAt = "2026-07-23T00:05:30Z" }},
-		{"cleanup starts before validation", func(value *postgresqlRecoveryEvidence) { value.Cleanup.StartedAt = "2026-07-23T00:06:30Z" }},
-		{"cleanup starts at validation boundary", func(value *postgresqlRecoveryEvidence) { value.Cleanup.StartedAt = value.Recovery.ValidatedAt }},
-		{"only one cleanup sweep", func(value *postgresqlRecoveryEvidence) { value.Cleanup.Sweeps = value.Cleanup.Sweeps[:1] }},
-		{"quiet window too small", func(value *postgresqlRecoveryEvidence) { value.Cleanup.Sweeps[1].ObservedAt = "2026-07-23T00:09:10Z" }},
-		{"residual PVC", func(value *postgresqlRecoveryEvidence) { value.Cleanup.Sweeps[1].PersistentVolumeClaimCount = 1 }},
-		{"cleanup incomplete", func(value *postgresqlRecoveryEvidence) { value.Cleanup.Complete = false }},
-		{"cleanup completes at second sweep", func(value *postgresqlRecoveryEvidence) {
+		{"source bytes absent", func(value *Evidence) { value.Checksum.SourceLogicalBytes = 0 }},
+		{"recovered bytes differ", func(value *Evidence) { value.Checksum.RecoveredLogicalBytes++ }},
+		{"row count absent", func(value *Evidence) { value.Checksum.SourceRowCount = 0 }},
+		{"row count differs", func(value *Evidence) { value.Checksum.RecoveredRowCount++ }},
+		{"backup not ordered", func(value *Evidence) { value.BaseBackup.StartedAt = value.BaseBackup.CompletedAt }},
+		{"WAL does not cover source", func(value *Evidence) { value.WALArchive.LastArchivedAt = "2026-07-23T00:02:30Z" }},
+		{"WAL failure retained", func(value *Evidence) { value.WALArchive.LastFailedAt = &failureTime }},
+		{"WAL replay timestamp after recovered checksum", func(value *Evidence) { value.WALArchive.ReplayedThrough = "2026-07-23T02:13:00Z" }},
+		{"recovery starts before archive", func(value *Evidence) { value.Recovery.StartedAt = "2026-07-23T00:03:30Z" }},
+		{"recovery starts at archive boundary", func(value *Evidence) { value.Recovery.StartedAt = value.WALArchive.LastArchivedAt }},
+		{"checksum before recovery Ready", func(value *Evidence) { value.Checksum.RecoveredCapturedAt = "2026-07-23T00:05:30Z" }},
+		{"cleanup starts before validation", func(value *Evidence) { value.Cleanup.StartedAt = "2026-07-23T00:06:30Z" }},
+		{"cleanup starts at validation boundary", func(value *Evidence) { value.Cleanup.StartedAt = value.Recovery.ValidatedAt }},
+		{"only one cleanup sweep", func(value *Evidence) { value.Cleanup.Sweeps = value.Cleanup.Sweeps[:1] }},
+		{"quiet window too small", func(value *Evidence) { value.Cleanup.Sweeps[1].ObservedAt = "2026-07-23T00:09:10Z" }},
+		{"residual PVC", func(value *Evidence) { value.Cleanup.Sweeps[1].PersistentVolumeClaimCount = 1 }},
+		{"cleanup incomplete", func(value *Evidence) { value.Cleanup.Complete = false }},
+		{"cleanup completes at second sweep", func(value *Evidence) {
 			value.Cleanup.CompletedAt = value.Cleanup.Sweeps[1].ObservedAt
 		}},
-		{"collection occurs at cleanup completion", func(value *postgresqlRecoveryEvidence) { value.CollectedAt = value.Cleanup.CompletedAt }},
-		{"production route observed", func(value *postgresqlRecoveryEvidence) { value.Recovery.ProductionRouteCount = 1 }},
-		{"credential disclosure", func(value *postgresqlRecoveryEvidence) { value.Redaction.ContainsCredentials = true }},
-		{"evidence expires before collection", func(value *postgresqlRecoveryEvidence) { value.ExpiresAt = value.CollectedAt }},
+		{"collection occurs at cleanup completion", func(value *Evidence) { value.CollectedAt = value.Cleanup.CompletedAt }},
+		{"production route observed", func(value *Evidence) { value.Recovery.ProductionRouteCount = 1 }},
+		{"credential disclosure", func(value *Evidence) { value.Redaction.ContainsCredentials = true }},
+		{"evidence expires before collection", func(value *Evidence) { value.ExpiresAt = value.CollectedAt }},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestVerifyEvidenceRejectsMissingZeroAndNullFields(t *testing.T) {
 		{name: "production route count", path: []any{"recovery", "productionRouteCount"}},
 		{name: "recovery namespace count", path: []any{"cleanup", "sweeps", 0, "recoveryNamespaceCount"}},
 		{name: "cluster count", path: []any{"cleanup", "sweeps", 0, "clusterCount"}},
-		{name: "credential Secret count", path: []any{"cleanup", "sweeps", 0, "credentialSecretCount"}},
+		{name: "credential Secret count", path: []any{"cleanup", "sweeps", 0, "accessObjectCount"}},
 		{name: "PVC count", path: []any{"cleanup", "sweeps", 0, "persistentVolumeClaimCount"}},
 		{name: "Service count", path: []any{"cleanup", "sweeps", 0, "serviceCount"}},
 		{name: "route count", path: []any{"cleanup", "sweeps", 0, "routeCount"}},
@@ -114,51 +114,53 @@ func TestVerifyEvidenceRejectsDuplicateAndUnknownFields(t *testing.T) {
 	}
 }
 
-func validPostgreSQLRecoveryEvidence() postgresqlRecoveryEvidence {
+func validPostgreSQLRecoveryEvidence() Evidence {
 	digest := "sha256:" + strings.Repeat("a", 64)
-	return postgresqlRecoveryEvidence{
+	evidence := Evidence{
 		SchemaVersion:  EvidenceSchemaVersion,
 		SourceRevision: strings.Repeat("a", 40),
 		CollectedAt:    "2026-07-23T00:12:00Z",
 		ExpiresAt:      "2026-07-23T02:12:00Z",
-		OffCell: postgresqlRecoveryOffCell{
+		OffCell: OffCellEvidence{
 			ObservedAt: "2026-07-23T00:00:00Z", DestinationIdentity: digest,
 			FailureDomainDistinct: true, RetentionDays: 30, ObjectLockMode: "governance",
 			ObjectLockMinimumDays: 30, ControlDeleteDenied: true,
 		},
-		BaseBackup: postgresqlRecoveryBaseBackup{
+		BaseBackup: BaseBackupEvidence{
 			Identity: digest, StartedAt: "2026-07-23T00:01:00Z", CompletedAt: "2026-07-23T00:02:00Z",
 			Status: "completed", Bytes: 4096, ObjectInventoryDigest: digest,
 		},
-		WALArchive: postgresqlRecoveryWALArchive{
+		WALArchive: WALArchiveEvidence{
 			FirstRecoverabilityPoint: "2026-07-22T23:00:00Z", LastArchivedAt: "2026-07-23T00:04:00Z",
 			LastFailedAt: nil, ReplayedThrough: "2026-07-23T00:03:00Z", Continuous: true,
 		},
-		Recovery: postgresqlRecoveryCluster{
+		Recovery: RecoveryClusterEvidence{
 			NamespaceIdentity: digest, ClusterIdentity: digest, SourceIdentity: digest,
 			StartedAt: "2026-07-23T00:05:00Z", ReadyAt: "2026-07-23T00:06:00Z", ValidatedAt: "2026-07-23T00:07:00Z",
 			ReadyInstances: 1, ExpectedInstances: 1, ProductionRouteCount: 0, WriteProbePassed: true,
 		},
-		Checksum: postgresqlRecoveryChecksum{
+		Checksum: ChecksumEvidence{
 			Algorithm: "sha256", ProjectionVersion: "cloudring-postgresql-logical-state/v1",
 			Source: digest, Recovered: digest, SourceCapturedAt: "2026-07-23T00:03:00Z",
 			RecoveredCapturedAt: "2026-07-23T00:06:30Z", SourceLogicalBytes: 2048,
 			RecoveredLogicalBytes: 2048, SourceRowCount: 8, RecoveredRowCount: 8, Matched: true,
 		},
-		Cleanup: postgresqlRecoveryCleanup{
+		Cleanup: CleanupEvidence{
 			StartedAt: "2026-07-23T00:08:00Z", CompletedAt: "2026-07-23T00:11:00Z",
 			Complete: true, TwoSweepQuietWindowSeconds: 30,
-			Sweeps: []postgresqlRecoveryCleanupSweep{
+			Sweeps: []CleanupSweepEvidence{
 				{ObservedAt: "2026-07-23T00:09:00Z", InventoryDigest: digest},
 				{ObservedAt: "2026-07-23T00:10:00Z", InventoryDigest: digest},
 			},
 		},
-		Redaction: postgresqlRecoveryRedaction{Verdict: "pass"},
+		Redaction: RedactionEvidence{Verdict: "pass"},
 		Verdict:   "pass",
 	}
+	addValidRecoveryAssurance(&evidence)
+	return evidence
 }
 
-func marshalPostgreSQLRecoveryEvidence(t *testing.T, evidence postgresqlRecoveryEvidence) []byte {
+func marshalPostgreSQLRecoveryEvidence(t *testing.T, evidence Evidence) []byte {
 	t.Helper()
 	payload, err := json.Marshal(evidence)
 	if err != nil {

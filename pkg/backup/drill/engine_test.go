@@ -39,8 +39,8 @@ type fakeAdapterRunner struct {
 func (runner *fakeAdapterRunner) IdentitySHA256() string { return runner.identity }
 func (runner *fakeAdapterRunner) Close() error           { return nil }
 
-func (runner *fakeAdapterRunner) RunWithEnvironment(_ context.Context, arguments []string, input []byte, _, _ int64, environment []string, replay *kubeconfigpipe.Replay) ([]byte, []byte, error) {
-	if len(arguments) != 1 || arguments[0] != "drill" || replay != nil || !slicesEqual(environment, []string{"LANG=C", "LC_ALL=C"}) {
+func (runner *fakeAdapterRunner) RunWithEnvironmentNames(_ context.Context, arguments []string, input []byte, _, _ int64, environment []string, replay *kubeconfigpipe.Replay, environmentNames []string) ([]byte, []byte, error) {
+	if len(environmentNames) != 0 || len(arguments) != 1 || arguments[0] != "drill" || replay != nil || !slicesEqual(environment, []string{"LANG=C", "LC_ALL=C"}) {
 		return nil, nil, errors.New("unsafe fake adapter invocation")
 	}
 	var request AdapterRequest

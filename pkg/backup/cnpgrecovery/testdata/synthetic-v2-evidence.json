@@ -1,0 +1,319 @@
+{
+  "schemaVersion": "cloudring.postgresql-cnpg-offcell-recovery-evidence/v2",
+  "sourceRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "collectedAt": "2026-07-23T00:12:00Z",
+  "expiresAt": "2026-07-23T02:12:00Z",
+  "offCell": {
+    "observedAt": "2026-07-23T00:00:00Z",
+    "destinationIdentity": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "failureDomainDistinct": true,
+    "retentionDays": 30,
+    "objectLockMode": "governance",
+    "objectLockMinimumDays": 30,
+    "controlDeleteDenied": true
+  },
+  "baseBackup": {
+    "identity": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "startedAt": "2026-07-23T00:01:00Z",
+    "completedAt": "2026-07-23T00:02:00Z",
+    "status": "completed",
+    "bytes": 4096,
+    "objectInventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "walArchive": {
+    "firstRecoverabilityPoint": "2026-07-22T23:00:00Z",
+    "lastArchivedAt": "2026-07-23T00:04:00Z",
+    "lastFailedAt": null,
+    "replayedThrough": "2026-07-23T00:03:10Z",
+    "continuous": true
+  },
+  "recovery": {
+    "namespaceIdentity": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "clusterIdentity": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sourceIdentity": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "startedAt": "2026-07-23T00:05:00Z",
+    "readyAt": "2026-07-23T00:06:00Z",
+    "validatedAt": "2026-07-23T00:07:00Z",
+    "readyInstances": 1,
+    "expectedInstances": 1,
+    "productionRouteCount": 0,
+    "writeProbePassed": true
+  },
+  "checksum": {
+    "algorithm": "sha256",
+    "projectionVersion": "cloudring-postgresql-logical-state/v1",
+    "source": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "recovered": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sourceCapturedAt": "2026-07-23T00:03:00Z",
+    "recoveredCapturedAt": "2026-07-23T00:06:30Z",
+    "sourceLogicalBytes": 2048,
+    "recoveredLogicalBytes": 2048,
+    "sourceRowCount": 8,
+    "recoveredRowCount": 8,
+    "matched": true
+  },
+  "consistency": {
+    "method": "postgresql-post-marker-first-xid/v1",
+    "boundaryDigest": "sha256:15e7822bca74c04c5213bc34d269f77625b099d56f3cf59f08c5dea27e10c9ac",
+    "sourceIdentity": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "primaryIdentity": "sha256:94d890119c1fdce65a212a45d51ec70c12e0d48402cd082e4da3d73fe5bd8ea5",
+    "snapshotIdentity": "sha256:abec325b258cc427bbf77438a74fe8446e7857cacbd9a72ae78c4e7831526ad0",
+    "snapshotIsolation": "repeatable read",
+    "snapshotReadOnly": true,
+    "snapshotXidAssigned": false,
+    "snapshotBoundsEqual": true,
+    "snapshotActiveXidCount": 0,
+    "logicalCatalogSameSnapshot": true,
+    "markerIdentity": "sha256:2a578cea13dd9ada3efba40deb4a876b8030532f7fce853998b118bde0404bb6",
+    "markerLsnIdentity": "sha256:8ec82715d3f7f7756894dc6d8acb79cd59af8320f250a2593fe216f4a523562c",
+    "markerWalIdentity": "sha256:928977bad8dca70cf6d9e2607157ce1c5946503c750cb95b80caec24a6c24a5f",
+    "markerNameUnique": true,
+    "markerXidBeforeAssigned": false,
+    "markerXidAfterAssigned": false,
+    "markerStatementsOrdered": true,
+    "markerSameTransaction": true,
+    "markerCommitConfirmed": true,
+    "firstXidMatchesSnapshot": true,
+    "sourceIdentityUnchanged": true,
+    "markerCreatedAt": "2026-07-23T00:03:10Z",
+    "qualifiedAt": "2026-07-23T00:03:11Z",
+    "archiveVerifiedAt": "2026-07-23T00:04:10Z",
+    "archivedMarkerWalIdentity": "sha256:928977bad8dca70cf6d9e2607157ce1c5946503c750cb95b80caec24a6c24a5f",
+    "archiveObjectIdentity": "sha256:4c97dec1d97891b8ae66480ef8648c0dbccc90ff2f6f35c5563c9d626445d3e5",
+    "exactMarkerArchived": true,
+    "baseBackupPrecedesMarker": true,
+    "recoveredMarkerIdentity": "sha256:2a578cea13dd9ada3efba40deb4a876b8030532f7fce853998b118bde0404bb6",
+    "recoveredLsnIdentity": "sha256:8ec82715d3f7f7756894dc6d8acb79cd59af8320f250a2593fe216f4a523562c",
+    "recoveredTargetVerifiedAt": "2026-07-23T00:06:10Z",
+    "exactRecoveredTargetVerified": true
+  },
+  "recoveryAccess": {
+    "expected": {
+      "principalIdentity": "sha256:8f9659729e796526a4b3793bc32f7ee09fa4b78acd16340acbe62359d8d03ea6",
+      "policyIdentity": "sha256:0a68bd63ea48866996a38ce243d5ba1c9669dafac46eb699aee9b52e8d2e6953",
+      "policyRevisionIdentity": "sha256:1a9fa942c40e93332d755a0b21bf0d0c0a1ea1bd93b66c10fb3231d010b12f67",
+      "objectIdentity": "sha256:75a37861b535cd29bcf3b7b142df77d1b1e9fdf713f03d4a470dc2161a7b1add",
+      "objectVersionIdentity": "sha256:444f05c6f198d92e545a7fee23ca5133835b066557040eb1643aa649dca1eb2b",
+      "destinationIdentity": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "scopeIdentity": "sha256:ff27b2797f69abedefa3025080f38aaa837143a25664ce3b5d076317791f856b"
+    },
+    "observed": {
+      "principalIdentity": "sha256:8f9659729e796526a4b3793bc32f7ee09fa4b78acd16340acbe62359d8d03ea6",
+      "policyIdentity": "sha256:0a68bd63ea48866996a38ce243d5ba1c9669dafac46eb699aee9b52e8d2e6953",
+      "policyRevisionIdentity": "sha256:1a9fa942c40e93332d755a0b21bf0d0c0a1ea1bd93b66c10fb3231d010b12f67",
+      "objectIdentity": "sha256:75a37861b535cd29bcf3b7b142df77d1b1e9fdf713f03d4a470dc2161a7b1add",
+      "objectVersionIdentity": "sha256:444f05c6f198d92e545a7fee23ca5133835b066557040eb1643aa649dca1eb2b",
+      "destinationIdentity": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "scopeIdentity": "sha256:ff27b2797f69abedefa3025080f38aaa837143a25664ce3b5d076317791f856b"
+    },
+    "writerPrincipalIdentity": "sha256:7fdd731d3bc8ba6baa5c9ead1c5b8651e03164364018c240f15c9e924f35a97e",
+    "verifiedAt": "2026-07-23T00:04:20Z",
+    "expiresAt": "2026-07-23T02:00:00Z",
+    "credentialExpiresAt": null,
+    "expiryChecked": true,
+    "independentPolicyVerified": true,
+    "requiredReadPermissions": true,
+    "writeDenied": true,
+    "deleteDenied": true,
+    "administrationDenied": true,
+    "outsideScopeDenied": true,
+    "baseBackupIdentity": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "markerWalIdentity": "sha256:928977bad8dca70cf6d9e2607157ce1c5946503c750cb95b80caec24a6c24a5f",
+    "baseBackupReadPassed": true,
+    "markerWalReadPassed": true,
+    "allowlistedProjectionOnly": true,
+    "sourceBindingUnchanged": true
+  },
+  "catalog": {
+    "contractVersion": "cloudring.transactional-state.recovery-contract/v1",
+    "ownerIdentity": "sha256:799fc6ffa50ee674b9960367c111c50d9b0432d26f31580cf367f49c4f384b28",
+    "applicationIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+    "sourceSnapshotIdentity": "sha256:abec325b258cc427bbf77438a74fe8446e7857cacbd9a72ae78c4e7831526ad0",
+    "source": "sha256:367ca9ad6fddc5003c296a0c1b2596695f054dfa6941c46121d43bec94722283",
+    "recovered": "sha256:367ca9ad6fddc5003c296a0c1b2596695f054dfa6941c46121d43bec94722283",
+    "sourceCapturedAt": "2026-07-23T00:03:00Z",
+    "recoveredCapturedAt": "2026-07-23T00:06:30Z",
+    "sourceContractValid": true,
+    "recoveredContractValid": true
+  },
+  "application": {
+    "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+    "startedAt": "2026-07-23T00:06:31Z",
+    "completedAt": "2026-07-23T00:06:40Z",
+    "authenticated": true,
+    "identityVerified": true,
+    "allowed": [
+      {
+        "operation": "documents-insert",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "affectedRows": 1,
+        "valuesMatched": true
+      },
+      {
+        "operation": "documents-read",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "affectedRows": 1,
+        "valuesMatched": true
+      },
+      {
+        "operation": "documents-update-cas",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "affectedRows": 1,
+        "valuesMatched": true
+      },
+      {
+        "operation": "documents-delete",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "affectedRows": 1,
+        "valuesMatched": true
+      },
+      {
+        "operation": "audit-insert",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "affectedRows": 1,
+        "valuesMatched": true
+      },
+      {
+        "operation": "audit-read",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "affectedRows": 1,
+        "valuesMatched": true
+      }
+    ],
+    "denied": [
+      {
+        "operation": "audit-update",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "sqlState": "42501"
+      },
+      {
+        "operation": "audit-delete",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "sqlState": "42501"
+      },
+      {
+        "operation": "schema-create",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "sqlState": "42501"
+      },
+      {
+        "operation": "migration-read",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "sqlState": "42501"
+      },
+      {
+        "operation": "migration-write",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "sqlState": "42501"
+      },
+      {
+        "operation": "document-truncate",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "sqlState": "42501"
+      },
+      {
+        "operation": "document-maintenance",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "sqlState": "42501"
+      },
+      {
+        "operation": "role-escalation",
+        "principalIdentity": "sha256:afe626289dca7a6b14ef898b2889c67b8e4afc46e4b54b4200cb05bcebfc9f36",
+        "sqlState": "42501"
+      }
+    ],
+    "rolledBack": true,
+    "residualDocumentRows": 0,
+    "residualAuditRows": 0,
+    "postProbeCapturedAt": "2026-07-23T00:06:45Z",
+    "postProbeLogicalDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "postProbeCatalogDigest": "sha256:367ca9ad6fddc5003c296a0c1b2596695f054dfa6941c46121d43bec94722283"
+  },
+  "classes": [
+    {
+      "dataClass": "portal-state",
+      "source": "sha256:91b8abed34150a63f1e3ed2fce8eae970aca667216291ff24ed45996a18fb1c0",
+      "recovered": "sha256:91b8abed34150a63f1e3ed2fce8eae970aca667216291ff24ed45996a18fb1c0",
+      "sourceBytes": 128,
+      "recoveredBytes": 128,
+      "sourceRows": 1,
+      "recoveredRows": 1,
+      "matched": true
+    },
+    {
+      "dataClass": "orders",
+      "source": "sha256:afe824bb2db68fc781b0bc7ca706ba79837a373a006194d94bf08c2f4320d710",
+      "recovered": "sha256:afe824bb2db68fc781b0bc7ca706ba79837a373a006194d94bf08c2f4320d710",
+      "sourceBytes": 128,
+      "recoveredBytes": 128,
+      "sourceRows": 3,
+      "recoveredRows": 3,
+      "matched": true
+    },
+    {
+      "dataClass": "support-tickets",
+      "source": "sha256:5c952493a642559dfab4d001d2125550d4bccdff85ecf8e83d14ed3fd5dd50fc",
+      "recovered": "sha256:5c952493a642559dfab4d001d2125550d4bccdff85ecf8e83d14ed3fd5dd50fc",
+      "sourceBytes": 128,
+      "recoveredBytes": 128,
+      "sourceRows": 2,
+      "recoveredRows": 2,
+      "matched": true
+    },
+    {
+      "dataClass": "audit-events",
+      "source": "sha256:15738369c6d7b16eba59a5b7852f64ffdeae1c3bdc2bf6f2e5c8a1b0a10953dc",
+      "recovered": "sha256:15738369c6d7b16eba59a5b7852f64ffdeae1c3bdc2bf6f2e5c8a1b0a10953dc",
+      "sourceBytes": 128,
+      "recoveredBytes": 128,
+      "sourceRows": 3,
+      "recoveredRows": 3,
+      "matched": true
+    },
+    {
+      "dataClass": "postgresql-cnpg",
+      "source": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "recovered": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceBytes": 2048,
+      "recoveredBytes": 2048,
+      "sourceRows": 8,
+      "recoveredRows": 8,
+      "matched": true
+    }
+  ],
+  "cleanup": {
+    "startedAt": "2026-07-23T00:08:00Z",
+    "completedAt": "2026-07-23T00:11:00Z",
+    "complete": true,
+    "twoSweepQuietWindowSeconds": 30,
+    "sweeps": [
+      {
+        "observedAt": "2026-07-23T00:09:00Z",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "recoveryNamespaceCount": 0,
+        "clusterCount": 0,
+        "accessObjectCount": 0,
+        "persistentVolumeClaimCount": 0,
+        "serviceCount": 0,
+        "routeCount": 0
+      },
+      {
+        "observedAt": "2026-07-23T00:10:00Z",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "recoveryNamespaceCount": 0,
+        "clusterCount": 0,
+        "accessObjectCount": 0,
+        "persistentVolumeClaimCount": 0,
+        "serviceCount": 0,
+        "routeCount": 0
+      }
+    ]
+  },
+  "redaction": {
+    "containsCredentials": false,
+    "containsEndpoints": false,
+    "containsTenantData": false,
+    "verdict": "pass"
+  },
+  "verdict": "pass"
+}
