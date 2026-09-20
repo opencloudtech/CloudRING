@@ -95,6 +95,13 @@ while IFS= read -r commit; do
   author_key="${BASH_REMATCH[1]}<${BASH_REMATCH[2],,}>"
   author_email_key="${BASH_REMATCH[2],,}"
 
+  # Web-flow merge commits (update-branch / merge queue) are committed by
+  # GitHub itself and cannot carry a contributor sign-off; the human approval
+  # is recorded on the pull request. Same exemption class as dco/action.
+  if [[ "$(git show -s --format='%ce' "${commit}")" == "noreply@github.com" ]]; then
+    git show -s --format='GitHub web-flow merge commit, sign-off validation skipped: %h' "${commit}"
+    continue
+  fi
   if is_approved_automation "${author_name}" "${author_email}"; then
     git show -s --format='Approved automation author, sign-off validation skipped: %h (%an)' "${commit}"
     automation_count=$((automation_count + 1))
