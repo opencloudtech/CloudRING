@@ -39,7 +39,7 @@ example.
 
 ## Non-Claims
 
-Example evidence in CloudRING does not claim production readiness, a running
+Example evidence in CloudRING does not claim production-grade readiness, a running
 deployment, billing settlement, data migration, support operation, or recovery
 success. It proves that the package has the metadata and evidence refs needed
 for service-team, platform-operator, security-reviewer, and

@@ -37,4 +37,4 @@ go run ./cmd/ocsctl validate ./examples/synthetic-service-module/connector-packa
 Do not embed payment credentials, customer records, settlement results, invoice
 truth, or private billing-system schemas in CloudRING. The public connector
 records the contract and evidence refs only. This document does not claim
-production readiness or billing settlement correctness.
+production-grade readiness or billing settlement correctness.

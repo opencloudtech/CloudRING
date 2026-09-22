@@ -85,3 +85,5 @@ semantics, or the public/private boundary must:
 ## Documents
 
 - [QUALITY.md](QUALITY.md) — quality charter: stage invariants, regression policy, reference-platform aim.
+
+- [ROADMAP.md](ROADMAP.md) — the single product roadmap: purpose, eras, exit criteria.

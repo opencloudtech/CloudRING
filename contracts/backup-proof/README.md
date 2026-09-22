@@ -68,7 +68,7 @@ no numeric request fields. The repository-owned conformance vectors are
 normative and deliberately include Unicode plus characters that Go's default
 JSON encoder HTML-escapes.
 
-These contracts do not claim production readiness. They also do not define
+These contracts do not claim production-grade readiness. They also do not define
 credentials, object-store configuration, or a deployment topology. Live
 receipts and baselines are deployment-private artifacts and must not be
 committed here.

@@ -37,4 +37,4 @@ stay in the downstream provider repository.
 6. Readiness and support evidence are recorded.
 7. Denied, degraded, blocked, retryable, and ready states are visible.
 
-No production readiness claim is valid without current evidence.
+No production-grade readiness claim is valid without current evidence.

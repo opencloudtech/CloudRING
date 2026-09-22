@@ -1,13 +1,13 @@
 # CloudRING Quality Charter
 
 This charter is the repository-owned statement of product quality requirements. It binds
-every contribution, release, and milestone: CloudRING must be a stable, production-ready
+every contribution, release, and milestone: CloudRING must be a stable, production-grade
 product at every stage of its evolution — not only at major releases — and it must deploy,
 operate, and update reliably from code alone.
 
 ## Invariants (enforced at every stage)
 
-1. **Production-ready at every stage.** Every merge leaves the platform stable and
+1. **Production-grade at every stage.** Every merge leaves the platform stable and
    operable. Intermediate states that degrade availability, installability, or
    upgradeability are defects, not milestones. Acceptance of any stage includes a clean
    install and a clean upgrade from the previous accepted state.
@@ -47,3 +47,5 @@ acceptance records, not by intent.
 
 This charter is maintained like code: changes arrive by pull request with review, and the
 charter is binding for all CloudRING repositories.
+
+The stage invariants of this charter are enforced through the roadmap in [ROADMAP.md](ROADMAP.md).

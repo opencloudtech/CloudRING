@@ -49,7 +49,7 @@ a provider database or its backup and failover have been verified live.
 This contract does not require live provider credentials, secret environment
 variables, network mutation, or live Kubernetes access. Passing it only means
 the CloudRING public tree is locally safe to publish and validate; it is not a
-production readiness claim.
+production-grade readiness claim.
 
 Reviewed content exceptions remain bound to their exact repository path and
 whole-file digest. A recursive gitlink scan may add exactly one canonical
