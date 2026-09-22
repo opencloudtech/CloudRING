@@ -7,7 +7,7 @@ operate, and update reliably from code alone.
 
 ## Invariants (enforced at every stage)
 
-1. **Production-ready at every stage.** Every merge leaves the platform stable and
+1. **Production-grade at every stage.** Every merge leaves the platform stable and
    operable. Intermediate states that degrade availability, installability, or
    upgradeability are defects, not milestones. Acceptance of any stage includes a clean
    install and a clean upgrade from the previous accepted state.

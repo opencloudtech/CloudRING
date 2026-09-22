@@ -140,4 +140,4 @@ effective on-wire destinations must be verified on the target site.
 This slice provides profile preflight, deterministic planning, kubeadm
 rendering, and captured-state verification contracts. It is not an installer,
 does not prove that any provider site is reachable, and does not claim
-production readiness.
+production-grade readiness.

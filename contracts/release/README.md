@@ -3,7 +3,7 @@
 This directory owns the public release and BOM compatibility boundary for
 CloudRING.
 
-The contract is not a production readiness claim. It describes which release
+The contract is not a production-grade readiness claim. It describes which release
 records, BOM rows, evidence gates, stale states, and blocked states a downstream
 release reviewer must evaluate before any live promotion claim is considered.
 
@@ -21,4 +21,4 @@ convert a release record into a live claim.
 
 This directory does not include live infrastructure evidence, provider details,
 tenant data, private endpoints, credentials, or deployment receipts. It also
-does not authorize general availability.
+makes no GA release claim.

@@ -28,7 +28,7 @@ advance a goal.
 | Provider adapters and site profiles | `experimental` | Public schemas, validation, and synthetic inputs exist. Concrete provider accounts and inventory are outside the public boundary. |
 | kubeadm rendering and Kubernetes deployment profiles | `blocked` for independent installation | Public issues document missing executable substitution/join paths, schema integration, topology validation, and storage dependencies. A complete supported installer is not available. |
 | Backup, proof signing, restore collection, and resilience observers | `reference` / `experimental` | Reusable collectors and protocols exist. Integrated off-site recovery and promotion-grade failure campaigns are not publicly proved. |
-| Three-node and one-server-loss material | `reference` | It tests one declared single-failure topology. It is not a universal HA topology or production availability promise. |
+| Three-node and one-server-loss material | `reference` | It tests one declared single-failure topology. It is not a universal HA topology or production-grade availability promise. |
 | Provider control plane, organization model, inventory reconciliation, durable operations, and portal | `planned` | Owned by G03-G11 and the provider-control-plane public issues; no complete runtime exists. |
 | Network, volume, image, compute, Kubernetes, object storage, backup, access, support, and external products | `planned` | Goal contracts exist, but the products are not complete public runtime capabilities. |
 | Multi-cell, multi-region, marketplace economics, and sovereign federation | `planned` | Explicit later roadmap work. No current implementation or availability claim. |
@@ -62,6 +62,6 @@ document should be read as implementing it.
 - inspect and exercise public validators and reference contracts;
 - contribute provider-neutral code, documentation, tests, adapters, and modules.
 
-The current repository is not ready for production use. A fresh reader should
+The current repository is not yet production-grade. A fresh reader should
 not treat a reference profile, green CI run, fixture, or roadmap document as a
 release or deployment claim.
