@@ -85,5 +85,5 @@ contract, policy, and validation pieces move into CloudRING. Concrete
 installation values and private product extensions stay downstream.
 
 Evidence paths remain evidence. A passing ownership manifest does not claim
-production readiness, deployment readiness, tenant data durability, backup
+production-grade readiness, deployment-grade readiness, tenant data durability, backup
 coverage, or single-point-of-failure readiness.

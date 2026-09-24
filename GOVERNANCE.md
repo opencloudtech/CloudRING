@@ -81,3 +81,9 @@ semantics, or the public/private boundary must:
 3. include a migration or versioning path when existing contracts change;
 4. receive the required maintainer review and pass all repository gates;
 5. update the public documents and machine-readable contracts together.
+
+## Documents
+
+- [QUALITY.md](QUALITY.md) — quality charter: stage invariants, regression policy, reference-platform aim.
+
+- [ROADMAP.md](ROADMAP.md) — the single product roadmap: purpose, eras, exit criteria.

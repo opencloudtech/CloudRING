@@ -11,7 +11,7 @@ services without hard-wiring them into one provider, one platform
 implementation, or one technology stack.
 
 > [!WARNING]
-> **CloudRING is in early development and is not ready for production or pilot
+> **CloudRING is in early development and is not yet production-grade or pilot
 > use.** Do not use it to operate real workloads, customer data, or critical
 > infrastructure. Passing repository tests proves only the code and contracts
 > present in that commit. Pilot readiness will be announced separately after
