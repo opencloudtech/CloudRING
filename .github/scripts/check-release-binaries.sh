@@ -45,9 +45,9 @@ EOF
 # block in build-release-etcdutl.sh. That script builds the binary under
 # test from this exact source; drifting copies silently adjudicate against
 # the wrong source tree.
-etcd_version='3.6.14'
-source_commit='fc04cf702b0a46c2fd85547a2be05705b100a496'
-source_archive_sha256='c02ebbf6af5f9266f111009fb8d585649a9fcafe5788c200f5a28a7f00d438f0'
+etcd_version='3.6.15'
+source_commit='a3346427fbe6e456e9b6d6e429346481c6be7c71'
+source_archive_sha256='32b1cb031a84067ae451cad1b060a07298bdd4e4ba290897ec0c73a02001e0bb'
 go_version='go1.26.8'
 
 etcd_version_arg=''

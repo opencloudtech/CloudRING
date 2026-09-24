@@ -35,7 +35,7 @@ the binary scan can identify compiled functions instead of falling back to
 reports for every package in a dependency module.
 
 The upstream recovery tool is rebuilt from the hash-pinned official etcd
-3.6.14 source using the release compiler, without source or dependency patches.
+3.6.15 source using the release compiler, without source or dependency patches.
 Two independent builds must match the binary digest pinned by the recovery
 worker. The separately attested `etcdutl-source.json` records the source commit,
 archive hash, compiler and resulting binary hash. The real offline snapshot

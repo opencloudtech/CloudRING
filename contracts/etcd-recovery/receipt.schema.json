@@ -29,8 +29,8 @@
       "required": ["name", "version", "executableSha256"],
       "properties": {
         "name": {"const": "etcdutl"},
-        "version": {"const": "3.6.14"},
-        "executableSha256": {"const": "2b7fea46e31fda1989168fbd8f7ec73f5839155f4b1af7bab274950e337e996d"}
+        "version": {"const": "3.6.15"},
+        "executableSha256": {"const": "aaebd9806bd5d614b16de6bbff4aaf9d7c1986f48d52068e578d93451d000835"}
       }
     },
     "sourceStatusSha256": {"$ref": "#/$defs/sha"},

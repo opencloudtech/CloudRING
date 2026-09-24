@@ -31,8 +31,8 @@ GET with system CA validation, no proxy and no redirect. Raw endpoint, bucket,
 object key/version and credentials never appear in tool arguments, environment,
 stdout, stderr or receipts.
 
-`etcdutl` 3.6.14 is content-pinned to
-`2b7fea46e31fda1989168fbd8f7ec73f5839155f4b1af7bab274950e337e996d`
+`etcdutl` 3.6.15 is content-pinned to
+`aaebd9806bd5d614b16de6bbff4aaf9d7c1986f48d52068e578d93451d000835`
 before execution. This executable is rebuilt from the unchanged official source
 with Go 1.26.8 and retained symbols using the [release build procedure](../../docs/releasing.md);
 its source and build identity are retained as `etcdutl-source.json`.
