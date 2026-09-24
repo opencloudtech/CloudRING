@@ -101,7 +101,7 @@ the bundle checksum, and creates GitHub artifact attestations.
 The recovery image job independently reproduces the worker binary and two OCI image
 layouts, checks their Linux AMD64 subject manifest digests are identical, and
 requires the separately pushed registry subject to match that reviewed digest.
-The official `etcdutl` 3.6.14 source is rebuilt twice with Go 1.26.8 and
+The official `etcdutl` 3.6.15 source is rebuilt twice with Go 1.26.8 and
 independent caches. The source archive, rebuilt binary, BuildKit, Dockerfile frontend,
 Buildx and Syft inputs are immutable-version or content pinned. The job
 publishes only `sha-<commit>`, creates a real Syft image-package SBOM plus a

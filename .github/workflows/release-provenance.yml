@@ -244,10 +244,10 @@ jobs:
           cp "${RUNNER_TEMP}/release-etcdutl/etcdutl-source.json" dist/
           install -d -m 0755 dist/etcd-licenses
           cp "${RUNNER_TEMP}/release-etcdutl/etcd-LICENSE" dist/etcd-licenses/LICENSE
-          test "$(dist/etcd-recovery-worker/etcdutl version)" = $'etcdutl version: 3.6.14\nAPI version: 3.6'
+          test "$(dist/etcd-recovery-worker/etcdutl version)" = $'etcdutl version: 3.6.15\nAPI version: 3.6'
           tool_digest="$(sha256sum dist/etcd-recovery-worker/etcdutl | cut -d ' ' -f 1)"
           worker_digest="$(sha256sum dist/etcd-recovery-worker/cloudring-etcd-recovery-worker | cut -d ' ' -f 1)"
-          test "${tool_digest}" = '2b7fea46e31fda1989168fbd8f7ec73f5839155f4b1af7bab274950e337e996d'
+          test "${tool_digest}" = 'aaebd9806bd5d614b16de6bbff4aaf9d7c1986f48d52068e578d93451d000835'
           bash .github/scripts/check-release-binaries.sh dist/etcd-recovery-worker/*
           jq -n -cS \
             --arg source_commit "${GITHUB_SHA}" \
@@ -278,10 +278,10 @@ jobs:
               {
                 type: "application",
                 name: "etcdutl",
-                version: "3.6.14",
-                purl: "pkg:github/etcd-io/etcd@v3.6.14",
+                version: "3.6.15",
+                purl: "pkg:github/etcd-io/etcd@v3.6.15",
                 properties: [
-                  {name: "cloudring.upstream.source-commit", value: "fc04cf702b0a46c2fd85547a2be05705b100a496"},
+                  {name: "cloudring.upstream.source-commit", value: "a3346427fbe6e456e9b6d6e429346481c6be7c71"},
                   {name: "cloudring.upstream.build-compiler", value: "go1.26.8"}
                 ],
                 hashes: [{alg: "SHA-256", content: $tool_digest}]
@@ -452,7 +452,7 @@ jobs:
               componentSbomSha256: $component_sbom_digest,
               containerfileSha256: $containerfile_digest,
               etcdutlSha256: $etcdutl_digest,
-              etcdutlVersion: "3.6.14",
+              etcdutlVersion: "3.6.15",
               imageDigest: $image_digest,
               imageName: "ghcr.io/opencloudtech/cloudring-etcd-recovery-worker",
               imageSbomSha256: $image_sbom_digest,
@@ -482,8 +482,8 @@ jobs:
             (.imageDigest | test("^sha256:[0-9a-f]{64}$")) and
             (.imageSubjectDigest | test("^sha256:[0-9a-f]{64}$")) and
             (.workerExecutableSha256 | test("^[0-9a-f]{64}$")) and
-            .etcdutlVersion == "3.6.14" and
-            .etcdutlSha256 == "2b7fea46e31fda1989168fbd8f7ec73f5839155f4b1af7bab274950e337e996d" and
+            .etcdutlVersion == "3.6.15" and
+            .etcdutlSha256 == "aaebd9806bd5d614b16de6bbff4aaf9d7c1986f48d52068e578d93451d000835" and
             .baseImageName == "gcr.io/distroless/static-debian12:nonroot" and
             .baseImageDigest == "sha256:f5b485ea962d9bd1186b2f6b3a061191539b905b82ec395de78cbfae51f20e35" and
             (.containerfileSha256 | test("^[0-9a-f]{64}$")) and
