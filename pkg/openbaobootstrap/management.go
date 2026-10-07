@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) IURII TRUKHIN 2012-2022, Elena Trukhina 2023-2026. Project and trademarks: Elena Trukhina ZZP.
+// Copyright (C) Iurii Trukhin.
 
 // Package openbaobootstrap exposes the non-secret, deterministic delegation
 // contract shared by the protected credential broker and the apply executor.
