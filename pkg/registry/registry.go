@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package registry validates the provider-neutral CloudRING module registry
 // contract. It validates metadata and lifecycle plans only; it never loads or

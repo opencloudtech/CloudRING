@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package devinstall installs one disposable, explicitly non-production provider.
 // Its KubeVirt substrate is an operator-selected prerequisite, never an owned

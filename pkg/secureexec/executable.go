@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package secureexec pins an executable identity once and runs bounded child
 // commands inside the CloudRING process-tree and kubeconfig replay boundary.

@@ -290,9 +290,9 @@ jobs:
           test -s deploy/kubernetes/secret-manager/README.md
           # Source headers carry the copyright line from NOTICE; vendored and test data keep their own.
           headers="$(git grep -n -I -E '^(//|#) Copyright \(C\) ' -- . ':!**/vendor/**' ':!**/testdata/**')" || [[ $? -eq 1 ]]
-          bad="$(printf '%s\n' "${headers}" | grep -v -E '^$|:(//|#) Copyright \(C\) Yuri Trukhin\.$' || true)"
+          bad="$(printf '%s\n' "${headers}" | grep -v -E '^$|:(//|#) Copyright \(C\) Iurii Trukhin\.$' || true)"
           if [[ -n "${bad}" ]]; then
-            echo "Use the copyright header from NOTICE: Copyright (C) Yuri Trukhin." >&2
+            echo "Use the copyright header from NOTICE: Copyright (C) Iurii Trukhin." >&2
             echo "${bad}" >&2
             exit 1
           fi

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package kubeidentity defines canonical privacy-safe hashes for Kubernetes
 // object identities shared by public collectors and downstream adapters.

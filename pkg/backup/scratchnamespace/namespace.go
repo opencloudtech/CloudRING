@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package scratchnamespace owns one isolated restore namespace through a
 // durable create fence and exact Kubernetes deletion preconditions. It never

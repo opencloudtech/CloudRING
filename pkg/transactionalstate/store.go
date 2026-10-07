@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package transactionalstate provides PostgreSQL-backed document state and an
 // append-only audit journal for CloudRING control-plane state. Documents expose

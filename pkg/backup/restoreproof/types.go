@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package restoreproof defines provider-neutral, source-safe backup and restore
 // evidence contracts. It does not contain installation credentials or provider

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package oneserverloss collects and verifies provider-neutral evidence that a
 // CloudRING installation survives the loss and recovery of one server. The

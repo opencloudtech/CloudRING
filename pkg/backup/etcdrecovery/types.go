@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package etcdrecovery implements a provider-neutral, offline etcd snapshot
 // recovery worker. It never connects to a live etcd endpoint. Its only network

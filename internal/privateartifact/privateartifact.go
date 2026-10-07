@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package privateartifact reads existing and writes new owner-only JSON
 // artifacts through stable directory handles without following or replacing

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package controlplane serves the public CloudRING management API and portal.
 // Its first supported deployment is an explicitly isolated development provider.

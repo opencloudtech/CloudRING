@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package openbaoapply executes the fail-closed OpenBao Kubernetes-auth plan.
 // Credentials are accepted only through the bounded stdin request and are

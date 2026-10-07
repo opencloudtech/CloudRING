@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package identity implements provider-neutral OIDC discovery, profile-bound
 // asymmetric JWT verification, JWKS rotation, bootstrap-credential references,

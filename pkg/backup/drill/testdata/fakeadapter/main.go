@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Command fakeadapter is a deterministic external protocol conformance helper.
 // It is test-only and selects failure injection solely from the synthetic

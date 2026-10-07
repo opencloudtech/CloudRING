@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package drill implements the provider-neutral Goal01 backup/restore drill
 // transaction. Provider and cluster mutations are available only through the

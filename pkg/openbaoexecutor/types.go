@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package openbaoexecutor renders the temporary Kubernetes identities, Lease,
 // and least-privilege RBAC required by the protected OpenBao bootstrap

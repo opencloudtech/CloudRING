@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package gitopsownership defines a provider-neutral, fail-closed contract for
 // proving that an accepted Flux source artifact and its exact Kustomization

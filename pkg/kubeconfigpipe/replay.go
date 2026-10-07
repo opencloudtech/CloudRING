@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package kubeconfigpipe replays one bounded pipe-backed kubeconfig through a
 // fresh anonymous pipe for each child command without placing the credential

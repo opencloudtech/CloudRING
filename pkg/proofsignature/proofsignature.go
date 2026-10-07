@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package proofsignature signs and verifies exact CloudRING proof payloads.
 // Private signing material is kept behind an opaque type so callers cannot

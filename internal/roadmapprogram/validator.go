@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package roadmapprogram validates the canonical CloudRING delivery roadmap.
 package roadmapprogram

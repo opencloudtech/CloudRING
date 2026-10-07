@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) Yuri Trukhin.
+# Copyright (C) Iurii Trukhin.
 
 # These two files form one byte-for-byte renderer contract on every checkout.
 contracts/openbao-kubernetes-auth/fixtures/synthetic-kubernetes-auth-executor.json text eol=lf

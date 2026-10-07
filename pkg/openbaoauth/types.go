@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package openbaoauth defines the source-only CloudRING contract for planning
 // least-privilege OpenBao Kubernetes authentication. It never performs network

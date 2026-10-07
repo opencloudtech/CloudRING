@@ -3,7 +3,7 @@
 CloudRING separates the reusable public platform from independently owned
 services, provider businesses, and deployment-specific material.
 
-Copyright attribution is stated in [NOTICE](NOTICE). Yuri Trukhin stewards the
+Copyright attribution is stated in [NOTICE](NOTICE). Iurii Trukhin stewards the
 repository and maintains the project naming policy in [TRADEMARKS.md](TRADEMARKS.md).
 Copyright in an independent contribution remains with its copyright holder unless
 it is transferred under a separate agreement. The Apache License 2.0 governs material

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package siteprofile validates provider-neutral site inventory and renders a
 // deterministic installation plan. It deliberately does not apply resources.

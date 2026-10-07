@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package cnpgrecovery defines and verifies the provider-neutral evidence
 // contract for an isolated CloudNativePG recovery from an off-cell base backup

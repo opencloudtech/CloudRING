@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Package httpsecurity provides a provider-neutral, read-only audit of the
 // public HTTP transport and response-header boundary for CloudRING surfaces.

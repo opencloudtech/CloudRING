@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) Yuri Trukhin.
+// Copyright (C) Iurii Trukhin.
 
 // Command cli-helper is test-only process plumbing for the cloudring-backup
 // CLI end-to-end test. It is intentionally outside production packages.
