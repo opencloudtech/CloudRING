@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) IURII TRUKHIN 2012-2022, Elena Trukhina 2023-2026. Project and trademarks: Elena Trukhina ZZP.
+# Copyright (C) Yuri Trukhin.
 
 # These two files form one byte-for-byte renderer contract on every checkout.
 contracts/openbao-kubernetes-auth/fixtures/synthetic-kubernetes-auth-executor.json text eol=lf

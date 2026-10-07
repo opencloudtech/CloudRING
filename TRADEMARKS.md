@@ -1,9 +1,7 @@
 # Trademarks
 
-CloudRING, OpenCloudTech, TRUKHIN, `#CloudRING`, and confusingly similar project names, marks, handles, and hashtags are owned or controlled for this project by Elena Trukhina ZZP.
+TRUKHIN is a trademark of Yuri Trukhin. TRUKHIN #CloudRING, CloudRING, #CloudRING, and OpenCloudTech are the names Yuri Trukhin uses for this project.
 
-You may use the names to truthfully identify this project, compatible modules, or unmodified distributions.
+You may use these names to truthfully identify this project, compatible modules, or unmodified distributions.
 
-You may not use CloudRING, OpenCloudTech, TRUKHIN, `#CloudRING`, or confusingly similar marks to name, brand, market, host, or promote forks, modified versions, derivative products, managed services, or downstream distributions without written permission from Elena Trukhina ZZP.
-
-Do not use the marks in a way that suggests endorsement, certification, official hosting, deployment approval, or ownership by Elena Trukhina ZZP unless that permission has been granted. Modified versions and downstream deployments must make their own identity clear when they differ from the reference CloudRING project.
+Forks, modified versions, and services built on this project must use their own names and must not present themselves as the TRUKHIN #CloudRING project or as endorsed or certified by Yuri Trukhin. Any other use of the TRUKHIN trademark requires written permission from Yuri Trukhin.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) IURII TRUKHIN 2012-2022, Elena Trukhina 2023-2026. Project and trademarks: Elena Trukhina ZZP.
+// Copyright (C) Yuri Trukhin.
 
 // Package kubeadm validates and renders provider-neutral upstream Kubernetes
 // control-plane bootstrap, sequential HA expansion, and runtime acceptance

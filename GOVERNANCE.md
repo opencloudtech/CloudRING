@@ -11,7 +11,7 @@ The project follows [VISION.md](VISION.md) and the evidence-gated sequence in th
 current non-claims: a capability becomes project truth only when it is accepted
 in the public repository and verified at the scope claimed.
 
-OpenCloudTech stewards the repository and decides which contributions are
+Yuri Trukhin stewards the repository and decides which contributions are
 accepted. Governance should broaden over time as active maintainers and
 independent provider or service contributors demonstrate sustained ownership.
 Until a governance change is documented here, no affiliation, deployment, or

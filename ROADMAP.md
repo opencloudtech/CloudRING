@@ -85,7 +85,7 @@ the standard (foundation/association).
 
 ## Stewardship and economics (cross-cutting; owner decisions)
 
-- Era 0: IP held by the founder's entity; a dedicated vehicle is the intended future owner
+- Era 0: IP held by the founder, Yuri Trukhin; a dedicated vehicle is the intended future owner
   ("ethereum foundation" model) — transfer not yet executed; stewardship form is an
   Era II decision.
 - Monetization per the transformation ladder: the OSS core is free; the Business tier
