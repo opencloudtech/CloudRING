@@ -17,7 +17,7 @@ version='3.6.14'
 source_commit='fc04cf702b0a46c2fd85547a2be05705b100a496'
 source_archive_sha256='c02ebbf6af5f9266f111009fb8d585649a9fcafe5788c200f5a28a7f00d438f0'
 source_url="https://codeload.github.com/etcd-io/etcd/tar.gz/${source_commit}"
-go_version='go1.26.8'
+go_version='go1.26.9'
 
 # Resolve an explicitly selected toolchain once, then disallow automatic
 # switching and caller-specific build settings in both independent builds.
