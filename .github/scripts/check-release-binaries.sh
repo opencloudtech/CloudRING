@@ -269,7 +269,27 @@ fi
 # conservatism produces this trace. REMOVE THIS ENTRY when the pinned etcd
 # release ships grpc >= 1.83.1 (see ANCHOR(etcd-pin)); do not extend this
 # list without a recorded adjudication in the PR that adds it.
-advisory_overrides="GO-2026-6348"
+#
+# GO-2026-6603, GO-2026-6611, GO-2026-6612, GO-2026-6617 (HTTP/2 Trailer
+# memory exhaustion, initial-window CPU, flow-control refund, HPACK encoder
+# race): the go1.26.9 release compiler fixes their standard-library part;
+# golang.org/x/net v0.55.0 from the pinned etcd module graph remains. Of the
+# 27 example traces source mode reports per advisory, 12 enter through the
+# init-time closure dispatch of GO-2026-6348 (crc32 table init ->
+# sync.OnceFunc -> grpc client transport) and 15 through error, fmt.Stringer
+# and io.Writer interface dispatch from cobra, cobrautl and pflag. Each
+# advisory needs an HTTP/2 peer; no etcdutl subcommand opens a listener or
+# dials, and the recovery worker runs only version, snapshot status, hashkv
+# and snapshot restore on local files. These IDs also cover net/http and
+# overrides match every binary in one run, so each scanned binary must be
+# built with go1.26.9 or go1.27.2 and later. REMOVE THESE ENTRIES when the
+# pinned etcd release ships golang.org/x/net >= v0.60.0 (see
+# ANCHOR(etcd-pin)).
+advisory_overrides="GO-2026-6348
+GO-2026-6603
+GO-2026-6611
+GO-2026-6612
+GO-2026-6617"
 
 gate_failed=0
 for id in ${binary_ids}; do
