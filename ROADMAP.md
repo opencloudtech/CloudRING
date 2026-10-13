@@ -11,8 +11,7 @@ A lifelong cloud: a provider of one's own, free from vendor lock-in and jurisdic
 dependence, developed and operated by a single engineer with a team of AI agents; full
 self-service for users; third parties extend the platform through the Open Cloud Standard
 (OCS) without modifying the core. Strategic horizon: a decentralized, unkillable network
-of clouds. Personally: the owner's company, number-one engineering quality, and the right
-to stop.
+of clouds. Personally: number-one engineering quality and the right to stop.
 
 **The purpose is achieved when all of the following hold:**
 
@@ -24,8 +23,7 @@ to stop.
 | P4 | Unkillability | ≥3 independent owners/jurisdictions at the network level; the federation runs with no central point |
 | P5 | OCS is alive | ≥2 independent implementations of the contract (CNCF Sandbox will expect 3+); a third-party product runs without core changes |
 | P6 | Quality #1 | comparable to or better than the leaders on every dimension; stage invariants enforced on every release |
-| P7 | The company | a working commercial entity of the owner with the first paid event |
-| P8 | A decade | the domain core carries no substrate types (substrate rotation every 5–10 years); standard stewardship institutionalized |
+| P7 | A decade | the domain core carries no substrate types (substrate rotation every 5–10 years); standard stewardship institutionalized |
 
 ## Stage invariants (enforced on every release; see QUALITY.md)
 
@@ -81,16 +79,13 @@ Provider federation: the P2P bus, cross-cloud connect, settlement (per the trans
 plan, its 18–36-month horizon); ≥3 jurisdictions at the network level; no jurisdiction,
 company, or single operator can switch the network off (P4). Decentralized governance of
 the standard (foundation/association).
-**Exit:** purpose dimensions P1–P8 are met and confirmed by external audits.
+**Exit:** purpose dimensions P1–P7 are met and confirmed by external audits.
 
-## Stewardship and economics (cross-cutting; owner decisions)
+## Stewardship (cross-cutting; owner decisions)
 
 - Era 0: IP held by the founder, Iurii Trukhin; a dedicated vehicle is the intended future owner
   ("ethereum foundation" model) — transfer not yet executed; stewardship form is an
   Era II decision.
-- Monetization per the transformation ladder: the OSS core is free; the Business tier
-  (licenses/support/maintenance) from Era I; marketplace revenue sharing from Era II+.
-  Thresholds are the owner's decision (no thresholds exist in the sources).
 - The team: one engineer + an agent team; "one engineer" is an operating invariant, not
   an organizational cap; the hiring trigger (proposed: when P2 genuinely breaks) is the
   owner's call — the sources do not set one.
