@@ -223,7 +223,7 @@ operations, documentation, and developer experience.
 
 ## Validate a fresh clone
 
-Prerequisites: Git and Go 1.26.8 or a newer supported security patch. The development installer and CI use Go 1.26.8.
+Prerequisites: Git and Go 1.26.9 or a newer supported security patch. The development installer and CI use Go 1.26.9.
 
 ```bash
 git clone https://github.com/opencloudtech/CloudRING.git

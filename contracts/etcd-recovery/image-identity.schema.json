@@ -32,7 +32,7 @@
     "imageSubjectDigest": {"$ref": "#/$defs/imageDigest"},
     "workerExecutableSha256": {"$ref": "#/$defs/sha"},
     "etcdutlVersion": {"const": "3.6.14"},
-    "etcdutlSha256": {"const": "2b7fea46e31fda1989168fbd8f7ec73f5839155f4b1af7bab274950e337e996d"},
+    "etcdutlSha256": {"const": "8cc788cf08a2ad326ab54add1a161000fd0d563a0f28d6a6d842877c0d2148c1"},
     "baseImageName": {"const": "gcr.io/distroless/static-debian12:nonroot"},
     "baseImageDigest": {"const": "sha256:f5b485ea962d9bd1186b2f6b3a061191539b905b82ec395de78cbfae51f20e35"},
     "containerfileSha256": {"$ref": "#/$defs/sha"},

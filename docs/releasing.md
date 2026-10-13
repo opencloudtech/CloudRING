@@ -23,7 +23,7 @@ the exact Go toolchain pinned in the workflow, Linux/amd64 target, GNU tar and
 Python 3 (standard-library UUID generation only);
 using a different compiler is a different build input.
 
-The release compiler is Go 1.26.8, a supported patch release. The required
+The release compiler is Go 1.26.9, a supported patch release. The required
 pull-request build check also reproduces the complete bundle with this exact
 compiler. Before artifacts are uploaded or attested, pinned `govulncheck`
 examines every compiled command, including the recovery worker and its upstream
