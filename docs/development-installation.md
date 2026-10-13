@@ -57,7 +57,7 @@ substitute `latest` images or an unverified BOM.
 
 Linux users can use the verified `cloudring-linux-amd64` asset as `cloudring`.
 Linux and macOS users can also build the client from the clean public release
-checkout with Go 1.26.8 or a newer supported security release:
+checkout with Go 1.26.9 or a newer supported security release:
 
 ```sh
 go build -o ./cloudring ./cmd/cloudring

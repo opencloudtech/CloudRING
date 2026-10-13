@@ -1,6 +1,6 @@
 module github.com/opencloudtech/CloudRING
 
-go 1.26.8
+go 1.26.9
 
 require (
 	github.com/jackc/pgx/v5 v5.11.0
