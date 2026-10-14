@@ -1,6 +1,6 @@
 # Public current state
 
-Snapshot reviewed: 2026-07-28.
+Snapshot reviewed: 2026-10-14.
 
 This document is a public orientation aid. It contains no private deployment
 inventory or downstream status. [`roadmap.yaml`](roadmap.yaml) is the single
@@ -22,15 +22,17 @@ advance a goal.
 | Capability | Public state | Evidence and boundary |
 | --- | --- | --- |
 | Build, unit/race/vet, source-safety, and supply-chain checks | `implemented` for repository validation | Workflows and Go tests validate the accepted source revision; they do not prove a deployed cloud. |
-| OCS package types, validators, Go SDK, fixtures, and conformance tooling | `reference` / `experimental` | Packages and synthetic modules are testable. OCS 1.0 compatibility, a complete product runtime, and independent product release proof remain planned. |
+| OCS package types, validators, Go SDK (`sdk/ocsv3`), Rust SDK (`sdk/rust/ocs-sdk-rs`), fixtures, and conformance tooling | `reference` / `experimental` | Packages and synthetic modules are testable in both Go and Rust. OCS 1.0 compatibility, a complete product runtime, and independent product release proof remain planned. |
+| Hexagonal provider port contracts (`pkg/providerports`) across the nine OCS service categories | `reference` | Portable interfaces, deterministic SHA-256 request commitments, and an in-memory contract conformance suite exist. Concrete production provider runtimes remain planned. |
+| Unified CLI (`cmd/cloudringctl`) and Open Blueprint control panel UI (`pkg/portal`) | `reference` / `experimental` | Operator and developer CLI commands (`vm`, `k8s`, `s3`, `net`, `iam`, `billing`, `support`, `quota`, `doctor`) and the Open Blueprint web surface exist in the repository; full G03-G11 production qualification remains planned. |
 | Identity, OIDC/JWT, IAM-policy, secure-session, and audit primitives | `reference` | Reusable primitives exist. A complete serving identity platform, durable production authorization path, and full recovery lifecycle are not delivered. |
 | Transactional PostgreSQL state and migrations | `reference` | A reusable implementation and tests exist; it is not yet the complete provider-control-plane state model. |
 | Provider adapters and site profiles | `experimental` | Public schemas, validation, and synthetic inputs exist. Concrete provider accounts and inventory are outside the public boundary. |
 | kubeadm rendering and Kubernetes deployment profiles | `blocked` for independent installation | Public issues document missing executable substitution/join paths, schema integration, topology validation, and storage dependencies. A complete supported installer is not available. |
 | Backup, proof signing, restore collection, and resilience observers | `reference` / `experimental` | Reusable collectors and protocols exist. Integrated off-site recovery and promotion-grade failure campaigns are not publicly proved. |
 | Three-node and one-server-loss material | `reference` | It tests one declared single-failure topology. It is not a universal HA topology or production-grade availability promise. |
-| Provider control plane, organization model, inventory reconciliation, durable operations, and portal | `planned` | Owned by G03-G11 and the provider-control-plane public issues; no complete runtime exists. |
-| Network, volume, image, compute, Kubernetes, object storage, backup, access, support, and external products | `planned` | Goal contracts exist, but the products are not complete public runtime capabilities. |
+| Provider control plane, organization model, inventory reconciliation, durable operations, and portal | `planned` | Owned by G03-G11 and the provider-control-plane public issues; no complete production runtime exists. |
+| Network, volume, image, compute, Kubernetes, object storage, backup, access, support, and external products | `planned` | Goal contracts and hexagonal port interfaces exist, but the products are not complete public runtime capabilities. |
 | Multi-cell, multi-region, marketplace economics, and sovereign federation | `planned` | Explicit later roadmap work. No current implementation or availability claim. |
 
 ## Publicly known blockers

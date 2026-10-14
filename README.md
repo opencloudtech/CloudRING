@@ -4,7 +4,7 @@
 and no single point of control.**
 
 CloudRING is an Apache-2.0 open source project for building private clouds,
-public cloud providers, and—eventually—a federation of independently operated
+public cloud providers, and, eventually, a federation of independently operated
 clouds. It is being built to combine a provider control plane with OCSv3 (Open
 Cloud Standard 3), a portable contract for developing and delivering cloud
 services without hard-wiring them into one provider, one platform
@@ -51,7 +51,7 @@ CloudRING's long-term goal is to make cloud infrastructure an interoperable,
 competitive network:
 
 - users choose providers and services for their quality, location, cost, and
-  legal fit—not because leaving is impractical;
+  legal fit, not because leaving is impractical;
 - providers share a reliable open platform and invest in the services and
   operating experience that differentiate them;
 - enterprises run the same model in private infrastructure and can extend it
@@ -89,7 +89,7 @@ Compute, networks, volumes, Kubernetes, object storage, databases, queues, AI
 infrastructure, and future products are cloud services. A service may be part
 of CloudRING, maintained by a provider, or developed independently. It becomes
 a first-class service by satisfying the same integration and operational
-contracts—not by receiving privileged access to platform internals.
+contracts, not by receiving privileged access to platform internals.
 
 ## OCSv3: one contract for cloud services
 
@@ -106,10 +106,11 @@ implementation replaceable. A conforming module declares its:
 - distribution, federation, compatibility, and commercial metadata.
 
 The wire contracts are intended to be language-neutral. The current reference
-implementation is Go-first and targets upstream Kubernetes APIs, but a service
-does not become portable by sharing CloudRING's implementation language. It
-becomes portable by exposing stable APIs, events, packages, and evidence that
-another conforming platform can validate and operate.
+implementation is Go-first and targets upstream Kubernetes APIs, accompanied by
+both a Go SDK (`sdk/ocsv3`) and a zero-dependency Rust SDK (`sdk/rust/ocs-sdk-rs`),
+but a service does not become portable by sharing CloudRING's implementation
+language. It becomes portable by exposing stable APIs, events, packages, and
+evidence that another conforming platform can validate and operate.
 
 OCSv3 is a specification developed by the CloudRING project. It is not currently
 an accredited international standard or certification scheme. See
@@ -156,11 +157,11 @@ flowchart TB
 
 The target separates three concerns:
 
-1. **Provider management plane** — identity, tenancy, product governance,
+1. **Provider management plane**: identity, tenancy, product governance,
    commercial policy, APIs, audit, and fleet coordination.
-2. **Regional cells** — bounded scale and failure units for lifecycle
+2. **Regional cells**: bounded scale and failure units for lifecycle
    controllers and infrastructure bindings.
-3. **Product data planes** — independently built services whose high-volume
+3. **Product data planes**: independently built services whose high-volume
    traffic and implementation details do not pass through the platform core.
 
 Federation must not introduce a shared root administrator, universal database,
@@ -173,8 +174,16 @@ connectivity whenever the product's declared operating model permits it.
 
 The repository already contains useful early slices, including:
 
-- OCSv3 package types, validators, SDK code, conformance fixtures, and a module
-  registry contract;
+- OCSv3 package types, validators, Go SDK (`sdk/ocsv3`), zero-dependency Rust
+  SDK (`sdk/rust/ocs-sdk-rs`), conformance fixtures, and a module registry
+  contract;
+- hexagonal provider port interfaces (`pkg/providerports`) across the nine OCS
+  service categories (`ComputeProvider`, `VolumeProvider`, `NetworkProvider`,
+  `KubernetesClusterProvider`, `ObjectStorageProvider`, `BackupProvider`,
+  `AccessControlProvider`, `SupportProvider`, `ExternalIntegrationProvider`)
+  with a contract conformance test suite;
+- unified operator and developer CLI (`cmd/cloudringctl`) and the Open Blueprint
+  control panel UI (`pkg/portal`);
 - identity, OIDC/JWKS/JWT, IAM-policy, secure-session, and audit primitives;
 - a PostgreSQL-backed transactional-state implementation;
 - provider-neutral site inventory, kubeadm rendering, and HA verification
