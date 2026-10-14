@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) Iurii Trukhin.
+
+[package]
+name = "ocs-sdk-rs"
+version = "0.3.0"
+edition = "2021"
+rust-version = "1.75"
+license = "Apache-2.0"
+description = "Zero-dependency Rust SDK for the CloudRING Open Cloud Standard (OCS v3)"
+repository = "https://github.com/opencloudtech/CloudRING"
+publish = false
+
+[lib]
+name = "ocs_sdk_rs"
+path = "src/lib.rs"
+
+[dependencies]
