@@ -20,10 +20,11 @@ the [public current state](roadmap/CURRENT_STATE.md).
 
 | Path | Purpose | Current maturity |
 | --- | --- | --- |
-| `cmd/` | Public CLIs for contract validation, roadmap verification, source safety, recovery, and reference operations. | Mixed `supported` repository tooling and `reference` operations; each command's help/README defines its scope. |
-| `pkg/` | Reusable Go packages for OCS, identity/IAM primitives, provider adapters, resilience, secure execution, and transactional state. | Implemented slices; not a complete provider runtime. |
+| `cmd/` | Public CLIs (`ocsctl`, `cloudringctl`, `cloudring-roadmap`, `cloudring-sourcecheck`, `cloudring-manifestcheck`, `cloudring-registry`, and reference operations). | Mixed `supported` repository tooling and `reference` operations; each command's help/README defines its scope. |
+| `pkg/` | Reusable Go packages for OCS, hexagonal provider port contracts (`pkg/providerports`), Open Blueprint portal UI (`pkg/portal`), identity/IAM primitives, provider adapters, resilience, secure execution, and transactional state. | Implemented slices; not a complete provider runtime. |
 | `internal/` | Implementation details for public commands and validators. | Internal API; no compatibility promise. |
 | `sdk/ocsv3/` | OCS Go SDK and authoring surfaces. | Early `reference`; OCS 1.0 is planned. |
+| `sdk/rust/ocs-sdk-rs/` | Zero-dependency Rust SDK for OCSv3 types, operation state validation, and conformance reporting. | Early `reference`; OCS 1.0 is planned. |
 | `contracts/` | Versioned schemas, fixtures, and validation contracts. | Contract-specific; a schema alone is not runtime readiness. |
 | `modules/` | Public OCS module-package definitions and early module slices. | Mostly `reference` or `experimental`. |
 | `reference/` | Synthetic end-to-end examples with no real provider or tenant data. | `reference`. |
