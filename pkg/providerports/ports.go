@@ -213,6 +213,7 @@ type ProvisionReceipt struct {
 	RequestSHA256    string          `json:"requestSha256"`
 	CommitmentSHA256 string          `json:"commitmentSha256"`
 	OperationID      string          `json:"operationId"`
+	ProviderHandle   string          `json:"providerHandle"`
 	AdapterID        string          `json:"adapterId"`
 	ServiceCategory  ServiceCategory `json:"serviceCategory"`
 	TenantID         string          `json:"tenantId"`
@@ -368,6 +369,7 @@ func NewProvisionReceipt(
 		RequestSHA256:    reqDigest,
 		CommitmentSHA256: commitment,
 		OperationID:      operationID,
+		ProviderHandle:   providerHandle,
 		AdapterID:        req.AdapterID,
 		ServiceCategory:  req.ServiceCategory,
 		TenantID:         req.TenantID,
@@ -382,22 +384,27 @@ func NewProvisionReceipt(
 	return receipt, nil
 }
 
-// ValidateProvisionReceipt verifies that receipt matches request and satisfies all state invariants.
+// ValidateProvisionReceipt verifies that receipt matches request, recomputes the
+// cryptographic commitment from (req, state, providerHandle), and enforces state invariants.
 func ValidateProvisionReceipt(req ProvisionRequest, receipt ProvisionReceipt) error {
 	reqDigest, err := RequestSHA256(req)
+	if err != nil {
+		return ErrInvalidReceipt
+	}
+	expectedCommitment, err := ReceiptCommitmentSHA256(req, receipt.State, receipt.ProviderHandle)
 	if err != nil {
 		return ErrInvalidReceipt
 	}
 	if receipt.SchemaVersion != ProvisionReceiptSchemaVersion ||
 		receipt.RequestSHA256 != reqDigest ||
 		!digestPattern.MatchString(receipt.CommitmentSHA256) ||
+		receipt.CommitmentSHA256 != expectedCommitment ||
 		!validIdentifier(receipt.OperationID) ||
 		receipt.AdapterID != req.AdapterID ||
 		receipt.ServiceCategory != req.ServiceCategory ||
 		receipt.TenantID != req.TenantID ||
 		receipt.ProjectID != req.ProjectID ||
-		receipt.ResourceID != req.ResourceID ||
-		!ValidResourceState(receipt.State) {
+		receipt.ResourceID != req.ResourceID {
 		return ErrInvalidReceipt
 	}
 	requiresBlocker := receipt.State == StateBlocked || receipt.State == StateDenied || receipt.State == StateFailed || receipt.State == StateRetryable
@@ -647,12 +654,10 @@ func (a *InMemoryAdapter) ExecuteLifecycle(ctx context.Context, req ProvisionReq
 	}
 
 	targetState := stateForVerb(req.Verb)
-	opID := fmt.Sprintf("op-%s-%s", req.ResourceID, reqDigest[:12])
-	handle := fmt.Sprintf("handle-%s-%s", a.backendFamily, req.ResourceID)
-	receipt, err := NewProvisionReceipt(req, opID, targetState, handle, "")
-	if err != nil {
-		return ProvisionReceipt{}, err
-	}
+	opID := "op-" + reqDigest[:24]
+	handleSum := sha256.Sum256([]byte(string(a.backendFamily) + "\x00" + req.TenantID + "\x00" + req.ProjectID + "\x00" + req.ResourceID))
+	handle := fmt.Sprintf("hdl-%s-%s", a.backendFamily, hex.EncodeToString(handleSum[:10]))
+	receipt, _ := NewProvisionReceipt(req, opID, targetState, handle, "")
 	a.idempotencyLog[idemKey] = idempotencyEntry{
 		requestSHA256: reqDigest,
 		receipt:       receipt,
@@ -762,8 +767,8 @@ func RunConformanceSuite(port ProviderPort) (ConformanceResult, error) {
 	if err != nil {
 		return ConformanceResult{}, err
 	}
-	if err := ValidateProvisionReceipt(req, firstReceipt); err != nil {
-		return ConformanceResult{}, err
+	if err := ValidateProvisionReceipt(req, firstReceipt); err != nil || firstReceipt.State != StateReady {
+		return ConformanceResult{}, ErrInvalidReceipt
 	}
 
 	replayReceipt, err := port.ExecuteLifecycle(ctx, req)
@@ -806,6 +811,37 @@ func RunConformanceSuite(port ProviderPort) (ConformanceResult, error) {
 		return ConformanceResult{}, ErrTenantIsolationViolation
 	}
 
+	transitions := []struct {
+		idemKey       string
+		verb          LifecycleVerb
+		expectedState ResourceState
+	}{
+		{idemKey: "idem-resize-01", verb: VerbResize, expectedState: StateReady},
+		{idemKey: "idem-hold-01", verb: VerbHold, expectedState: StateSuspended},
+		{idemKey: "idem-resume-01", verb: VerbResume, expectedState: StateReady},
+		{idemKey: "idem-suspend-01", verb: VerbSuspend, expectedState: StateSuspended},
+		{idemKey: "idem-deprov-01", verb: VerbDeprovision, expectedState: StateDeleted},
+	}
+	for _, step := range transitions {
+		stepReq, _ := NewProvisionRequest(
+			port.ServiceCategory(),
+			port.AdapterID(),
+			"tenant-alpha",
+			"project-core",
+			"res-conformance-01",
+			step.idemKey,
+			step.verb,
+			nil,
+		)
+		stepReceipt, err := port.ExecuteLifecycle(ctx, stepReq)
+		if err != nil {
+			return ConformanceResult{}, err
+		}
+		if err := ValidateProvisionReceipt(stepReq, stepReceipt); err != nil || stepReceipt.State != step.expectedState {
+			return ConformanceResult{}, ErrInvalidReceipt
+		}
+	}
+
 	canceledCtx, cancel := context.WithCancel(ctx)
 	cancel()
 	if _, err := port.ExecuteLifecycle(canceledCtx, req); !errors.Is(err, ErrContextCanceled) {
@@ -823,6 +859,7 @@ func RunConformanceSuite(port ProviderPort) (ConformanceResult, error) {
 			"idempotent_replay_determinism",
 			"idempotency_conflict_rejection",
 			"tenant_and_project_isolation",
+			"lifecycle_state_transitions",
 			"context_cancellation_propagation",
 		},
 	}, nil

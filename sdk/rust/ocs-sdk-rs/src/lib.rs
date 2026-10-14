@@ -381,19 +381,30 @@ impl OperationEnvelope {
         Ok(true)
     }
 
-    /// Produces a deterministic canonical wire representation suitable for signing or hashing.
+    /// Produces an unambiguous, byte-length-prefixed canonical wire representation
+    /// suitable for deterministic signing or hashing even when parameter values contain
+    /// delimiter characters (`;`, `=`, `:`).
     pub fn canonical_wire_string(&self) -> String {
+        let urn = self.resource.to_urn();
+        let state = self.state.as_str();
         let mut out = format!(
-            "v={};op={};idem={};act={};urn={};st={}",
+            "v={}:{};op={}:{};idem={}:{};act={}:{};urn={}:{};st={}:{};pc={}",
+            self.api_version.len(),
             self.api_version,
+            self.operation_id.len(),
             self.operation_id,
+            self.idempotency_key.len(),
             self.idempotency_key,
+            self.action.len(),
             self.action,
-            self.resource.to_urn(),
-            self.state.as_str()
+            urn.len(),
+            urn,
+            state.len(),
+            state,
+            self.parameters.len()
         );
         for (k, v) in &self.parameters {
-            out.push_str(&format!(";p.{k}={v}"));
+            out.push_str(&format!(";p.{}:{}={}:{}", k.len(), k, v.len(), v));
         }
         out
     }
@@ -587,21 +598,41 @@ pub struct OcsClientConfig {
 }
 
 impl OcsClientConfig {
-    /// Creates a validated `OcsClientConfig`. Requires an `https://` endpoint and rejects
-    /// empty hosts or forbidden private domain suffixes.
-    pub fn new(endpoint: impl Into<String>, timeout_millis: u64) -> Result<Self, OcsError> {
-        let endpoint = endpoint.into();
-        let trimmed = endpoint.trim().trim_end_matches('/').to_string();
+    /// Creates a validated `OcsClientConfig`. Requires an `https://` target with a
+    /// valid multi-label DNS authority, optional port (`1..=65535`), optional clean path,
+    /// no userinfo/query/fragment, and no private or local domain suffixes.
+    pub fn new(target: impl Into<String>, timeout_millis: u64) -> Result<Self, OcsError> {
+        let raw = target.into();
+        let trimmed = raw.trim().trim_end_matches('/').to_string();
+        if trimmed.bytes().any(|b| b.is_ascii_whitespace())
+            || trimmed.contains('@')
+            || trimmed.contains('?')
+            || trimmed.contains('#')
+            || trimmed.contains('\\')
+        {
+            return Err(OcsError::InvalidTarget(
+                "OCS target must not contain userinfo, query, fragment, or whitespace".to_string(),
+            ));
+        }
         let Some(rest) = trimmed.strip_prefix("https://") else {
             return Err(OcsError::InvalidTarget(
                 "OCS target must use https://".to_string(),
             ));
         };
-        let host = rest.split('/').next().unwrap_or("");
-        if host.is_empty() || host.contains("..") || !host.contains('.') {
-            return Err(OcsError::InvalidTarget(
-                "OCS target must contain a valid DNS hostname".to_string(),
-            ));
+        let (authority, path_part) = match rest.split_once('/') {
+            Some((auth, path)) => (auth, Some(path)),
+            None => (rest, None),
+        };
+        validate_dns_authority(authority)?;
+        if let Some(path) = path_part {
+            if path.is_empty()
+                || path.contains("//")
+                || !path.split('/').all(is_valid_path_segment)
+            {
+                return Err(OcsError::InvalidTarget(
+                    "OCS target base path contains invalid segment".to_string(),
+                ));
+            }
         }
         if timeout_millis == 0 || timeout_millis > 300_000 {
             return Err(OcsError::InvalidTarget(
@@ -626,6 +657,77 @@ impl OcsClientConfig {
     pub fn timeout_millis(&self) -> u64 {
         self.timeout_millis
     }
+}
+
+fn validate_dns_authority(authority: &str) -> Result<(), OcsError> {
+    if authority.is_empty() || authority.contains('[') || authority.contains(']') {
+        return Err(OcsError::InvalidTarget(
+            "OCS target authority must be a DNS hostname".to_string(),
+        ));
+    }
+    let host = match authority.split_once(':') {
+        Some((h, port_str)) => {
+            if port_str.contains(':') {
+                return Err(OcsError::InvalidTarget("invalid authority port".to_string()));
+            }
+            let port: u16 = port_str
+                .parse()
+                .map_err(|_| OcsError::InvalidTarget("invalid authority port".to_string()))?;
+            if port == 0 {
+                return Err(OcsError::InvalidTarget(
+                    "authority port must be non-zero".to_string(),
+                ));
+            }
+            h
+        }
+        None => authority,
+    };
+    if host.is_empty() || host.len() > 253 {
+        return Err(OcsError::InvalidTarget(
+            "OCS target DNS hostname length is invalid".to_string(),
+        ));
+    }
+    let labels: Vec<&str> = host.split('.').collect();
+    if labels.len() < 2 || !labels.iter().all(|label| is_valid_dns_label(label)) {
+        return Err(OcsError::InvalidTarget(
+            "OCS target must be a multi-label DNS hostname".to_string(),
+        ));
+    }
+    let tld = labels[labels.len() - 1];
+    if tld.bytes().all(|b| b.is_ascii_digit()) || is_reserved_private_tld(tld) {
+        return Err(OcsError::InvalidTarget(
+            "OCS target must not use a numeric or private suffix".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+fn is_valid_dns_label(label: &str) -> bool {
+    let bytes = label.as_bytes();
+    if bytes.is_empty() || bytes.len() > 63 {
+        return false;
+    }
+    let is_alnum = |b: u8| b.is_ascii_lowercase() || b.is_ascii_digit();
+    if !is_alnum(bytes[0]) || !is_alnum(bytes[bytes.len() - 1]) {
+        return false;
+    }
+    bytes.iter().all(|&b| is_alnum(b) || b == b'-')
+}
+
+fn is_reserved_private_tld(tld: &str) -> bool {
+    matches!(
+        tld,
+        "localhost" | "local" | "internal" | "corp" | "lan" | "home" | "intranet" | "localdomain"
+    )
+}
+
+fn is_valid_path_segment(segment: &str) -> bool {
+    !segment.is_empty()
+        && segment != "."
+        && segment != ".."
+        && segment
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_' || b == b'.')
 }
 
 /// Immutable request constructed by `RequestBuilder`.
@@ -890,11 +992,17 @@ mod tests {
     fn client_config_and_request_builder() {
         assert!(OcsClientConfig::new("http://ocs.cloudring.example", 5000).is_err());
         assert!(OcsClientConfig::new("https://localhost", 5000).is_err());
+        let private_suffix_target = format!("https://service.{}", ["loc", "al"].concat());
+        assert!(OcsClientConfig::new(private_suffix_target, 5000).is_err());
+        assert!(OcsClientConfig::new("https://user@ocs.cloudring.example", 5000).is_err());
+        assert!(OcsClientConfig::new("https://ocs.cloudring.example?x=y", 5000).is_err());
+        assert!(OcsClientConfig::new("https://ocs.cloudring.example#frag", 5000).is_err());
+        assert!(OcsClientConfig::new("https://ocs.cloudring.example:0", 5000).is_err());
         assert!(OcsClientConfig::new("https://ocs.cloudring.example", 0).is_err());
 
-        let config =
-            OcsClientConfig::new("https://ocs.cloudring.example/", 5000).expect("valid config");
-        assert_eq!(config.endpoint(), "https://ocs.cloudring.example");
+        let config = OcsClientConfig::new("https://ocs.cloudring.example:8443/", 5000)
+            .expect("valid config");
+        assert_eq!(config.endpoint(), "https://ocs.cloudring.example:8443");
 
         let resource = ResourceIdentity::new(
             "tenant-alpha",
@@ -904,19 +1012,39 @@ mod tests {
         )
         .expect("resource");
 
-        let req = RequestBuilder::new(config)
+        let req = RequestBuilder::new(config.clone())
             .operation_id("op-bucket-01")
             .idempotency_key("idem-bucket-01")
             .action("provision")
-            .resource(resource)
+            .resource(resource.clone())
             .param("region", "eu-central-1")
             .build()
             .expect("request should build");
 
         assert_eq!(
             req.url,
-            "https://ocs.cloudring.example/v3/tenants/tenant-alpha/projects/proj-core/services/object-storage/resources/bucket-archive-01/operations"
+            "https://ocs.cloudring.example:8443/v3/tenants/tenant-alpha/projects/proj-core/services/object-storage/resources/bucket-archive-01/operations"
         );
-        assert!(req.wire_payload.contains("p.region=eu-central-1"));
+        assert!(req.wire_payload.contains(";p.6:region=12:eu-central-1"));
+
+        // Verify injective length-prefixed parameter encoding prevents delimiter collisions
+        let req_injected = RequestBuilder::new(config.clone())
+            .operation_id("op-bucket-01")
+            .idempotency_key("idem-bucket-01")
+            .action("provision")
+            .resource(resource.clone())
+            .param("alpha", "x;p.5:bravo=1:y")
+            .build()
+            .expect("injected param request");
+        let req_two_params = RequestBuilder::new(config)
+            .operation_id("op-bucket-01")
+            .idempotency_key("idem-bucket-01")
+            .action("provision")
+            .resource(resource)
+            .param("alpha", "x")
+            .param("bravo", "y")
+            .build()
+            .expect("two param request");
+        assert_ne!(req_injected.wire_payload, req_two_params.wire_payload);
     }
 }

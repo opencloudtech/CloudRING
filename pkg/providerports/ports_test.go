@@ -123,6 +123,16 @@ func TestProvisionRequestAndReceiptValidation(t *testing.T) {
 	if err := ValidateProvisionReceipt(req, tampered); !errors.Is(err, ErrInvalidReceipt) {
 		t.Fatalf("expected ErrInvalidReceipt on tampered tenant, got %v", err)
 	}
+	tamperedCommitment := blockedReceipt
+	tamperedCommitment.CommitmentSHA256 = strings.Repeat("a", 64)
+	if err := ValidateProvisionReceipt(req, tamperedCommitment); !errors.Is(err, ErrInvalidReceipt) {
+		t.Fatalf("expected ErrInvalidReceipt on forged 64-hex CommitmentSHA256, got %v", err)
+	}
+	tamperedHandle := blockedReceipt
+	tamperedHandle.ProviderHandle = "bad..handle"
+	if err := ValidateProvisionReceipt(req, tamperedHandle); !errors.Is(err, ErrInvalidReceipt) {
+		t.Fatalf("expected ErrInvalidReceipt on invalid ProviderHandle, got %v", err)
+	}
 }
 
 func TestProviderRegistryAndAllNineCategoryInterfaces(t *testing.T) {
@@ -150,7 +160,7 @@ func TestProviderRegistryAndAllNineCategoryInterfaces(t *testing.T) {
 		}
 
 		res, err := RunConformanceSuite(adapter)
-		if err != nil || !res.Passed || len(res.VerifiedChecks) != 6 {
+		if err != nil || !res.Passed || len(res.VerifiedChecks) != 7 {
 			t.Fatalf("RunConformanceSuite(%s) failed: res=%+v err=%v", cat, res, err)
 		}
 	}
@@ -308,20 +318,21 @@ func TestInMemoryAdapterLifecycleAndEdgeCases(t *testing.T) {
 		t.Fatalf("InspectResource unexpected result: %+v %v", inspected, err)
 	}
 
-	// Long resourceID (>50 chars) causes opID in ExecuteLifecycle to exceed 64-char identifier limit
-	longResourceID := "res-" + strings.Repeat("a", 55)
+	// Max-length 64-character resourceID succeeds with fixed-length digest operation ID and handle
+	longResourceID := "res-" + strings.Repeat("a", 60)
 	longReq, err := NewProvisionRequest(ServiceCompute, "adapter-compute", "tenant-a", "proj-a", longResourceID, "idem-long", VerbProvision, nil)
 	if err != nil {
 		t.Fatalf("unexpected NewProvisionRequest error: %v", err)
 	}
-	if _, err := adapter.ExecuteLifecycle(ctx, longReq); !errors.Is(err, ErrInvalidReceipt) {
-		t.Fatalf("expected ErrInvalidReceipt when generated opID exceeds 64 chars, got %v", err)
+	longRec, err := adapter.ExecuteLifecycle(ctx, longReq)
+	if err != nil || ValidateProvisionReceipt(longReq, longRec) != nil {
+		t.Fatalf("expected 64-char resourceID to succeed with valid receipt, got %+v err=%v", longRec, err)
 	}
 }
 
 type faultyPort struct {
 	*InMemoryAdapter
-	mode string
+	mode  string
 	calls int
 }
 
@@ -363,6 +374,17 @@ func (f *faultyPort) ExecuteLifecycle(ctx context.Context, req ProvisionRequest)
 			return rec, nil
 		}
 		return f.InMemoryAdapter.ExecuteLifecycle(ctx, req)
+	case "transition-err":
+		if req.Verb == VerbResize {
+			return ProvisionReceipt{}, errors.New("resize unsupported")
+		}
+		return f.InMemoryAdapter.ExecuteLifecycle(ctx, req)
+	case "transition-wrong-state":
+		if req.Verb == VerbSuspend {
+			rec, _ := NewProvisionReceipt(req, "op-wrong-state", StateReady, "handle-ok", "")
+			return rec, nil
+		}
+		return f.InMemoryAdapter.ExecuteLifecycle(ctx, req)
 	case "ignore-context-cancel":
 		return f.InMemoryAdapter.ExecuteLifecycle(context.Background(), req)
 	default:
@@ -398,6 +420,8 @@ func TestRunConformanceSuiteFailureModes(t *testing.T) {
 		"ignore-conflict",
 		"allow-cross-tenant-inspect",
 		"allow-cross-tenant-mutate",
+		"transition-err",
+		"transition-wrong-state",
 		"ignore-context-cancel",
 	}
 	for _, mode := range modes {
