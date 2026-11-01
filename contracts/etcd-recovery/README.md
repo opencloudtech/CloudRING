@@ -32,9 +32,9 @@ object key/version and credentials never appear in tool arguments, environment,
 stdout, stderr or receipts.
 
 `etcdutl` 3.6.14 is content-pinned to
-`8cc788cf08a2ad326ab54add1a161000fd0d563a0f28d6a6d842877c0d2148c1`
+`04c53c46f259a1c470a74c83d5a3a4a5d0b1e54db4d42dfaeb66ab78b3cb71cf`
 before execution. This executable is rebuilt from the unchanged official source
-with Go 1.26.9 and retained symbols using the [release build procedure](../../docs/releasing.md);
+with Go 1.26.10 and retained symbols using the [release build procedure](../../docs/releasing.md);
 its source and build identity are retained as `etcdutl-source.json`.
 Source `hashkv` runs only against a verified disposable
 private copy, because upstream `hashkv` can mutate bbolt metadata. The restored
