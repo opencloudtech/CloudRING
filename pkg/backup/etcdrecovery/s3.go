@@ -487,6 +487,9 @@ func signS3Request(request *http.Request, region, canonicalURI, canonicalQuery s
 	if request == nil || credentials == nil || len(credentials.accessKey) == 0 || len(credentials.secretKey) == 0 {
 		return errors.New("signing input is invalid")
 	}
+	if request.Method != http.MethodGet && request.Method != http.MethodHead {
+		return errors.New("signing method is invalid")
+	}
 	amzDate := now.UTC().Format("20060102T150405Z")
 	date := now.UTC().Format("20060102")
 	request.Header.Set("X-Amz-Date", amzDate)
@@ -499,7 +502,7 @@ func signS3Request(request *http.Request, region, canonicalURI, canonicalQuery s
 		canonicalHeaders += "x-amz-security-token:" + string(credentials.sessionToken) + "\n"
 		signedHeaders += ";x-amz-security-token"
 	}
-	canonicalRequest := strings.Join([]string{http.MethodGet, canonicalURI, canonicalQuery, canonicalHeaders, signedHeaders, emptyPayloadHash}, "\n")
+	canonicalRequest := strings.Join([]string{request.Method, canonicalURI, canonicalQuery, canonicalHeaders, signedHeaders, emptyPayloadHash}, "\n")
 	canonicalDigest := sha256.Sum256([]byte(canonicalRequest))
 	scope := date + "/" + region + "/s3/aws4_request"
 	stringToSign := "AWS4-HMAC-SHA256\n" + amzDate + "\n" + scope + "\n" + hex.EncodeToString(canonicalDigest[:])
