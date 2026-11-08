@@ -1,0 +1,124 @@
+{
+  "apiVersion": "cloudring.org/rsi-governance/v1",
+  "kind": "RSICandidateProfile",
+  "candidate": {
+    "id": "cand-k3-rsi-reference-01",
+    "declaredClass": "K3",
+    "changedPaths": [
+      "pkg/rsi/rsi.go",
+      "cmd/cloudringctl/commands.go"
+    ],
+    "readOnlyOnly": false,
+    "reversibleConfigOnly": false,
+    "deletedOrSkippedTests": 0,
+    "modifiedExistingTests": false,
+    "modifiedTestdata": false,
+    "humanK4ApprovalReference": ""
+  },
+  "gates": {
+    "g1": {
+      "evaluatorFrozenHashVerified": true,
+      "suitePassed": true,
+      "newTestFailedBeforeFix": true,
+      "newTestPassedAfterFix": true,
+      "rerunMaskingUsed": false,
+      "silentErrorSwallowing": 0,
+      "unseenHoldoutPassed": true,
+      "seededErrorRejected": true
+    },
+    "g2": {
+      "killedMutants": 19,
+      "totalMutants": 20,
+      "fuzzTargetsPassed": true
+    },
+    "g3": {
+      "sastFindings": 0,
+      "vulnFindings": 0,
+      "externalCapabilityGate": true,
+      "promptDelimiterOnlySecurity": false,
+      "explanationOnlyApproval": false
+    },
+    "g4": {
+      "activeCanaries": 1,
+      "canaryStepPercent": "10",
+      "canaryMaxPercent": "50",
+      "requestSuccessRatePercent": "99.5",
+      "latencyP99Ms": "210",
+      "canaryDurationMinutes": "10",
+      "canaryFailuresLast24h": 0,
+      "touchesPersistentState": true,
+      "downgradeContinuityVerified": true
+    },
+    "g5": {
+      "portabilityDrillPassed": true,
+      "dataActVerdict": "pass"
+    },
+    "g6": {
+      "aiFailedDeployments": 1,
+      "aiTotalDeployments": 20,
+      "humanFailedDeployments": 2,
+      "humanTotalDeployments": 20
+    },
+    "g7": {
+      "taskCostUsd": "1.80",
+      "medianTaskCostUsd": "1.50",
+      "taskDurationMinutes": "12",
+      "executorModelFamily": "family-a",
+      "overseerModelFamily": "family-b"
+    }
+  },
+  "voi": {
+    "priorSuccessProb": "2/5",
+    "successNetPayoffEur": "120000",
+    "failureLossEur": "60000",
+    "noActionPayoffEur": "0",
+    "testCostEur": "4000",
+    "testSensitivity": "4/5",
+    "testSpecificity": "3/4",
+    "hardLossCapEur": "80000",
+    "correlatedLlmRunsCount": 3
+  },
+  "passK": {
+    "k": 4,
+    "tasks": [
+      {"taskId": "t1", "trials": 5, "successes": 5},
+      {"taskId": "t2", "trials": 5, "successes": 4},
+      {"taskId": "t3", "trials": 5, "successes": 3},
+      {"taskId": "t4", "trials": 5, "successes": 0}
+    ],
+    "cheapModelCostUsd": "0.80",
+    "verifierCostUsd": "0.30",
+    "strongModelCostUsd": "4.00",
+    "gateFailRate": "0.45",
+    "strongRetryRate": "0.10",
+    "humanCodingHours": "40",
+    "humanReviewHours": "28",
+    "humanReworkHours": "12",
+    "acceptedTasks": 14,
+    "attemptedTasks": 20
+  },
+  "experiment": {
+    "controlAssignedUnits": 10000,
+    "treatmentAssignedUnits": 10000,
+    "clustersPerArm": 20,
+    "unitsPerCluster": 500,
+    "intraclusterCorrelation": "0.05",
+    "naiveZStat": "2.50",
+    "hasPostTreatmentCovariate": false,
+    "observedDiff": "0.02",
+    "diffStandardError": "0.01",
+    "nonInferiorityMargin": "0.05"
+  },
+  "discovery": {
+    "hardConstraintsIntact": true,
+    "totalInterviewedPeople": 12,
+    "independentAccounts": 10,
+    "hasTechnicalUserEvidence": true,
+    "hasEconomicBuyerEvidence": true,
+    "hasVetoHolderEvidence": true,
+    "usesMechanicalWtpDivisor": false,
+    "usesRiceToOverrideSecurity": false,
+    "externalContactOwnerApproved": true,
+    "hasConsequentialCommitment": true
+  }
+}

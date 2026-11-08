@@ -96,10 +96,14 @@ complete goal, every qualification dependency and verified evidence. C01 baselin
 acceptance is the entry to C02/G01; it does not falsely complete G00's later
 clean-room/downstream/live chain.
 
-Only one active write PR/MR per repository is allowed. Read-only research and
-verification may proceed in parallel. A compatible batch of already accepted
-public commits may share one downstream pin, but each requirement must remain
-traceable.
+At most two concurrent active write PRs/MRs per repository are allowed when they
+target distinct delivery slices with non-overlapping path ownership (Fork 2A).
+Read-only research and verification may proceed in parallel. Slice acceptance
+executes autonomously through the pre-approved 32-oracle batch in
+`contracts/slice-oracles/oracles-32.json` and the frozen RSI evaluator (`VER`,
+Fork 1A), with weekly founder audit and rollback authority. A compatible batch of
+already accepted public commits may share one downstream pin, but each
+requirement must remain traceable.
 
 ## Universal definition of done
 

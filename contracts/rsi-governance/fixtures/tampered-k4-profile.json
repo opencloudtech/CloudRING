@@ -1,0 +1,70 @@
+{
+  "apiVersion": "cloudring.org/rsi-governance/v1",
+  "kind": "RSICandidateProfile",
+  "candidate": {
+    "id": "cand-k4-tampered-01",
+    "declaredClass": "K2",
+    "changedPaths": [
+      "pkg/controlplane/server.go",
+      ".github/workflows/ci.yml"
+    ],
+    "readOnlyOnly": false,
+    "reversibleConfigOnly": false,
+    "deletedOrSkippedTests": 2,
+    "modifiedExistingTests": true,
+    "modifiedTestdata": true,
+    "humanK4ApprovalReference": ""
+  },
+  "gates": {
+    "g1": {
+      "evaluatorFrozenHashVerified": false,
+      "suitePassed": true,
+      "newTestFailedBeforeFix": false,
+      "newTestPassedAfterFix": true,
+      "rerunMaskingUsed": true,
+      "silentErrorSwallowing": 1,
+      "unseenHoldoutPassed": false,
+      "seededErrorRejected": false
+    },
+    "g2": {
+      "killedMutants": 10,
+      "totalMutants": 20,
+      "fuzzTargetsPassed": false
+    },
+    "g3": {
+      "sastFindings": 2,
+      "vulnFindings": 1,
+      "externalCapabilityGate": false,
+      "promptDelimiterOnlySecurity": true,
+      "explanationOnlyApproval": true
+    },
+    "g4": {
+      "activeCanaries": 2,
+      "canaryStepPercent": "25",
+      "canaryMaxPercent": "80",
+      "requestSuccessRatePercent": "95.0",
+      "latencyP99Ms": "750",
+      "canaryDurationMinutes": "30",
+      "canaryFailuresLast24h": 3,
+      "touchesPersistentState": true,
+      "downgradeContinuityVerified": false
+    },
+    "g5": {
+      "portabilityDrillPassed": false,
+      "dataActVerdict": "fail"
+    },
+    "g6": {
+      "aiFailedDeployments": 5,
+      "aiTotalDeployments": 20,
+      "humanFailedDeployments": 1,
+      "humanTotalDeployments": 20
+    },
+    "g7": {
+      "taskCostUsd": "14.00",
+      "medianTaskCostUsd": "2.00",
+      "taskDurationMinutes": "45",
+      "executorModelFamily": "family-b",
+      "overseerModelFamily": "family-b"
+    }
+  }
+}

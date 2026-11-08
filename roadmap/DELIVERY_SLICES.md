@@ -19,15 +19,25 @@ replace required independent infrastructure or a real human participant.
 not assert readiness or completed predecessors. `delivered` still requires every
 qualification dependency and the original full evidence contract. C dependencies
 below control implementation entry; read-only preparation can happen earlier.
-External authorization or capacity blocks its affected live result while
-independent authorized work continues.
+Under Fork 1A (`PROCDEC`), all 32 slice acceptance oracles (`C01–C28`, `SP01`,
+`DBAAS`, `DNSAAS`, `FILESAAS`) are frozen in
+`contracts/slice-oracles/oracles-32.json` and evaluated autonomously by `VER`
+and the RSI gate (`pkg/rsi`, `pkg/sliceoracles`). Under Fork 2A, `C15`, `C16`,
+`C17`, `C20`, `DBAAS`, `DNSAAS` and `FILESAAS` split core implementation entry
+(`CORE`, after `C11` and their technical prerequisite) from full billing and
+experience qualification (`QUAL`, after `C13` and `C14`); `C24` enters after
+`C14` instead of `C23`; and `C20` does not wait for `C19`. Hardware-gated
+multi-node NVMe/GPU/second-provider qualification (`Fork 3`) is deferred while
+all no-new-hardware slices advance automatically. External authorization or
+capacity blocks its affected live result while independent authorized work
+continues.
 
 ## Slice sequence
 
 | Slice | Entry | Accepted working result | Original coverage and full-qualification boundary |
 | --- | --- | --- | --- |
 | C01 | None | Reproducible public delivery baseline; useful delivery fixes accepted; every current-family WIP root classified and preserved; invalid candidate rejected; fixed numeric measurement profiles. | Partial G00 / CR-G00-DELIVERY. Current endpoint, GitOps revision and separately verified or unknown host-binary provenance are recorded. Full downstream/live G00 qualification follows in C08. Proposed downstream requirements are not automatically ratified. |
-| C02 | C01 accepted | Public isolated developer create, repeat, restart, positive/negative smoke, destroy with zero owned residue and recreate; same profile beside reference installation. | Full G01 / CR-G01-DEV-INSTALL, including clean-room tutorial and human/installation profile. Production shortcuts must be rejected. G01 does not wait for full G00. |
+| C02 | C01 and SP01 accepted | Public isolated developer create, repeat, restart, positive/negative smoke, destroy with zero owned residue and recreate; same profile beside reference installation. | Full G01 / CR-G01-DEV-INSTALL, including clean-room tutorial and human/installation profile. Production shortcuts must be rejected. G01 does not wait for full G00. |
 | C03 | C02 | Public durable project/operation API, CLI and read-only UI; transactions, outbox, crash, retry, concurrency, migration and restore. | Partial G03 / CR-G03-KERNEL. Full directory, production failover and scale qualification in C09. |
 | C04 | C03 | Two developer tenants invite/login/use own project/logout; token/session revocation and direct API/browser isolation negatives. | Partial G04 / CR-G04-IDENTITY and G05 / CR-G05-IAM. Full production identity, recovery and workload identity in C09. |
 | C05 | C04; applicable C06 barriers for reference-site mutations | Real developer VM through public Go/OCS; login, project, create, bounded access, write/read digest, retry/restart, one VM, delete and cleanup; one real user performs a useful task. | Partial G07–G09 and G15 / CR-G15-COMPUTE. Quota/reservation and explicit zero-priced-metered or non-billable policy required now. Pilot dependencies are owned and bounded; Network/Volume/Image products and full Compute remain incomplete. |
@@ -40,20 +50,24 @@ independent authorized work continues.
 | C12 | C11 | Complete real order/subscription/entitlement lifecycle, quota/capacity, compensation, crash/retry/cancel and restore through both connector paths. | Full G09 / CR-G09-LIFECYCLE. |
 | C13 | C12 | Real test usage to exact balanced ledger, invoice, correction, budget and publisher share with replay/restore/HA and eligibility denial. | Full G10 / CR-G10-BILLING. Uses isolated non-financial data; actual customer charging needs separate authority. |
 | C14 | C13 | Equivalent complete API/CLI/portal/agent actions, policy, identity, audit, resumability, accessible UI and authoritative backend comparison. | Full G11 / CR-G11-EXPERIENCE. |
-| C15 | C14, C07 | Standalone OCS Network lifecycle, dual-stack connectivity, tenant denial, quota/usage, actual failure and cleanup. | Full G12 / CR-G12-NETWORK. |
-| C16 | C14, C08 | Standalone OCS Volume lifecycle, real CSI/snapshot/restore, encryption, node-loss digest and accounting. | Full G13 / CR-G13-VOLUME. Independent of C15; production rejects replication-one or unknown topology. |
-| C17 | C16 | Standalone OCS Image/Artifact lifecycle, immutable provenance, VM/OCI round trip, resumable import, scan/quarantine, boot harness, restore and safe GC. | Full G14 / CR-G14-ARTIFACT. Boot harness does not require completed C18. |
+| C15 | CORE: C11, C07; QUAL: C13, C14 | Standalone OCS Network lifecycle, dual-stack connectivity, tenant denial, quota/usage, actual failure and cleanup. | Full G12 / CR-G12-NETWORK. Core implementation starts after C11 and C07; full billing/experience qualification completes after C13 and C14 (Fork 2A). |
+| C16 | CORE: C11, C08; QUAL: C13, C14 | Standalone OCS Volume lifecycle, real CSI/snapshot/restore, encryption, node-loss digest and accounting. | Full G13 / CR-G13-VOLUME. Independent of C15; core implementation starts after C11 and C08, full qualification after C13 and C14 (Fork 2A). Production rejects replication-one or unknown topology. |
+| C17 | CORE: C11, C16; QUAL: C13, C14 | Standalone OCS Image/Artifact lifecycle, immutable provenance, VM/OCI round trip, resumable import, scan/quarantine, boot harness, restore and safe GC. | Full G14 / CR-G14-ARTIFACT. Core implementation starts after C11 and C16; full qualification after C13 and C14 (Fork 2A). Boot harness does not require completed C18. |
 | C18 | C15, C16, C17 | Complete Compute through ordinary Network/Volume/Image entitlements; full use, access, billing, failure and recovery; existing pilot user migrates or exports data safely. | Full G15 / CR-G15-COMPUTE. Supported cold recovery is measured; live migration is claimed only with its actual prerequisites and proof. |
 | C19 | C18 | Real tenant Kubernetes, workload/data, short-lived access, scale, signed upgrade, failure, isolated restore and full cleanup. | Full G16 / CR-G16-KUBERNETES. |
-| C20 | C14, C16, C19 | Real local/reference and remote S3 lifecycle, objects/digests, credentials, retention, metering, failure and isolated restore. | Full G17 / CR-G17-OBJECT. Replace placeholder catalog path; unsupported durability cannot pass full product acceptance. |
+| C20 | CORE: C11, C16; QUAL: C13, C14 | Real local/reference and remote S3 lifecycle, objects/digests, credentials, retention, metering, failure and isolated restore. | Full G17 / CR-G17-OBJECT. Does not wait for C19 (Fork 2A); core starts after C11 and C16, full qualification after C13 and C14. Replace placeholder catalog path; unsupported durability cannot pass full product acceptance. |
 | C21 | C19, C20 | Customer self-service backup and verified off-cell restore of every claimed data class, ownership, retention, retries, RPO/RTO, cost and cleanup. | Full G18 / CR-G18-BACKUP. |
 | C22 | C19, C21 | Supported SSH/Kubernetes/console access request, approval, grant, use, expiry/revoke and recovery without reviving grants. | Full G19 / CR-G19-ACCESS. |
 | C23 | C22 | Durable support case, consent, bounded redacted bundle, controlled access, routing outage, escalation, resolve and restore. | Full G20 / CR-G20-SUPPORT. |
-| C24 | C23 | Real authorized remote/API-only system with complete lifecycle/usage and two independent replaceable adapters; independent developer uses public core only. | Full G21 / CR-G21-EXTERNAL. Unimplemented external templates remain templates. |
-| C25 | All C01–C24; functional G22 entry below | Adjacent signed release upgrade, failed canary, rollback/restore boundary and integrated supported failure campaign under continuous identity/operation/data/billing probes. | Full G23 / CR-G23-RESILIENCE and CR-G23-OPERATIONS-ENTRY. Functional G22 proof precedes campaign; human G22 qualification follows in C26. |
+| C24 | C14 | Real authorized remote/API-only system with complete lifecycle/usage and two independent replaceable adapters; independent developer uses public core only. | Full G21 / CR-G21-EXTERNAL. Enters after C14 instead of C23 (Fork 2A). Unimplemented external templates remain templates. |
+| SP01 | C01 | SafePush admission, provenance verification and two-slot LKG rollback guardrails (`S1–S6`). | Preparatory G00 / CR-G00-DELIVERY and autonomous RSI safety gate before full C02/C08 promotion. |
+| DBAAS | CORE: C11, C16; QUAL: C13, C14, C21 | Standalone OCS Managed PostgreSQL (CNPG) lifecycle, HA failover, point-in-time recovery, quota/metering and tenant isolation. | Mandatory 1.0 service category (Fork 3 2026-10-14); core starts after C11 and C16, full qualification after C13, C14 and C21 (Fork 2A). |
+| DNSAAS | CORE: C11, C07; QUAL: C13, C14, C15 | Standalone OCS Managed DNS lifecycle, authoritative zone/record reconciliation, tenant delegation, quota/metering and DNSSEC/split-horizon verification. | Mandatory 1.0 service category (Fork 3 2026-10-14); core starts after C11 and C07, full qualification after C13, C14 and C15 (Fork 2A). |
+| FILESAAS | CORE: C11, C16; QUAL: C13, C14 | Standalone OCS Shared File Storage (RWX NFS/CephFS) lifecycle, mount isolation, snapshot/restore, quota/metering and cleanup. | Table-stakes 1.0 service category (6 of 7 competitors, Wave 6); core starts after C11 and C16, full qualification after C13 and C14 (Fork 2A). |
+| C25 | All C01–C24, SP01, DBAAS, DNSAAS, FILESAAS; functional G22 entry below | Adjacent signed release upgrade, failed canary, rollback/restore boundary and integrated supported failure campaign under continuous identity/operation/data/billing probes. | Full G23 / CR-G23-RESILIENCE and CR-G23-OPERATIONS-ENTRY. Functional G22 proof precedes campaign; human G22 qualification follows in C26. |
 | C26 | C25 | Independent engineer completes full incident set, diagnosis, repair, rotation, maintenance and 14-day toil measurement on the accepted candidate. | Full G22 / CR-G22-OPERATIONS. Same release as C25; later runtime change creates a new candidate and repeats affected G23 checks. |
 | C27 | C26 | Independently administered bare-metal provider and second engineer reproduce exact public release, install/use/upgrade/failure/restore/cleanup and original product development. | Full G24 / CR-G24-PORTABILITY. Separate outstanding PhoenixNAP site/IaC/GitLab CI commitment must reach accepted protected provider main with its exact core pin and Stage 9; it remains configuration-only and does not claim a PhoenixNAP deployment. Another independently controlled live provider is allowed but does not cancel this obligation. |
-| C28 | All C01–C27 | Final adversarial audit, upstream fixes, propagated regressions, public immutable platform/OCS 1.0, support/compatibility/runbooks and exact independent proof. | Full G27 / CR-G27-RELEASE and all remaining standalone 1.0 legacy obligations, Tasks 25–27 and F1–F5. No required unverified blocker, generic private dependency or hidden manual step. |
+| C28 | All C01–C27, SP01, DBAAS, DNSAAS, FILESAAS | Final adversarial audit, upstream fixes, propagated regressions, public immutable platform/OCS 1.0, support/compatibility/runbooks and exact independent proof. | Full G27 / CR-G27-RELEASE and all remaining standalone 1.0 legacy obligations, Tasks 25–27 and F1–F5. No required unverified blocker, generic private dependency or hidden manual step. |
 
 G25 / CR-G25-CELLS and G26 / CR-G26-FEDERATION retain their complete original
 goal files and depend on G27. They are post-1.0 expansion tracks outside C01–C28;
