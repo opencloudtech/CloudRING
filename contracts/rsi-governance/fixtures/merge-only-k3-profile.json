@@ -1,0 +1,48 @@
+{
+  "apiVersion": "cloudring.org/rsi-governance/v1",
+  "kind": "RSICandidateProfile",
+  "candidate": {
+    "id": "cand-k3-rsi-merge-01",
+    "declaredClass": "K3",
+    "changedPaths": [
+      "pkg/rsi/rsi.go",
+      "cmd/cloudringctl/commands.go"
+    ],
+    "readOnlyOnly": false,
+    "reversibleConfigOnly": false,
+    "deletedOrSkippedTests": 0,
+    "modifiedExistingTests": false,
+    "modifiedTestdata": false,
+    "humanK4ApprovalReference": "",
+    "admission": "merge",
+    "targetRepository": "opencloudtech/CloudRING",
+    "targetBranch": "main",
+    "deploymentTargets": [],
+    "origin": "operator_directed",
+    "operatorReference": "review-1"
+  },
+  "gates": {
+    "g1": {
+      "evaluatorFrozenHashVerified": true,
+      "suitePassed": true,
+      "newTestFailedBeforeFix": true,
+      "newTestPassedAfterFix": true,
+      "rerunMaskingUsed": false,
+      "silentErrorSwallowing": 0,
+      "unseenHoldoutPassed": true,
+      "seededErrorRejected": true
+    },
+    "g2": {
+      "killedMutants": 19,
+      "totalMutants": 20,
+      "fuzzTargetsPassed": true
+    },
+    "g3": {
+      "sastFindings": 0,
+      "vulnFindings": 0,
+      "externalCapabilityGate": true,
+      "promptDelimiterOnlySecurity": false,
+      "explanationOnlyApproval": false
+    }
+  }
+}

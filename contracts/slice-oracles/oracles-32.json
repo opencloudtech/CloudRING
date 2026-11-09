@@ -34,7 +34,7 @@
         "roadmap"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C01.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C01.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -61,12 +61,24 @@
       "qualDependencies": [],
       "requiresFork3Hardware": false,
       "allowedPaths": [
+        ".github/safepush.json",
+        "cmd/cloudring-mutation",
+        "cmd/cloudring-safepush",
+        "cmd/cloudringctl/main.go",
+        "cmd/cloudringctl/rsi.go",
+        "cmd/cloudringctl/rsi_test.go",
+        "contracts/rsi-governance",
+        "contracts/slice-oracles",
+        "docs/ci-checks.md",
+        "docs/safepush.md",
         "pkg/rsi",
+        "pkg/safepush",
         "pkg/sliceoracles",
-        "contracts/slice-oracles"
+        "roadmap/DELIVERY_SLICES.md",
+        "roadmap/EXECUTION_CONTRACT.md"
       ],
-      "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/SP01.json",
+      "autonomyClass": "K4",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/SP01.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -98,7 +110,7 @@
         "internal/portal"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C02.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C02.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -129,7 +141,7 @@
         "internal/api"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C03.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C03.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -161,7 +173,7 @@
         "pkg/iam"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C04.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C04.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -196,7 +208,7 @@
         "sdk/ocsv3"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C05.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C05.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -231,7 +243,7 @@
         "pkg/dataact"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C06.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C06.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -264,7 +276,7 @@
         "pkg/network"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C07.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C07.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -298,7 +310,7 @@
         "pkg/installer"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C08.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C08.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -334,7 +346,7 @@
         "pkg/directory"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C09.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C09.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -365,7 +377,7 @@
         "pkg/inventory"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C10.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C10.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -399,7 +411,7 @@
         "sdk/rust/ocs-sdk-rs"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C11.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C11.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -430,7 +442,7 @@
         "pkg/subscriptions"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C12.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C12.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -461,7 +473,7 @@
         "pkg/metering"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C13.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C13.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -492,7 +504,7 @@
         "cmd/cloudringctl"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C14.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C14.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -526,7 +538,7 @@
         "pkg/products/network"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C15.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C15.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -560,7 +572,7 @@
         "pkg/products/volume"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C16.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C16.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -594,7 +606,7 @@
         "pkg/products/image"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C17.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C17.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -626,7 +638,7 @@
         "pkg/products/compute"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C18.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C18.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -656,7 +668,7 @@
         "pkg/products/kubernetes"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C19.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C19.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -690,7 +702,7 @@
         "pkg/products/objectstorage"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C20.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C20.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -721,7 +733,7 @@
         "pkg/products/backup"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C21.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C21.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -752,7 +764,7 @@
         "pkg/products/access"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C22.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C22.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -782,7 +794,7 @@
         "pkg/products/support"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C23.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C23.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -812,7 +824,7 @@
         "pkg/products/external"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C24.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C24.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -869,7 +881,7 @@
         "pkg/resilience"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C25.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C25.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -899,7 +911,7 @@
         "pkg/operations"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C26.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C26.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -929,7 +941,7 @@
         "pkg/portability"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C27.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C27.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -989,7 +1001,7 @@
         "roadmap/state"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C28.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C28.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -1026,7 +1038,7 @@
         "pkg/products/dbaas"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/DBAAS.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/DBAAS.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -1063,7 +1075,7 @@
         "pkg/products/dnsaas"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/DNSAAS.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/DNSAAS.json",
       "requiredGates": [
         "G1",
         "G2",
@@ -1099,7 +1111,7 @@
         "pkg/products/filesaas"
       ],
       "autonomyClass": "K2",
-      "verificationCommand": "go test ./... && cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/FILESAAS.json",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/FILESAAS.json",
       "requiredGates": [
         "G1",
         "G2",

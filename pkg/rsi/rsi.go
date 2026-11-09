@@ -12,13 +12,18 @@
 package rsi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"math/big"
 	"path"
+	"reflect"
+	"slices"
 	"sort"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/opencloudtech/CloudRING/internal/strictjson"
 )
@@ -37,13 +42,28 @@ const (
 	VerdictPass = "pass"
 	VerdictFail = "fail"
 
-	StatusPass = "pass"
-	StatusFail = "fail"
+	StatusPass          = "pass"
+	StatusFail          = "fail"
+	StatusNotApplicable = "not_applicable"
+
+	// AdmissionMerge admits code into a branch that deploys nothing;
+	// AdmissionDeploy admits code into a running environment.
+	AdmissionMerge  = "merge"
+	AdmissionDeploy = "deploy"
+
+	// OriginAutonomousLoop is a change produced by the metered unattended loop;
+	// OriginOperatorDirected is a change whose task a human operator directed.
+	OriginAutonomousLoop   = "autonomous_loop"
+	OriginOperatorDirected = "operator_directed"
 
 	KillSwitchNone = "none"
 	KillSwitchL1   = "L1_suspend_gitops_canary"
 	KillSwitchL2   = "L2_revoke_gateway_openbao_leases"
 	KillSwitchL3   = "L3_vap_ai_freeze_deny"
+
+	// MinPinnedLKGSlots and MinSoakMinutes bound S2 of the LKG invariants.
+	MinPinnedLKGSlots = 2
+	MinSoakMinutes    = 30
 
 	maxProfileBytes = 1 << 20
 )
@@ -72,10 +92,13 @@ type CandidateProfile struct {
 	Kind       string            `json:"kind"`
 	Candidate  CandidateMetadata `json:"candidate"`
 	Gates      GateReceipts      `json:"gates"`
-	VOI        *VOIInput         `json:"voi,omitempty"`
-	PassK      *PassKInput       `json:"passK,omitempty"`
-	Experiment *ExperimentInput  `json:"experiment,omitempty"`
-	Discovery  *DiscoveryInput   `json:"discovery,omitempty"`
+	// LKG is the S1-S6 receipt of the deployment slot the candidate would be
+	// promoted into; deploy admission requires it.
+	LKG        *LKGReceipt      `json:"lkg,omitempty"`
+	VOI        *VOIInput        `json:"voi,omitempty"`
+	PassK      *PassKInput      `json:"passK,omitempty"`
+	Experiment *ExperimentInput `json:"experiment,omitempty"`
+	Discovery  *DiscoveryInput  `json:"discovery,omitempty"`
 }
 
 // CandidateMetadata identifies the diff and declared target class.
@@ -89,6 +112,24 @@ type CandidateMetadata struct {
 	ModifiedExistingTests    bool     `json:"modifiedExistingTests"`
 	ModifiedTestdata         bool     `json:"modifiedTestdata"`
 	HumanK4ApprovalReference string   `json:"humanK4ApprovalReference"`
+	// Admission is "merge" or "deploy"; empty means "deploy", so every gate applies.
+	Admission string `json:"admission"`
+	// TargetRepository and TargetBranch name where a merge admission lands
+	// (owner/name and branch); merge admission requires a known non-GitOps target.
+	TargetRepository string `json:"targetRepository"`
+	TargetBranch     string `json:"targetBranch"`
+	// DeploymentTargets names the running environments this admission changes.
+	DeploymentTargets []string `json:"deploymentTargets"`
+	// Origin is "autonomous_loop" or "operator_directed"; empty means "autonomous_loop".
+	Origin string `json:"origin"`
+	// OperatorReference is the auditable record of the operator who directed
+	// the task; required for an operator_directed origin.
+	OperatorReference string `json:"operatorReference"`
+	// EvaluatorBootstrap records that the merge base has no evaluator, so no
+	// frozen predecessor can judge the candidate. It escalates to K4 and stands
+	// in for the frozen-hash check only at merge admission: once merged, the
+	// evaluator exists and every deployment is judged by a frozen copy.
+	EvaluatorBootstrap bool `json:"evaluatorBootstrap"`
 }
 
 // GateReceipts holds externally measured G1-G7 evidence (never self-reported by the candidate).
@@ -115,6 +156,12 @@ type G1Receipt struct {
 }
 
 // G2Receipt captures diff-based mutation testing on changed non-arid lines and fuzzing.
+// For guardrail code (pkg/rsi, pkg/sliceoracles, pkg/safepush, cmd/cloudring-safepush
+// and the rsi command of cmd/cloudringctl) cmd/cloudring-mutation measures it: the
+// gremlins v0.6.0 mutants (default mutators plus INVERT_LOGICAL) on lines changed against
+// the merge-base, each run alone with go test on its package. KilledMutants counts failing
+// runs; TotalMutants counts every mutant that builds and passes go vet, less equivalent
+// mutants proven in the evidence (roadmap/EXECUTION_CONTRACT.md).
 type G2Receipt struct {
 	KilledMutants     int  `json:"killedMutants"`
 	TotalMutants      int  `json:"totalMutants"`
@@ -155,6 +202,19 @@ type G6Receipt struct {
 	AITotalDeployments     int `json:"aiTotalDeployments"`
 	HumanFailedDeployments int `json:"humanFailedDeployments"`
 	HumanTotalDeployments  int `json:"humanTotalDeployments"`
+}
+
+// LKGReceipt captures the six self-evolution liveness invariants (S1-S6) of
+// the last-known-good slot a deployed candidate would be promoted into.
+type LKGReceipt struct {
+	ImmutableBootloaderVerified  bool     `json:"immutableBootloaderVerified"`
+	PinnedLKGSlots               int      `json:"pinnedLkgSlots"`
+	SoakMinutes                  int      `json:"soakMinutes"`
+	WebhookBypassVerified        bool     `json:"webhookBypassVerified"`
+	PreMigrationSnapshotVerified bool     `json:"preMigrationSnapshotVerified"`
+	MetaRSISelfCheckPassed       bool     `json:"metaRsiSelfCheckPassed"`
+	CandidateSHA                 string   `json:"candidateSha"`
+	QuarantinedSHAs              []string `json:"quarantinedShas"`
 }
 
 // G7Receipt captures compute budget, wall-clock duration, and cross-family overseer isolation.
@@ -311,10 +371,12 @@ type Report struct {
 	SchemaVersion         string            `json:"schemaVersion"`
 	APIVersion            string            `json:"apiVersion"`
 	CandidateID           string            `json:"candidateId"`
+	Admission             string            `json:"admission"`
 	Classification        Classification    `json:"classification"`
 	Checks                []CheckResult     `json:"checks"`
 	Passed                int               `json:"passed"`
 	Failed                int               `json:"failed"`
+	NotApplicable         int               `json:"notApplicable"`
 	MaxAutonomousClass    string            `json:"maxAutonomousClass"`
 	KillSwitchLevel       string            `json:"killSwitchLevel"`
 	KillSwitchReasons     []string          `json:"killSwitchReasons"`
@@ -338,6 +400,13 @@ func ParseProfile(raw []byte) (CandidateProfile, error) {
 	if err := strictjson.DecodeExact(raw, &profile); err != nil {
 		return CandidateProfile{}, fmt.Errorf("%w: %v", ErrInvalidProfile, err)
 	}
+	var tree any
+	if err := json.Unmarshal(raw, &tree); err != nil {
+		return CandidateProfile{}, fmt.Errorf("%w: %v", ErrInvalidProfile, err)
+	}
+	if err := checkExactKeys(tree, reflect.TypeFor[CandidateProfile](), "profile"); err != nil {
+		return CandidateProfile{}, fmt.Errorf("%w: %v", ErrInvalidProfile, err)
+	}
 	if profile.APIVersion != ProfileAPIVersion || profile.Kind != ProfileKind {
 		return CandidateProfile{}, fmt.Errorf("%w: expected apiVersion=%q kind=%q", ErrInvalidProfile, ProfileAPIVersion, ProfileKind)
 	}
@@ -350,7 +419,99 @@ func ParseProfile(raw []byte) (CandidateProfile, error) {
 	if len(profile.Candidate.ChangedPaths) == 0 && !profile.Candidate.ReadOnlyOnly {
 		return CandidateProfile{}, fmt.Errorf("%w: changedPaths required for non-K0 candidate", ErrInvalidProfile)
 	}
+	switch profile.Candidate.Admission {
+	case "", AdmissionMerge, AdmissionDeploy:
+	default:
+		return CandidateProfile{}, fmt.Errorf("%w: invalid admission %q", ErrInvalidProfile, profile.Candidate.Admission)
+	}
+	switch profile.Candidate.Origin {
+	case "", OriginAutonomousLoop, OriginOperatorDirected:
+	default:
+		return CandidateProfile{}, fmt.Errorf("%w: invalid origin %q", ErrInvalidProfile, profile.Candidate.Origin)
+	}
+	if ref := profile.Candidate.OperatorReference; ref != "" && !validReference(ref) {
+		return CandidateProfile{}, fmt.Errorf("%w: candidate.operatorReference %q names no record", ErrInvalidProfile, ref)
+	}
+	if ref := profile.Candidate.HumanK4ApprovalReference; ref != "" && !validReference(ref) {
+		return CandidateProfile{}, fmt.Errorf("%w: candidate.humanK4ApprovalReference %q names no record", ErrInvalidProfile, ref)
+	}
 	return profile, nil
+}
+
+// checkExactKeys rejects every object key that is not exactly the JSON name
+// of a field of the struct it decodes into, at any depth. encoding/json maps
+// keys onto fields case-insensitively, so a case variant of a known key would
+// otherwise decode into that field while other readers of the same profile
+// see a different value.
+func checkExactKeys(v any, t reflect.Type, at string) error {
+	for t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	switch t.Kind() {
+	case reflect.Struct:
+		obj, ok := v.(map[string]any)
+		if !ok {
+			return nil // the strict decoder already rejected a type mismatch
+		}
+		fields := make(map[string]reflect.Type, t.NumField())
+		for i := range t.NumField() {
+			name, _, _ := strings.Cut(t.Field(i).Tag.Get("json"), ",")
+			if name != "" && name != "-" {
+				fields[name] = t.Field(i).Type
+			}
+		}
+		keys := make([]string, 0, len(obj))
+		for key := range obj {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			fieldType, known := fields[key]
+			if !known {
+				return fmt.Errorf("%s: unknown or case-variant field %q", at, key)
+			}
+			if err := checkExactKeys(obj[key], fieldType, at+"."+key); err != nil {
+				return err
+			}
+		}
+	case reflect.Slice, reflect.Array:
+		items, ok := v.([]any)
+		if !ok {
+			return nil
+		}
+		for i, item := range items {
+			if err := checkExactKeys(item, t.Elem(), fmt.Sprintf("%s[%d]", at, i)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// validReference reports whether s can name an auditable record. It rejects
+// control, format, private-use, surrogate, variation-selector and other
+// default-ignorable characters (such as the Hangul fillers) and blank letters,
+// and requires a visible letter or digit, so invisible text never counts as a
+// reference.
+func validReference(s string) bool {
+	named := false
+	for _, r := range s {
+		if r == utf8.RuneError || unicode.Is(unicode.C, r) || blankLetters[r] ||
+			unicode.Is(unicode.Other_Default_Ignorable_Code_Point, r) || unicode.Is(unicode.Variation_Selector, r) {
+			return false
+		}
+		if unicode.IsGraphic(r) && (unicode.IsLetter(r) || unicode.IsDigit(r)) {
+			named = true
+		}
+	}
+	return named
+}
+
+// blankLetters are letters (category Lo) that render as empty space but are
+// not default-ignorable, so no Unicode property excludes them.
+var blankLetters = map[rune]bool{
+	0x13441: true, // EGYPTIAN HIEROGLYPH FULL BLANK
+	0x13442: true, // EGYPTIAN HIEROGLYPH HALF BLANK
 }
 
 func validClass(c string) bool {
@@ -457,6 +618,12 @@ func ClassifyCandidate(meta CandidateMetadata) (Classification, error) {
 		touchesK4 = true
 		reasons = append(reasons, "modified_testdata_fixtures_requires_k4")
 	}
+	if meta.EvaluatorBootstrap {
+		// No frozen predecessor exists to judge the evaluator's own introduction,
+		// so only a human can admit it.
+		touchesK4 = true
+		reasons = append(reasons, "evaluator_bootstrap_requires_k4")
+	}
 	if touchesK4 {
 		effective = ClassK4
 	}
@@ -521,9 +688,126 @@ func parseProbabilityRat(raw string, field string) (*big.Rat, error) {
 	return r, nil
 }
 
-// EvaluateCandidate runs the complete G1-G7 governance evaluation and any
-// attached decision-science checks (VOI, PassK, Experiment, Discovery).
+// deploySurfaceSegments name repository paths whose change takes effect on a
+// running environment: deployment manifests, infrastructure code, and gitlinks
+// (submodules), which pin one repository's code into another that deploys it.
+var deploySurfaceSegments = map[string]bool{"deploy": true, "iac": true, ".gitmodules": true, "cloudring_core": true}
+
+// touchesDeploySurface reports whether a changed path takes effect on a running
+// environment once merged: a deploy, iac or gitlink path segment anywhere, or a
+// workflow that runs on the target branch. A path that cannot be normalized
+// counts as deploy surface, so it cannot support a merge-only claim.
+func touchesDeploySurface(raw string) bool {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" || strings.ContainsAny(trimmed, "\x00\\%") || strings.Contains(trimmed, "..") {
+		return true
+	}
+	lower := strings.ToLower(path.Clean(trimmed))
+	if lower == "." || strings.HasPrefix(lower, "/") || lower == ".github/workflows" || strings.HasPrefix(lower, ".github/workflows/") {
+		return true
+	}
+	for _, seg := range strings.Split(lower, "/") {
+		if deploySurfaceSegments[seg] {
+			return true
+		}
+	}
+	return false
+}
+
+type mergeTarget struct{ repository, branch string }
+
+// mergeOnlyTargets lists the repository branches that no environment tracks as
+// a GitOps source, so merging into them deploys nothing. Checked 2026-11-09:
+// the hub's only Flux GitRepository is opencloudtech/cloudring-enterprise main;
+// public opencloudtech/CloudRING code reaches an environment only through a
+// gitlink bump in cloudring-enterprise, which is a deploy admission there.
+var mergeOnlyTargets = map[mergeTarget]bool{{"opencloudtech/CloudRING", "main"}: true}
+
+// admissionScope derives the admission that governs gate applicability from
+// the declared admission and origin and the evidence that can contradict them.
+// A merge-only claim must name a known non-GitOps target branch and carry no
+// deployment targets, no deploy-surface path, no canary receipt and no LKG
+// receipt; an operator-directed origin must name its operator. Any
+// contradiction resolves to deploy admission from the autonomous loop, where
+// every gate applies, and is returned so the caller fails the candidate.
+func admissionScope(profile CandidateProfile) (string, bool, []string) {
+	meta := profile.Candidate
+	admission := AdmissionDeploy
+	var contradictions []string
+	switch meta.Admission {
+	case "", AdmissionDeploy:
+	case AdmissionMerge:
+		admission = AdmissionMerge
+		if !mergeOnlyTargets[mergeTarget{meta.TargetRepository, meta.TargetBranch}] {
+			contradictions = append(contradictions, fmt.Sprintf("merge_admission_target_not_known_non_gitops:%q@%q", meta.TargetRepository, meta.TargetBranch))
+		}
+		if len(meta.DeploymentTargets) > 0 {
+			contradictions = append(contradictions, "merge_admission_with_deployment_targets")
+		}
+		for _, raw := range meta.ChangedPaths {
+			if touchesDeploySurface(raw) {
+				contradictions = append(contradictions, fmt.Sprintf("merge_admission_touches_deploy_surface:%s", raw))
+			}
+		}
+		if profile.Gates.G4 != (G4Receipt{}) {
+			contradictions = append(contradictions, "merge_admission_with_canary_receipt")
+		}
+		if profile.LKG != nil {
+			contradictions = append(contradictions, "merge_admission_with_lkg_receipt")
+		}
+	default:
+		contradictions = append(contradictions, fmt.Sprintf("unknown_admission:%s", meta.Admission))
+	}
+	operatorDirected := false
+	switch meta.Origin {
+	case "", OriginAutonomousLoop:
+	case OriginOperatorDirected:
+		operatorDirected = validReference(meta.OperatorReference)
+		if !operatorDirected {
+			contradictions = append(contradictions, "operator_directed_without_operator_reference")
+		}
+	default:
+		contradictions = append(contradictions, fmt.Sprintf("unknown_origin:%s", meta.Origin))
+	}
+	if len(contradictions) > 0 {
+		return AdmissionDeploy, false, contradictions
+	}
+	return admission, operatorDirected, nil
+}
+
+// escalateToK4 raises a classification to K4 for a reason found during
+// evaluation rather than in the changed paths.
+func escalateToK4(cls Classification, reason string) Classification {
+	cls.EffectiveClass = ClassK4
+	cls.HumanApprovalRequired = true
+	cls.HoldoutRequired = true
+	cls.EscalationReasons = append(cls.EscalationReasons, reason)
+	sort.Strings(cls.EscalationReasons)
+	cls.EscalationReasons = compactStrings(cls.EscalationReasons)
+	return cls
+}
+
+// EvaluateCandidate runs the G1-G7 governance evaluation for the candidate's
+// admission and any attached decision-science checks (VOI, PassK, Experiment,
+// Discovery).
+//
+// Deploy admission (the default) applies every gate, including the S1-S6 LKG
+// invariants of the receipt in profile.LKG. Merge admission admits code into a
+// branch that deploys nothing: G4 and S1-S6 are not applicable there, because
+// no running environment hosts a canary and nothing is promoted to an LKG slot.
 func EvaluateCandidate(profile CandidateProfile) (Report, error) {
+	return evaluateCandidate(profile, profile.LKG)
+}
+
+// EvaluateCandidateForSlot evaluates profile for promotion into the LKG slot
+// described by slot. Whenever the derived admission is deploy, including a
+// merge claim that contradicts its own scope, S1-S6 are checked against slot
+// and never against a receipt the profile carries about itself.
+func EvaluateCandidateForSlot(profile CandidateProfile, slot LKGReceipt) (Report, error) {
+	return evaluateCandidate(profile, &slot)
+}
+
+func evaluateCandidate(profile CandidateProfile, lkg *LKGReceipt) (Report, error) {
 	cls, err := ClassifyCandidate(profile.Candidate)
 	if err != nil {
 		return Report{}, err
@@ -534,11 +818,33 @@ func EvaluateCandidate(profile CandidateProfile) (Report, error) {
 	killLevel := KillSwitchNone
 	maxAutoClass := ClassK3
 
+	admission, operatorDirected, contradictions := admissionScope(profile)
+	g6 := profile.Gates.G6
+	g6Invalid := g6.AITotalDeployments < 0 || g6.AIFailedDeployments < 0 || g6.AIFailedDeployments > g6.AITotalDeployments ||
+		g6.HumanTotalDeployments < 0 || g6.HumanFailedDeployments < 0 || g6.HumanFailedDeployments > g6.HumanTotalDeployments
+	coldStart := !g6Invalid && g6.AITotalDeployments == 0
+	if admission == AdmissionDeploy && coldStart {
+		// The AI line has no change-fail history to bound its first deployment,
+		// so only a human can admit it.
+		cls = escalateToK4(cls, "deploy_cold_start_requires_k4")
+	}
+	scopeSummary := fmt.Sprintf("admission=%s operatorDirected=%t deploymentTargets=%d",
+		admission, operatorDirected, len(profile.Candidate.DeploymentTargets))
+	if admission == AdmissionMerge {
+		scopeSummary = fmt.Sprintf("admission=merge target=%s@%s operatorDirected=%t deploymentTargets=0",
+			profile.Candidate.TargetRepository, profile.Candidate.TargetBranch, operatorDirected)
+	}
+	if len(contradictions) > 0 {
+		scopeSummary = fmt.Sprintf("declared admission=%q origin=%q contradicts evidence (%s); evaluated as deploy admission from the autonomous loop",
+			profile.Candidate.Admission, profile.Candidate.Origin, strings.Join(contradictions, ", "))
+	}
+	checks = append(checks, makeCheck("admission_scope_consistency", len(contradictions) == 0, scopeSummary))
+
 	// Gate K4: Human approval check when escalated or declared K4.
 	k4Pass := true
 	k4Summary := fmt.Sprintf("effective class %s within autonomous boundary", cls.EffectiveClass)
 	if cls.EffectiveClass == ClassK4 {
-		if strings.TrimSpace(profile.Candidate.HumanK4ApprovalReference) == "" {
+		if !validReference(profile.Candidate.HumanK4ApprovalReference) {
 			k4Pass = false
 			k4Summary = fmt.Sprintf("effective class K4 requires explicit human approval (%s)", strings.Join(cls.EscalationReasons, ", "))
 			if profile.Candidate.DeletedOrSkippedTests > 0 || profile.Candidate.ModifiedExistingTests || profile.Candidate.ModifiedTestdata {
@@ -551,17 +857,22 @@ func EvaluateCandidate(profile CandidateProfile) (Report, error) {
 	}
 	checks = append(checks, makeCheck("k4_human_boundary", k4Pass, k4Summary))
 
-	// Gate G1: Red->Green test & evaluator hash integrity.
+	// Gate G1: Red->Green test & evaluator hash integrity. An evaluator
+	// bootstrap has no frozen predecessor to verify against, so at merge
+	// admission it stands in for the frozen hash; it is always K4 and admitted
+	// only through the human boundary above. A deployment is always judged by
+	// a frozen evaluator.
 	g1 := profile.Gates.G1
-	g1Pass := g1.EvaluatorFrozenHashVerified && g1.SuitePassed && !g1.RerunMaskingUsed && g1.SilentErrorSwallowing == 0
+	frozenOK := g1.EvaluatorFrozenHashVerified || (profile.Candidate.EvaluatorBootstrap && admission == AdmissionMerge)
+	g1Pass := frozenOK && g1.SuitePassed && !g1.RerunMaskingUsed && g1.SilentErrorSwallowing == 0
 	if classRank(cls.EffectiveClass) >= classRank(ClassK2) {
 		g1Pass = g1Pass && g1.NewTestFailedBeforeFix && g1.NewTestPassedAfterFix
 	}
 	if cls.HoldoutRequired {
 		g1Pass = g1Pass && g1.UnseenHoldoutPassed && g1.SeededErrorRejected
 	}
-	g1Summary := fmt.Sprintf("frozenHash=%t suite=%t redGreen=%t/%t holdout=%t seededError=%t rerunMask=%t silentSwallow=%d",
-		g1.EvaluatorFrozenHashVerified, g1.SuitePassed, g1.NewTestFailedBeforeFix, g1.NewTestPassedAfterFix,
+	g1Summary := fmt.Sprintf("frozenHash=%t evaluatorBootstrap=%t suite=%t redGreen=%t/%t holdout=%t seededError=%t rerunMask=%t silentSwallow=%d",
+		g1.EvaluatorFrozenHashVerified, profile.Candidate.EvaluatorBootstrap, g1.SuitePassed, g1.NewTestFailedBeforeFix, g1.NewTestPassedAfterFix,
 		g1.UnseenHoldoutPassed, g1.SeededErrorRejected, g1.RerunMaskingUsed, g1.SilentErrorSwallowing)
 	checks = append(checks, makeCheck("g1_red_green_and_test_integrity", g1Pass, g1Summary))
 
@@ -593,116 +904,142 @@ func EvaluateCandidate(profile CandidateProfile) (Report, error) {
 
 	// Gate G4: Canary SLO burn and stateful downgrade continuity.
 	g4 := profile.Gates.G4
-	stepPct, err := parseNonNegativeRat(g4.CanaryStepPercent, "gates.g4.canaryStepPercent")
-	if err != nil {
-		return Report{}, err
+	burnFrac := big.NewRat(0, 1)
+	switch {
+	case admission == AdmissionMerge:
+		checks = append(checks, notApplicableCheck("g4_canary_slo_and_stateful_downgrade",
+			"merge admission: no running environment hosts a canary; G4 applies at deploy admission"))
+	case g4 == (G4Receipt{}):
+		checks = append(checks, makeCheck("g4_canary_slo_and_stateful_downgrade", false,
+			"deploy admission requires one live canary receipt; none supplied"))
+	default:
+		g4Pass, g4Summary, frac, err := evaluateG4(g4)
+		if err != nil {
+			return Report{}, err
+		}
+		burnFrac = frac
+		if g4.CanaryFailuresLast24h >= 3 {
+			killLevel = escalateKillSwitch(killLevel, KillSwitchL1)
+			killReasons = append(killReasons, "three_or_more_canary_failures_in_24h")
+		}
+		checks = append(checks, makeCheck("g4_canary_slo_and_stateful_downgrade", g4Pass, g4Summary))
 	}
-	maxPct, err := parseNonNegativeRat(g4.CanaryMaxPercent, "gates.g4.canaryMaxPercent")
-	if err != nil {
-		return Report{}, err
-	}
-	succPct, err := parseNonNegativeRat(g4.RequestSuccessRatePercent, "gates.g4.requestSuccessRatePercent")
-	if err != nil {
-		return Report{}, err
-	}
-	latMs, err := parseNonNegativeRat(g4.LatencyP99Ms, "gates.g4.latencyP99Ms")
-	if err != nil {
-		return Report{}, err
-	}
-	durMin, err := parseNonNegativeRat(g4.CanaryDurationMinutes, "gates.g4.canaryDurationMinutes")
-	if err != nil {
-		return Report{}, err
-	}
-	stepFrac := new(big.Rat).Quo(stepPct, big.NewRat(100, 1))
-	maxFrac := new(big.Rat).Quo(maxPct, big.NewRat(100, 1))
-	succFrac := new(big.Rat).Quo(succPct, big.NewRat(100, 1))
-	// Worst-case error-minutes during one canary step = stepFrac * durMin; burn fraction = (stepFrac * durMin) / 43.2
-	errMinutes := new(big.Rat).Mul(stepFrac, durMin)
-	burnFrac := new(big.Rat).Quo(errMinutes, sloMonthlyBudgetMin)
 
-	g4Pass := g4.ActiveCanaries >= 1 && g4.ActiveCanaries <= 1 &&
-		stepFrac.Cmp(maxCanaryStepPct) <= 0 &&
-		maxFrac.Cmp(maxCanaryWeightPct) <= 0 &&
-		succFrac.Cmp(minCanarySuccessRate) >= 0 &&
-		latMs.Cmp(maxCanaryLatencyMs) <= 0 &&
-		burnFrac.Cmp(maxCanarySLOBurnFrac) <= 0 &&
-		g4.CanaryFailuresLast24h < 3 &&
-		(!g4.TouchesPersistentState || g4.DowngradeContinuityVerified)
-
-	if g4.CanaryFailuresLast24h >= 3 {
-		killLevel = escalateKillSwitch(killLevel, KillSwitchL1)
-		killReasons = append(killReasons, "three_or_more_canary_failures_in_24h")
-	}
-	g4Summary := fmt.Sprintf("active=%d step=%s%% max=%s%% success=%s%% p99=%sms burnFrac=%s stateful=%t downgradeOK=%t",
-		g4.ActiveCanaries, stepPct.FloatString(1), maxPct.FloatString(1), succPct.FloatString(2), latMs.FloatString(1),
-		burnFrac.FloatString(4), g4.TouchesPersistentState, g4.DowngradeContinuityVerified)
-	checks = append(checks, makeCheck("g4_canary_slo_and_stateful_downgrade", g4Pass, g4Summary))
-
-	// Gate G5: Portability and EU Data Act switching drill.
+	// Gate G5: Portability and EU Data Act switching drill. The drill exercises
+	// tenant export and provider switching on a running installation; merged
+	// code reaches tenants only through a later deploy admission, where G5 is
+	// mandatory. A drill receipt supplied with a merge is still evaluated.
 	g5 := profile.Gates.G5
-	g5Pass := g5.PortabilityDrillPassed && g5.DataActVerdict == VerdictPass
-	g5Summary := fmt.Sprintf("portabilityDrill=%t dataActVerdict=%s", g5.PortabilityDrillPassed, g5.DataActVerdict)
-	checks = append(checks, makeCheck("g5_portability_and_switching_drill", g5Pass, g5Summary))
+	if admission == AdmissionMerge && g5 == (G5Receipt{}) {
+		checks = append(checks, notApplicableCheck("g5_portability_and_switching_drill",
+			"merge admission: no tenant installation runs the merged code; G5 applies at deploy admission"))
+	} else {
+		g5Pass := g5.PortabilityDrillPassed && g5.DataActVerdict == VerdictPass
+		g5Summary := fmt.Sprintf("portabilityDrill=%t dataActVerdict=%s", g5.PortabilityDrillPassed, g5.DataActVerdict)
+		checks = append(checks, makeCheck("g5_portability_and_switching_drill", g5Pass, g5Summary))
+	}
 
-	// Gate G6: Rolling DORA Change Fail Rate (CFR) circuit breaker.
-	g6 := profile.Gates.G6
+	// Gate G6: Rolling DORA Change Fail Rate (CFR) circuit breaker. With AI
+	// deployment history the breaker applies to every admission. Without it
+	// (cold start) there is no rate to compute: a merge adds no deployment and
+	// is not applicable; a first deployment was escalated to K4 above, so only
+	// the human boundary can admit it.
 	aiCFR := big.NewRat(0, 1)
 	humanCFR := big.NewRat(0, 1)
-	g6Pass := true
-	if g6.AITotalDeployments <= 0 || g6.AIFailedDeployments < 0 || g6.AIFailedDeployments > g6.AITotalDeployments ||
-		g6.HumanTotalDeployments < 0 || g6.HumanFailedDeployments < 0 || g6.HumanFailedDeployments > g6.HumanTotalDeployments {
-		g6Pass = false
-	} else {
-		aiCFR = big.NewRat(int64(g6.AIFailedDeployments), int64(g6.AITotalDeployments))
-		if aiCFR.Cmp(maxAICFR) > 0 {
-			g6Pass = false
-		}
-		if g6.HumanTotalDeployments > 0 {
-			humanCFR = big.NewRat(int64(g6.HumanFailedDeployments), int64(g6.HumanTotalDeployments))
-			if aiCFR.Cmp(humanCFR) > 0 {
+	switch {
+	case coldStart && admission == AdmissionMerge:
+		checks = append(checks, notApplicableCheck("g6_dora_cfr_circuit_breaker",
+			"cold start: the AI line has no deployment history and a merge adds no deployment; the breaker applies from the first deploy admission"))
+	case coldStart:
+		checks = append(checks, makeCheck("g6_dora_cfr_circuit_breaker", true,
+			"cold start: the AI line has no deployment history; the first deployment is admitted only through k4_human_boundary (deploy_cold_start_requires_k4)"))
+	default:
+		g6Pass := !g6Invalid
+		if g6Pass {
+			aiCFR = big.NewRat(int64(g6.AIFailedDeployments), int64(g6.AITotalDeployments))
+			if aiCFR.Cmp(maxAICFR) > 0 {
 				g6Pass = false
 			}
+			if g6.HumanTotalDeployments > 0 {
+				humanCFR = big.NewRat(int64(g6.HumanFailedDeployments), int64(g6.HumanTotalDeployments))
+				if aiCFR.Cmp(humanCFR) > 0 {
+					g6Pass = false
+				}
+			}
 		}
+		if !g6Pass {
+			maxAutoClass = ClassK1
+			killLevel = escalateKillSwitch(killLevel, KillSwitchL1)
+			killReasons = append(killReasons, "g6_cfr_budget_exceeded_autonomy_downgraded_to_k1")
+		}
+		g6Summary := fmt.Sprintf("aiCFR=%d/%d (%s) humanCFR=%d/%d (%s) maxAutoClass=%s",
+			g6.AIFailedDeployments, g6.AITotalDeployments, aiCFR.FloatString(4),
+			g6.HumanFailedDeployments, g6.HumanTotalDeployments, humanCFR.FloatString(4), maxAutoClass)
+		checks = append(checks, makeCheck("g6_dora_cfr_circuit_breaker", g6Pass, g6Summary))
 	}
-	if !g6Pass {
-		maxAutoClass = ClassK1
-		killLevel = escalateKillSwitch(killLevel, KillSwitchL1)
-		killReasons = append(killReasons, "g6_cfr_budget_exceeded_autonomy_downgraded_to_k1")
-	}
-	g6Summary := fmt.Sprintf("aiCFR=%d/%d (%s) humanCFR=%d/%d (%s) maxAutoClass=%s",
-		g6.AIFailedDeployments, g6.AITotalDeployments, aiCFR.FloatString(4),
-		g6.HumanFailedDeployments, g6.HumanTotalDeployments, humanCFR.FloatString(4), maxAutoClass)
-	checks = append(checks, makeCheck("g6_dora_cfr_circuit_breaker", g6Pass, g6Summary))
 
 	// Gate G7: Task budget, duration, burn multiplier, and cross-family overseer.
+	// G7 bounds the metered autonomous loop: its per-task spend and duration,
+	// a different-family overseer for its work, and kill switch L2 revoking its
+	// leases. An operator-directed merge is directed and reviewed by a named
+	// human operator, holds no loop budget or leases and is not metered per
+	// task, so the gate has no subject. Every deployment, and any supplied
+	// budget receipt, is evaluated.
 	g7 := profile.Gates.G7
-	costUSD, err := parseNonNegativeRat(g7.TaskCostUSD, "gates.g7.taskCostUsd")
-	if err != nil {
-		return Report{}, err
+	switch {
+	case operatorDirected && admission == AdmissionMerge && g7 == (G7Receipt{}):
+		checks = append(checks, notApplicableCheck("g7_budget_and_cross_family_overseer",
+			fmt.Sprintf("operator-directed merge (%s): no metered autonomous loop budget or overseer pairing to bound", profile.Candidate.OperatorReference)))
+	case g7 == (G7Receipt{}):
+		checks = append(checks, makeCheck("g7_budget_and_cross_family_overseer", false,
+			"a deployment or autonomous loop candidate requires a budget and overseer receipt; none supplied"))
+	default:
+		costUSD, err := parseNonNegativeRat(g7.TaskCostUSD, "gates.g7.taskCostUsd")
+		if err != nil {
+			return Report{}, err
+		}
+		medCostUSD, err := parseNonNegativeRat(g7.MedianTaskCostUSD, "gates.g7.medianTaskCostUsd")
+		if err != nil {
+			return Report{}, err
+		}
+		taskDurMin, err := parseNonNegativeRat(g7.TaskDurationMinutes, "gates.g7.taskDurationMinutes")
+		if err != nil {
+			return Report{}, err
+		}
+		execFam := strings.ToLower(strings.TrimSpace(g7.ExecutorModelFamily))
+		overFam := strings.ToLower(strings.TrimSpace(g7.OverseerModelFamily))
+		burnLimit := new(big.Rat).Mul(medCostUSD, maxCostBurnMult)
+		burnExceeded := medCostUSD.Sign() <= 0 || costUSD.Cmp(burnLimit) > 0
+		if burnExceeded {
+			killLevel = escalateKillSwitch(killLevel, KillSwitchL2)
+			killReasons = append(killReasons, "g7_task_cost_burn_exceeded_2x_median")
+		}
+		g7Pass := costUSD.Cmp(maxTaskCostUSD) <= 0 &&
+			taskDurMin.Cmp(maxTaskDurationMin) <= 0 &&
+			!burnExceeded &&
+			execFam != "" && overFam != "" && execFam != overFam
+		g7Summary := fmt.Sprintf("cost=$%s (median=$%s) duration=%smin executor=%s overseer=%s",
+			costUSD.FloatString(2), medCostUSD.FloatString(2), taskDurMin.FloatString(1), execFam, overFam)
+		checks = append(checks, makeCheck("g7_budget_and_cross_family_overseer", g7Pass, g7Summary))
 	}
-	medCostUSD, err := parseNonNegativeRat(g7.MedianTaskCostUSD, "gates.g7.medianTaskCostUsd")
-	if err != nil {
-		return Report{}, err
+
+	// S1-S6: LKG promotion invariants of the slot a deployment is promoted into.
+	switch {
+	case admission == AdmissionMerge:
+		checks = append(checks, notApplicableCheck("s1_s6_lkg_promotion",
+			"merge admission promotes nothing to an LKG slot; S1-S6 apply at deploy admission"))
+	case lkg == nil:
+		checks = append(checks, makeCheck("s1_s6_lkg_promotion", false,
+			"deploy admission requires an S1-S6 LKG receipt; none supplied"))
+	default:
+		lkgBlockers := ValidateLKG(*lkg)
+		lkgSummary := fmt.Sprintf("S1-S6 hold: pinnedSlots=%d soak=%dmin candidateSha=%s",
+			lkg.PinnedLKGSlots, lkg.SoakMinutes, lkg.CandidateSHA)
+		if len(lkgBlockers) > 0 {
+			lkgSummary = strings.Join(lkgBlockers, "; ")
+		}
+		checks = append(checks, makeCheck("s1_s6_lkg_promotion", len(lkgBlockers) == 0, lkgSummary))
 	}
-	taskDurMin, err := parseNonNegativeRat(g7.TaskDurationMinutes, "gates.g7.taskDurationMinutes")
-	if err != nil {
-		return Report{}, err
-	}
-	execFam := strings.ToLower(strings.TrimSpace(g7.ExecutorModelFamily))
-	overFam := strings.ToLower(strings.TrimSpace(g7.OverseerModelFamily))
-	burnLimit := new(big.Rat).Mul(medCostUSD, maxCostBurnMult)
-	burnExceeded := medCostUSD.Sign() <= 0 || costUSD.Cmp(burnLimit) > 0
-	if burnExceeded {
-		killLevel = escalateKillSwitch(killLevel, KillSwitchL2)
-		killReasons = append(killReasons, "g7_task_cost_burn_exceeded_2x_median")
-	}
-	g7Pass := costUSD.Cmp(maxTaskCostUSD) <= 0 &&
-		taskDurMin.Cmp(maxTaskDurationMin) <= 0 &&
-		!burnExceeded &&
-		execFam != "" && overFam != "" && execFam != overFam
-	g7Summary := fmt.Sprintf("cost=$%s (median=$%s) duration=%smin executor=%s overseer=%s",
-		costUSD.FloatString(2), medCostUSD.FloatString(2), taskDurMin.FloatString(1), execFam, overFam)
-	checks = append(checks, makeCheck("g7_budget_and_cross_family_overseer", g7Pass, g7Summary))
 
 	var voiReport *VOIReport
 	if profile.VOI != nil {
@@ -752,12 +1089,14 @@ func EvaluateCandidate(profile CandidateProfile) (Report, error) {
 			fmt.Sprintf("valid=%t authorized=%t reasons=%v", dr.MethodologicallyValid, dr.StageGateAuthorized, dr.Reasons)))
 	}
 
-	passed := 0
-	failed := 0
+	passed, failed, notApplicable := 0, 0, 0
 	for _, c := range checks {
-		if c.Status == StatusPass {
+		switch c.Status {
+		case StatusPass:
 			passed++
-		} else {
+		case StatusNotApplicable:
+			notApplicable++
+		default:
 			failed++
 		}
 	}
@@ -778,10 +1117,12 @@ func EvaluateCandidate(profile CandidateProfile) (Report, error) {
 		SchemaVersion:         ReportSchema,
 		APIVersion:            ProfileAPIVersion,
 		CandidateID:           profile.Candidate.ID,
+		Admission:             admission,
 		Classification:        cls,
 		Checks:                checks,
 		Passed:                passed,
 		Failed:                failed,
+		NotApplicable:         notApplicable,
 		MaxAutonomousClass:    maxAutoClass,
 		KillSwitchLevel:       killLevel,
 		KillSwitchReasons:     killReasons,
@@ -803,6 +1144,84 @@ func makeCheck(id string, pass bool, summary string) CheckResult {
 		status = StatusPass
 	}
 	return CheckResult{ID: id, Status: status, Summary: summary}
+}
+
+func notApplicableCheck(id string, summary string) CheckResult {
+	return CheckResult{ID: id, Status: StatusNotApplicable, Summary: summary}
+}
+
+// ValidateLKG returns the S1-S6 invariants an LKG receipt violates; an empty
+// result means the deployed candidate may be promoted to an LKG slot.
+func ValidateLKG(s LKGReceipt) []string {
+	var blockers []string
+	if !s.ImmutableBootloaderVerified {
+		blockers = append(blockers, "S1: immutable bootloader supervisor checksum not verified")
+	}
+	if s.PinnedLKGSlots < MinPinnedLKGSlots {
+		blockers = append(blockers, fmt.Sprintf("S2: requires at least %d locally pinned LKG slots, got %d", MinPinnedLKGSlots, s.PinnedLKGSlots))
+	}
+	if s.SoakMinutes < MinSoakMinutes {
+		blockers = append(blockers, fmt.Sprintf("S2: requires >= %d minutes soak before LKG promotion, got %d", MinSoakMinutes, s.SoakMinutes))
+	}
+	if !s.WebhookBypassVerified {
+		blockers = append(blockers, "S3: rollback namespace/channel bypass of admission/conversion webhooks not verified")
+	}
+	if !s.PreMigrationSnapshotVerified {
+		blockers = append(blockers, "S4: pre-migration state snapshot and V_old/V_new round-trip not verified")
+	}
+	if !s.MetaRSISelfCheckPassed {
+		blockers = append(blockers, "S5: meta-RSI noop self-check canary did not pass")
+	}
+	if strings.TrimSpace(s.CandidateSHA) == "" {
+		blockers = append(blockers, "S6: candidateSha is empty")
+	} else if slices.Contains(s.QuarantinedSHAs, s.CandidateSHA) {
+		blockers = append(blockers, fmt.Sprintf("S6: candidateSha %s is in incident quarantine and requires a new regression test", s.CandidateSHA))
+	}
+	return blockers
+}
+
+// evaluateG4 checks one live canary step against the SLO limits and returns
+// the verdict, its summary and the canary's share of the monthly error budget.
+func evaluateG4(g4 G4Receipt) (bool, string, *big.Rat, error) {
+	stepPct, err := parseNonNegativeRat(g4.CanaryStepPercent, "gates.g4.canaryStepPercent")
+	if err != nil {
+		return false, "", nil, err
+	}
+	maxPct, err := parseNonNegativeRat(g4.CanaryMaxPercent, "gates.g4.canaryMaxPercent")
+	if err != nil {
+		return false, "", nil, err
+	}
+	succPct, err := parseNonNegativeRat(g4.RequestSuccessRatePercent, "gates.g4.requestSuccessRatePercent")
+	if err != nil {
+		return false, "", nil, err
+	}
+	latMs, err := parseNonNegativeRat(g4.LatencyP99Ms, "gates.g4.latencyP99Ms")
+	if err != nil {
+		return false, "", nil, err
+	}
+	durMin, err := parseNonNegativeRat(g4.CanaryDurationMinutes, "gates.g4.canaryDurationMinutes")
+	if err != nil {
+		return false, "", nil, err
+	}
+	stepFrac := new(big.Rat).Quo(stepPct, big.NewRat(100, 1))
+	maxFrac := new(big.Rat).Quo(maxPct, big.NewRat(100, 1))
+	succFrac := new(big.Rat).Quo(succPct, big.NewRat(100, 1))
+	// Worst-case error-minutes during one canary step = stepFrac * durMin; burn fraction = (stepFrac * durMin) / 43.2
+	errMinutes := new(big.Rat).Mul(stepFrac, durMin)
+	burnFrac := new(big.Rat).Quo(errMinutes, sloMonthlyBudgetMin)
+
+	pass := g4.ActiveCanaries == 1 &&
+		stepFrac.Cmp(maxCanaryStepPct) <= 0 &&
+		maxFrac.Cmp(maxCanaryWeightPct) <= 0 &&
+		succFrac.Cmp(minCanarySuccessRate) >= 0 &&
+		latMs.Cmp(maxCanaryLatencyMs) <= 0 &&
+		burnFrac.Cmp(maxCanarySLOBurnFrac) <= 0 &&
+		g4.CanaryFailuresLast24h < 3 &&
+		(!g4.TouchesPersistentState || g4.DowngradeContinuityVerified)
+	summary := fmt.Sprintf("active=%d step=%s%% max=%s%% success=%s%% p99=%sms burnFrac=%s stateful=%t downgradeOK=%t",
+		g4.ActiveCanaries, stepPct.FloatString(1), maxPct.FloatString(1), succPct.FloatString(2), latMs.FloatString(1),
+		burnFrac.FloatString(4), g4.TouchesPersistentState, g4.DowngradeContinuityVerified)
+	return pass, summary, burnFrac, nil
 }
 
 func escalateKillSwitch(current, candidate string) string {

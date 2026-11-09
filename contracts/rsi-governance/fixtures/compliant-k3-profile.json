@@ -67,6 +67,18 @@
       "overseerModelFamily": "family-b"
     }
   },
+  "lkg": {
+    "immutableBootloaderVerified": true,
+    "pinnedLkgSlots": 2,
+    "soakMinutes": 30,
+    "webhookBypassVerified": true,
+    "preMigrationSnapshotVerified": true,
+    "metaRsiSelfCheckPassed": true,
+    "candidateSha": "a326123af6ca994ce876bb786dff7683f181ca36",
+    "quarantinedShas": [
+      "deadbeef00000000000000000000000000000000"
+    ]
+  },
   "voi": {
     "priorSuccessProb": "2/5",
     "successNetPayoffEur": "120000",

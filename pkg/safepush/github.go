@@ -362,7 +362,9 @@ func (api *githubAPI) get(ctx context.Context, suffix string, query url.Values, 
 	if err != nil {
 		return ErrGitHubAPI
 	}
-	defer resp.Body.Close()
+	// Every path either returns ErrGitHubAPI already or has read the body to the
+	// end through strictjson.Read, so a Close error cannot change the result.
+	defer func() { _ = resp.Body.Close() }()
 	mediaType, _, mediaErr := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 	if resp.StatusCode != http.StatusOK || mediaErr != nil ||
 		(mediaType != "application/json" && mediaType != "application/vnd.github+json") ||

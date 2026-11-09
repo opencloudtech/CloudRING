@@ -23,8 +23,8 @@ const (
 	ExpectedKind       = "SliceOracleBatch"
 	ExpectedSliceCount = 32
 	MaxWritePRsPerRepo = 2
-	MinPinnedLKGSlots  = 2
-	MinSoakMinutes     = 30
+	MinPinnedLKGSlots  = rsi.MinPinnedLKGSlots
+	MinSoakMinutes     = rsi.MinSoakMinutes
 )
 
 // Batch represents the frozen 32-oracle contract (Fork 1A + Fork 2A + Deferred Fork 3).
@@ -64,16 +64,7 @@ type SliceOracle struct {
 }
 
 // LKGSafetyState captures the 6 necessary and sufficient self-evolution liveness invariants (S1-S6).
-type LKGSafetyState struct {
-	ImmutableBootloaderVerified  bool     `json:"immutableBootloaderVerified"`
-	PinnedLKGSlots               int      `json:"pinnedLkgSlots"`
-	SoakMinutes                  int      `json:"soakMinutes"`
-	WebhookBypassVerified        bool     `json:"webhookBypassVerified"`
-	PreMigrationSnapshotVerified bool     `json:"preMigrationSnapshotVerified"`
-	MetaRSISelfCheckPassed       bool     `json:"metaRsiSelfCheckPassed"`
-	CandidateSHA                 string   `json:"candidateSha"`
-	QuarantinedSHAs              []string `json:"quarantinedShas"`
-}
+type LKGSafetyState = rsi.LKGReceipt
 
 // ActivePR describes an open write PR for Fork 2A concurrency validation.
 type ActivePR struct {
@@ -146,6 +137,9 @@ func (b *Batch) Validate() error {
 		if o.SplitMode && len(o.QualDependencies) == 0 {
 			return fmt.Errorf("sliceoracles: split slice %s must declare qualDependencies", o.SliceID)
 		}
+		if err := checkAutonomyClass(o); err != nil {
+			return err
+		}
 		byID[o.SliceID] = o
 	}
 
@@ -188,6 +182,29 @@ func (b *Batch) Validate() error {
 		if err := dfs(id); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// classOrder ranks autonomy classes so a declared class can be compared with
+// the class the RSI classifier derives from the slice's allowed paths.
+var classOrder = map[string]int{rsi.ClassK0: 0, rsi.ClassK1: 1, rsi.ClassK2: 2, rsi.ClassK3: 3, rsi.ClassK4: 4}
+
+// checkAutonomyClass rejects an oracle whose declared autonomy class is lower
+// than the effective class of a change touching all of its allowed paths, so a
+// slice cannot be accepted under a weaker gate set than its paths require.
+func checkAutonomyClass(o SliceOracle) error {
+	declared, ok := classOrder[o.AutonomyClass]
+	if !ok {
+		return fmt.Errorf("sliceoracles: slice %s has invalid autonomyClass %q", o.SliceID, o.AutonomyClass)
+	}
+	cls, err := rsi.ClassifyCandidate(rsi.CandidateMetadata{ID: o.SliceID, DeclaredClass: o.AutonomyClass, ChangedPaths: o.AllowedPaths})
+	if err != nil {
+		return fmt.Errorf("sliceoracles: slice %s: %w", o.SliceID, err)
+	}
+	if classOrder[cls.EffectiveClass] > declared {
+		return fmt.Errorf("sliceoracles: slice %s declares %s but its allowedPaths require %s (%s)",
+			o.SliceID, o.AutonomyClass, cls.EffectiveClass, strings.Join(cls.EscalationReasons, ", "))
 	}
 	return nil
 }
@@ -326,35 +343,15 @@ func pathsOverlap(a, b string) bool {
 
 // ValidateLKGSafety checks all 6 S1-S6 invariants required for dead-end-free autonomous self-evolution.
 func ValidateLKGSafety(s LKGSafetyState) []string {
-	var blockers []string
-	if !s.ImmutableBootloaderVerified {
-		blockers = append(blockers, "S1: immutable bootloader supervisor checksum not verified")
-	}
-	if s.PinnedLKGSlots < MinPinnedLKGSlots {
-		blockers = append(blockers, fmt.Sprintf("S2: requires at least %d locally pinned LKG slots, got %d", MinPinnedLKGSlots, s.PinnedLKGSlots))
-	}
-	if s.SoakMinutes < MinSoakMinutes {
-		blockers = append(blockers, fmt.Sprintf("S2: requires >= %d minutes soak before LKG promotion, got %d", MinSoakMinutes, s.SoakMinutes))
-	}
-	if !s.WebhookBypassVerified {
-		blockers = append(blockers, "S3: rollback namespace/channel bypass of admission/conversion webhooks not verified")
-	}
-	if !s.PreMigrationSnapshotVerified {
-		blockers = append(blockers, "S4: pre-migration state snapshot and V_old/V_new round-trip not verified")
-	}
-	if !s.MetaRSISelfCheckPassed {
-		blockers = append(blockers, "S5: meta-RSI noop self-check canary did not pass")
-	}
-	if strings.TrimSpace(s.CandidateSHA) == "" {
-		blockers = append(blockers, "S6: candidateSha is empty")
-	} else if slices.Contains(s.QuarantinedSHAs, s.CandidateSHA) {
-		blockers = append(blockers, fmt.Sprintf("S6: candidateSha %s is in incident quarantine and requires a new regression test", s.CandidateSHA))
-	}
-	return blockers
+	return rsi.ValidateLKG(s)
 }
 
 // EvaluateSliceCandidate runs autonomous Fork 1A acceptance for a slice candidate by combining
 // oracle membership, hardware boundary check, S1-S6 LKG safety, and the frozen RSI G1-G7 evaluator.
+// The lkg state is the slot the candidate would be promoted into: whenever the derived admission is
+// deploy, including a merge claim that contradicts its own scope, the RSI S1-S6 check runs against
+// this slot and never against a receipt in the profile. A consistent merge promotes nothing, so a
+// passing merge receipt never reports PromotedToLKG.
 func (b *Batch) EvaluateSliceCandidate(sliceID, phase string, profile rsi.CandidateProfile, lkg LKGSafetyState) (*SliceAcceptanceReceipt, error) {
 	if err := b.Validate(); err != nil {
 		return nil, err
@@ -380,20 +377,21 @@ func (b *Batch) EvaluateSliceCandidate(sliceID, phase string, profile rsi.Candid
 		receipt.Blockers = append(receipt.Blockers, fmt.Sprintf("Fork 3 deferred: slice %s requires additional multi-node/second-provider hardware", sliceID))
 	}
 
-	receipt.Blockers = append(receipt.Blockers, ValidateLKGSafety(lkg)...)
-
-	rep, err := rsi.EvaluateCandidate(profile)
+	rep, err := rsi.EvaluateCandidateForSlot(profile, lkg)
 	if err != nil {
 		return nil, err
 	}
 	receipt.RSIReport = &rep
+	if rep.Admission != rsi.AdmissionMerge {
+		receipt.Blockers = append(receipt.Blockers, ValidateLKGSafety(lkg)...)
+	}
 	if rep.Verdict != rsi.VerdictPass {
 		receipt.Blockers = append(receipt.Blockers, fmt.Sprintf("RSI G1-G7 evaluator returned verdict=%s (failed=%d, killSwitch=%s)", rep.Verdict, rep.Failed, rep.KillSwitchLevel))
 	}
 
 	if len(receipt.Blockers) == 0 {
 		receipt.Verdict = rsi.VerdictPass
-		receipt.PromotedToLKG = true
+		receipt.PromotedToLKG = rep.Admission != rsi.AdmissionMerge
 	}
 	return receipt, nil
 }

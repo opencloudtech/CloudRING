@@ -75,6 +75,16 @@ func validCompliantK3Profile() CandidateProfile {
 				OverseerModelFamily: "family-b",
 			},
 		},
+		LKG: &LKGReceipt{
+			ImmutableBootloaderVerified:  true,
+			PinnedLKGSlots:               2,
+			SoakMinutes:                  30,
+			WebhookBypassVerified:        true,
+			PreMigrationSnapshotVerified: true,
+			MetaRSISelfCheckPassed:       true,
+			CandidateSHA:                 "a326123af6ca994ce876bb786dff7683f181ca36",
+			QuarantinedSHAs:              []string{"deadbeef00000000000000000000000000000000"},
+		},
 		VOI: &VOIInput{
 			PriorSuccessProb:       "2/5",
 			SuccessNetPayoffEUR:    "120000",

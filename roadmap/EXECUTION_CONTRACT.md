@@ -105,6 +105,48 @@ Fork 1A), with weekly founder audit and rollback authority. A compatible batch o
 already accepted public commits may share one downstream pin, but each
 requirement must remain traceable.
 
+The evaluator distinguishes two admissions. Merge admission covers a change that
+enters a branch no environment tracks as a GitOps source. Today only
+`opencloudtech/CloudRING` `main` qualifies, and the profile names it. Merge
+admission runs G1–G3, G5 when a drill receipt is supplied and G6 when deployment
+history exists. The live canary (G4) and LKG promotion (S1–S6) do not apply. G7
+does not apply only to an operator-directed merge. Deploy admission covers a
+change that reaches a running environment, including a downstream pin bump. It
+runs every gate and requires an S1–S6 receipt. A first AI deployment without
+history is K4. A merge claim is evaluated as deploy when it names another target,
+carries deployment targets, touches a `deploy`, `iac` or gitlink path,
+`.gitmodules` or a workflow file, carries a canary or LKG receipt, or claims an
+operator-directed origin without a valid reference. A profile without an
+admission field is evaluated as deploy. A key that is not an exact field name is
+rejected.
+
+G2 for guardrail code (`pkg/rsi`, `pkg/sliceoracles`, `pkg/safepush`,
+`cmd/cloudring-safepush`, and the `rsi` command files and changed dispatch lines
+of `cmd/cloudringctl`) is the mutation score measured by
+`go run ./cmd/cloudring-mutation --base <merge-base> --packages
+./pkg/rsi,./pkg/sliceoracles,./pkg/safepush,./cmd/cloudring-safepush,./cmd/cloudringctl`.
+The tool generates the mutants of gremlins v0.6.0 with the default mutators plus
+`INVERT_LOGICAL` in the files `go build` compiles for those packages, on lines
+the candidate adds or changes against its merge-base (every file compared as
+text, a renamed file counting as new, physical lines regardless of `//line`
+directives) and on its new files. It applies each mutant alone in a private copy
+of the module and runs `go test -count=1 -timeout 2m` (its `--timeout` default)
+on the mutant's package. The tool stops with exit 2 unless every package with a
+mutant passes `go test` unmutated in the copy, before the mutants and in every
+copy after them, when it cannot read the diff in full, and when a compiled file
+is not a regular file of its package directory. A passing run is LIVED and a
+run that hits the time limit TIMED OUT. A failing run is KILLED only after
+confirmation in the same copy: the unmutated package then passes twice in a row
+and the mutant fails again with the same first failing test; otherwise the
+mutant is UNSTABLE. A mutant that does not build, including one that `go vet`
+rejects during `go test`, is not viable and is not counted.
+`killedMutants` counts KILLED mutants. `totalMutants` counts KILLED, LIVED,
+TIMED OUT and UNSTABLE mutants. A mutant leaves the denominator only as an
+equivalent mutant whose written proof that no input distinguishes it is in the
+evidence. The threshold is 4/5. Tests in the measured packages must not read the
+package's source files or keep state across runs; such a test invalidates G2 and
+is a review finding.
+
 ## Universal definition of done
 
 A goal is complete only when all applicable cells are green:

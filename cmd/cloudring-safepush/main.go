@@ -30,7 +30,7 @@ func main() {
 // caller-supplied check-results file, success flag, API host, or policy override.
 func run(ctx context.Context, args []string, getenv func(string) string, stdout, stderr io.Writer, read githubPolicyReader, verify githubVerifier) int {
 	if len(args) == 0 || args[0] != "github" {
-		fmt.Fprintln(stderr, "usage: cloudring-safepush github --repository OWNER/REPO --pr NUMBER --head SHA --base SHA --branch main|master")
+		_, _ = fmt.Fprintln(stderr, "usage: cloudring-safepush github --repository OWNER/REPO --pr NUMBER --head SHA --base SHA --branch main|master")
 		return 2
 	}
 	flags := flag.NewFlagSet("github", flag.ContinueOnError)
@@ -44,17 +44,17 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 	if flags.Parse(args[1:]) != nil || flags.NArg() != 0 || *repository == "" || *pr <= 0 ||
 		*head == "" || *base == "" || (*branch != "main" && *branch != "master") ||
 		*timeout <= 0 || *timeout > 30*time.Minute {
-		fmt.Fprintln(stderr, "SafePush request is invalid")
+		_, _ = fmt.Fprintln(stderr, "SafePush request is invalid")
 		return 2
 	}
 	candidate := safepush.GitHubCandidate{PullRequest: *pr, HeadSHA: *head, BaseSHA: *base, TargetBranch: *branch}
 	if safepush.ValidateGitHubCandidate(*repository, candidate) != nil {
-		fmt.Fprintln(stderr, "SafePush request is invalid")
+		_, _ = fmt.Fprintln(stderr, "SafePush request is invalid")
 		return 2
 	}
 	bearer := getenv("GITHUB_TOKEN")
 	if bearer == "" {
-		fmt.Fprintln(stderr, "SafePush requires the workflow's read-only GITHUB_TOKEN")
+		_, _ = fmt.Fprintln(stderr, "SafePush requires the workflow's read-only GITHUB_TOKEN")
 		return 2
 	}
 	ctx, cancel := context.WithTimeout(ctx, *timeout)
@@ -62,16 +62,16 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 	client := &http.Client{Timeout: 30 * time.Second}
 	policy, err := read(ctx, client, bearer, *repository, *base)
 	if err != nil {
-		fmt.Fprintln(stderr, "SafePush blocked:", safeDiagnostic(err))
+		_, _ = fmt.Fprintln(stderr, "SafePush blocked:", safeDiagnostic(err))
 		return 1
 	}
 	if policy.Repository != *repository {
-		fmt.Fprintln(stderr, "SafePush blocked: accepted policy belongs to another repository")
+		_, _ = fmt.Fprintln(stderr, "SafePush blocked: accepted policy belongs to another repository")
 		return 1
 	}
 	err = waitForChecks(ctx, 30*time.Second, func() error { return verify(ctx, client, bearer, policy, candidate) })
 	if err != nil {
-		fmt.Fprintln(stderr, "SafePush blocked:", safeDiagnostic(err))
+		_, _ = fmt.Fprintln(stderr, "SafePush blocked:", safeDiagnostic(err))
 		return 1
 	}
 	if _, err := fmt.Fprintln(stdout, "SafePush: the exact required CI checks passed for the current candidate and base"); err != nil {
