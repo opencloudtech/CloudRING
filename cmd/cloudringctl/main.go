@@ -38,6 +38,9 @@ type state struct {
 func main() { os.Exit(run(os.Args[1:], os.Stdout, os.Stderr)) }
 
 func run(args []string, out, errOut io.Writer) int {
+	if len(args) > 0 && args[0] == "rsi" {
+		return runRSICommand(args[1:], out, errOut)
+	}
 	if len(args) < 2 || args[0] != "verify" || args[1] != "goal" {
 		return blocked(errOut, "invalid arguments")
 	}

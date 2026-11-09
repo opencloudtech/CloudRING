@@ -1,0 +1,1129 @@
+{
+  "apiVersion": "cloudring.org/slice-oracles/v1",
+  "kind": "SliceOracleBatch",
+  "decisionForks": {
+    "fork1": "1A_batch_32_oracles_autonomous_ver_acceptance_weekly_audit",
+    "fork2": "2A_split_core_qual_c24_after_c14_c20_no_c19_max_2_write_prs",
+    "fork3": "3_deferred_no_new_hardware_now_execute_no_hw_subgraph_via_rsi"
+  },
+  "maxConcurrentWritePRsPerRepo": 2,
+  "ownerAcceptanceLatencyDays": 0,
+  "weeklyOwnerAuditHours": 1,
+  "lkgInvariants": [
+    "S1_immutable_bootloader",
+    "S2_two_pinned_lkg_slots_30m_soak",
+    "S3_webhook_rollback_bypass",
+    "S4_pre_migration_state_snapshot",
+    "S5_meta_rsi_noop_self_check",
+    "S6_incident_sha_quarantine"
+  ],
+  "oracles": [
+    {
+      "sliceId": "C01",
+      "title": "Reproducible public delivery baseline (partial G00)",
+      "goals": [
+        "G00"
+      ],
+      "splitMode": false,
+      "coreDependencies": [],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "internal/roadmapprogram",
+        "internal/sourcecheck",
+        "roadmap"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C01.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "7.4",
+      "daysFactory": "1.4"
+    },
+    {
+      "sliceId": "SP01",
+      "title": "SafePush enablement / provenance admission",
+      "goals": [
+        "G00"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C01"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        ".github/safepush.json",
+        "cmd/cloudring-mutation",
+        "cmd/cloudring-safepush",
+        "cmd/cloudringctl/main.go",
+        "cmd/cloudringctl/rsi.go",
+        "cmd/cloudringctl/rsi_test.go",
+        "contracts/rsi-governance",
+        "contracts/slice-oracles",
+        "docs/ci-checks.md",
+        "docs/safepush.md",
+        "pkg/rsi",
+        "pkg/safepush",
+        "pkg/sliceoracles",
+        "roadmap/DELIVERY_SLICES.md",
+        "roadmap/EXECUTION_CONTRACT.md"
+      ],
+      "autonomyClass": "K4",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/SP01.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "14.9",
+      "daysFactory": "2.8"
+    },
+    {
+      "sliceId": "C02",
+      "title": "Public isolated developer VM install (full G01)",
+      "goals": [
+        "G01"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C01",
+        "SP01"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "cmd/cloudringctl",
+        "internal/portal"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C02.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "10.8",
+      "daysFactory": "2.0"
+    },
+    {
+      "sliceId": "C03",
+      "title": "Durable project/operation API, CLI, read-only UI (partial G03)",
+      "goals": [
+        "G03"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C02"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/transactionalstate",
+        "internal/api"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C03.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "19.3",
+      "daysFactory": "3.6"
+    },
+    {
+      "sliceId": "C04",
+      "title": "Two developer tenants identity + isolation (partial G04/G05)",
+      "goals": [
+        "G04",
+        "G05"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C03"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/identity",
+        "pkg/iam"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C04.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "36.5",
+      "daysFactory": "6.8"
+    },
+    {
+      "sliceId": "C05",
+      "title": "Real developer VM through public Go/OCS (partial G07-G09, G15)",
+      "goals": [
+        "G07",
+        "G08",
+        "G09",
+        "G15"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C04",
+        "C06"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/compute",
+        "sdk/ocsv3"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C05.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "42.1",
+      "daysFactory": "7.8"
+    },
+    {
+      "sliceId": "C06",
+      "title": "Reference installation restore from off-cell copies (prep G02,G17,G18,G22,G23)",
+      "goals": [
+        "G02",
+        "G17",
+        "G18",
+        "G22",
+        "G23"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C01"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/backup",
+        "pkg/dataact"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C06.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "44.1",
+      "daysFactory": "8.2"
+    },
+    {
+      "sliceId": "C07",
+      "title": "GitOps origin/API routing, IPv4/IPv6 TLS (prep G02,G12,G23)",
+      "goals": [
+        "G02",
+        "G12",
+        "G23"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C06"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/Ingress",
+        "pkg/network"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C07.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "26.9",
+      "daysFactory": "5.0"
+    },
+    {
+      "sliceId": "C08",
+      "title": "Independent public HA empty-provider install (full G00+G02)",
+      "goals": [
+        "G00",
+        "G02"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C02",
+        "C06",
+        "C07"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/kubeadm",
+        "pkg/installer"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C08.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "70.6",
+      "daysFactory": "13.1"
+    },
+    {
+      "sliceId": "C09",
+      "title": "Production kernel, identity, IAM (full G03-G05)",
+      "goals": [
+        "G03",
+        "G04",
+        "G05"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C03",
+        "C04",
+        "C05",
+        "C08"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/kernel",
+        "pkg/directory"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C09.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "74.4",
+      "daysFactory": "13.8"
+    },
+    {
+      "sliceId": "C10",
+      "title": "Provider inventory/adoption/executor, two adapters (full G06)",
+      "goals": [
+        "G06"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C09"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/providerports",
+        "pkg/inventory"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C10.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "46.0",
+      "daysFactory": "8.5"
+    },
+    {
+      "sliceId": "C11",
+      "title": "OCS RC + registry, independent product from SDK (full G07+G08)",
+      "goals": [
+        "G07",
+        "G08"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C05",
+        "C10"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/ocs",
+        "cmd/ocsctl",
+        "sdk/rust/ocs-sdk-rs"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C11.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "66.9",
+      "daysFactory": "12.4"
+    },
+    {
+      "sliceId": "C12",
+      "title": "Orders/subscriptions/entitlements lifecycle (full G09)",
+      "goals": [
+        "G09"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C11"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/orders",
+        "pkg/subscriptions"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C12.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "30.4",
+      "daysFactory": "5.6"
+    },
+    {
+      "sliceId": "C13",
+      "title": "Metering/rating/billing ledger (full G10)",
+      "goals": [
+        "G10"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C12"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/billing",
+        "pkg/metering"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C13.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "70.3",
+      "daysFactory": "13.0"
+    },
+    {
+      "sliceId": "C14",
+      "title": "Equivalent API/CLI/portal/agent experience (full G11)",
+      "goals": [
+        "G11"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C13"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "internal/portal",
+        "cmd/cloudringctl"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C14.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "34.5",
+      "daysFactory": "6.4"
+    },
+    {
+      "sliceId": "C15",
+      "title": "OCS Network product (full G12)",
+      "goals": [
+        "G12"
+      ],
+      "splitMode": true,
+      "coreDependencies": [
+        "C11",
+        "C07"
+      ],
+      "qualDependencies": [
+        "C13",
+        "C14"
+      ],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/network"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C15.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "34.5",
+      "daysFactory": "6.4"
+    },
+    {
+      "sliceId": "C16",
+      "title": "OCS Volume product (full G13)",
+      "goals": [
+        "G13"
+      ],
+      "splitMode": true,
+      "coreDependencies": [
+        "C11",
+        "C08"
+      ],
+      "qualDependencies": [
+        "C13",
+        "C14"
+      ],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/volume"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C16.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "36.5",
+      "daysFactory": "6.8"
+    },
+    {
+      "sliceId": "C17",
+      "title": "OCS Image/Artifact product (full G14)",
+      "goals": [
+        "G14"
+      ],
+      "splitMode": true,
+      "coreDependencies": [
+        "C11",
+        "C16"
+      ],
+      "qualDependencies": [
+        "C13",
+        "C14"
+      ],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/image"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C17.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "40.6",
+      "daysFactory": "7.5"
+    },
+    {
+      "sliceId": "C18",
+      "title": "Complete Compute via Network/Volume/Image (full G15)",
+      "goals": [
+        "G15"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C15",
+        "C16",
+        "C17"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/compute"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C18.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "28.9",
+      "daysFactory": "5.3"
+    },
+    {
+      "sliceId": "C19",
+      "title": "Managed tenant Kubernetes (full G16)",
+      "goals": [
+        "G16"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C18"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/kubernetes"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C19.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "38.5",
+      "daysFactory": "7.1"
+    },
+    {
+      "sliceId": "C20",
+      "title": "Object storage S3 product (full G17)",
+      "goals": [
+        "G17"
+      ],
+      "splitMode": true,
+      "coreDependencies": [
+        "C11",
+        "C16"
+      ],
+      "qualDependencies": [
+        "C13",
+        "C14"
+      ],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/objectstorage"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C20.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "34.5",
+      "daysFactory": "6.4"
+    },
+    {
+      "sliceId": "C21",
+      "title": "Customer self-service backup (full G18)",
+      "goals": [
+        "G18"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C19",
+        "C20"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/backup"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C21.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "32.4",
+      "daysFactory": "6.0"
+    },
+    {
+      "sliceId": "C22",
+      "title": "Controlled access product (full G19)",
+      "goals": [
+        "G19"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C19",
+        "C21"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/access"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C22.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "38.9",
+      "daysFactory": "7.2"
+    },
+    {
+      "sliceId": "C23",
+      "title": "Support product (full G20)",
+      "goals": [
+        "G20"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C22"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/support"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C23.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "43.3",
+      "daysFactory": "8.0"
+    },
+    {
+      "sliceId": "C24",
+      "title": "External integration product (full G21)",
+      "goals": [
+        "G21"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C14"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/external"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C24.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "43.3",
+      "daysFactory": "8.0"
+    },
+    {
+      "sliceId": "C25",
+      "title": "Resilience campaign on adjacent signed releases (full G23)",
+      "goals": [
+        "G23"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C01",
+        "SP01",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C15",
+        "C16",
+        "C17",
+        "C18",
+        "C19",
+        "C20",
+        "C21",
+        "C22",
+        "C23",
+        "C24",
+        "DBAAS",
+        "DNSAAS",
+        "FILESAAS"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": true,
+      "allowedPaths": [
+        "pkg/resilience"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C25.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "32.9",
+      "daysFactory": "6.1"
+    },
+    {
+      "sliceId": "C26",
+      "title": "Independent engineer operations, 14-day toil (full G22)",
+      "goals": [
+        "G22"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C25"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": true,
+      "allowedPaths": [
+        "pkg/operations"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C26.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "36.5",
+      "daysFactory": "6.8"
+    },
+    {
+      "sliceId": "C27",
+      "title": "Second bare-metal provider reproduction (full G24)",
+      "goals": [
+        "G24"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C26"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": true,
+      "allowedPaths": [
+        "pkg/portability"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C27.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "46.0",
+      "daysFactory": "8.5"
+    },
+    {
+      "sliceId": "C28",
+      "title": "Final audit and 1.0 release (full G27)",
+      "goals": [
+        "G27"
+      ],
+      "splitMode": false,
+      "coreDependencies": [
+        "C01",
+        "SP01",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C15",
+        "C16",
+        "C17",
+        "C18",
+        "C19",
+        "C20",
+        "C21",
+        "C22",
+        "C23",
+        "C24",
+        "C25",
+        "C26",
+        "C27",
+        "DBAAS",
+        "DNSAAS",
+        "FILESAAS"
+      ],
+      "qualDependencies": [],
+      "requiresFork3Hardware": true,
+      "allowedPaths": [
+        "roadmap/state"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/C28.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "54.1",
+      "daysFactory": "10.0"
+    },
+    {
+      "sliceId": "DBAAS",
+      "title": "OCS Managed PostgreSQL (CNPG) product",
+      "goals": [
+        "G07",
+        "G10",
+        "G18"
+      ],
+      "splitMode": true,
+      "coreDependencies": [
+        "C11",
+        "C16"
+      ],
+      "qualDependencies": [
+        "C13",
+        "C14",
+        "C21"
+      ],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/dbaas"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/DBAAS.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "34.5",
+      "daysFactory": "6.4"
+    },
+    {
+      "sliceId": "DNSAAS",
+      "title": "OCS Managed DNS product",
+      "goals": [
+        "G07",
+        "G10",
+        "G12"
+      ],
+      "splitMode": true,
+      "coreDependencies": [
+        "C11",
+        "C07"
+      ],
+      "qualDependencies": [
+        "C13",
+        "C14",
+        "C15"
+      ],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/dnsaas"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/DNSAAS.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "34.5",
+      "daysFactory": "6.4"
+    },
+    {
+      "sliceId": "FILESAAS",
+      "title": "OCS Shared File Storage (RWX NFS/CephFS) product",
+      "goals": [
+        "G07",
+        "G10",
+        "G13"
+      ],
+      "splitMode": true,
+      "coreDependencies": [
+        "C11",
+        "C16"
+      ],
+      "qualDependencies": [
+        "C13",
+        "C14"
+      ],
+      "requiresFork3Hardware": false,
+      "allowedPaths": [
+        "pkg/products/filesaas"
+      ],
+      "autonomyClass": "K2",
+      "verificationCommand": "go test ./... && go run ./cmd/cloudringctl rsi evaluate --profile contracts/slice-oracles/profiles/FILESAAS.json",
+      "requiredGates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7",
+        "S1_S6_LKG"
+      ],
+      "daysHist": "34.5",
+      "daysFactory": "6.4"
+    }
+  ]
+}
