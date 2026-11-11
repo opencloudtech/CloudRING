@@ -17,7 +17,7 @@ const (
 	SandboxStateSchemaVersion    = "cloudring.etcd-recovery.sandbox-state/v1"
 	ToolName                     = "etcdutl"
 	ToolVersion                  = "3.6.14"
-	ToolSHA256                   = "04c53c46f259a1c470a74c83d5a3a4a5d0b1e54db4d42dfaeb66ab78b3cb71cf"
+	ToolSHA256                   = "9ada77511dce9263c24c8a0c116318d5384b1e348ace152da76aa65b62d17784"
 
 	DefaultRequestPath     = "/run/cloudring/request/request.json"
 	DefaultArchivePath     = "/run/cloudring/archive/snapshot.db"

@@ -26,7 +26,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.26.10
+          go-version: 1.26.11
           check-latest: false
           cache: true
       - name: Validate workflow syntax
@@ -155,7 +155,7 @@ jobs:
                . == "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" or
                . == "actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6" or
                . == "docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f" or
-               test("^github/codeql-action/(init|autobuild|analyze)@7188fc363630916deb702c7fdcf4e481b751f97a$") or
+               test("^github/codeql-action/(init|autobuild|analyze)@33d7b85da1a04171e211befe2c739303b9a4c066$") or
                test("^docker://[^@[:space:]]+@sha256:[0-9a-f]{64}$"));
             def safe_image:
               type == "string" and

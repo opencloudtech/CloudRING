@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.26.10
+          go-version: 1.26.11
           check-latest: false
           cache: true
       - name: Independently reproduce release bundle and CycloneDX SBOM
@@ -95,7 +95,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.26.10
+          go-version: 1.26.11
           check-latest: false
           cache: true
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
@@ -203,7 +203,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.26.10
+          go-version: 1.26.11
           check-latest: false
           cache: true
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
@@ -247,7 +247,7 @@ jobs:
           test "$(dist/etcd-recovery-worker/etcdutl version)" = $'etcdutl version: 3.6.14\nAPI version: 3.6'
           tool_digest="$(sha256sum dist/etcd-recovery-worker/etcdutl | cut -d ' ' -f 1)"
           worker_digest="$(sha256sum dist/etcd-recovery-worker/cloudring-etcd-recovery-worker | cut -d ' ' -f 1)"
-          test "${tool_digest}" = '04c53c46f259a1c470a74c83d5a3a4a5d0b1e54db4d42dfaeb66ab78b3cb71cf'
+          test "${tool_digest}" = '9ada77511dce9263c24c8a0c116318d5384b1e348ace152da76aa65b62d17784'
           bash .github/scripts/check-release-binaries.sh dist/etcd-recovery-worker/*
           jq -n -cS \
             --arg source_commit "${GITHUB_SHA}" \
@@ -282,7 +282,7 @@ jobs:
                 purl: "pkg:github/etcd-io/etcd@v3.6.14",
                 properties: [
                   {name: "cloudring.upstream.source-commit", value: "fc04cf702b0a46c2fd85547a2be05705b100a496"},
-                  {name: "cloudring.upstream.build-compiler", value: "go1.26.10"}
+                  {name: "cloudring.upstream.build-compiler", value: "go1.26.11"}
                 ],
                 hashes: [{alg: "SHA-256", content: $tool_digest}]
               },
@@ -483,7 +483,7 @@ jobs:
             (.imageSubjectDigest | test("^sha256:[0-9a-f]{64}$")) and
             (.workerExecutableSha256 | test("^[0-9a-f]{64}$")) and
             .etcdutlVersion == "3.6.14" and
-            .etcdutlSha256 == "04c53c46f259a1c470a74c83d5a3a4a5d0b1e54db4d42dfaeb66ab78b3cb71cf" and
+            .etcdutlSha256 == "9ada77511dce9263c24c8a0c116318d5384b1e348ace152da76aa65b62d17784" and
             .baseImageName == "gcr.io/distroless/static-debian12:nonroot" and
             .baseImageDigest == "sha256:f5b485ea962d9bd1186b2f6b3a061191539b905b82ec395de78cbfae51f20e35" and
             (.containerfileSha256 | test("^[0-9a-f]{64}$")) and
